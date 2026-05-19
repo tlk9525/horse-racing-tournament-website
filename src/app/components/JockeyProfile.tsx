@@ -1,0 +1,128 @@
+import {
+  ArrowLeft,
+  Trophy,
+  Award,
+  TrendingUp,
+  Activity,
+  Star,
+} from 'lucide-react';
+
+interface JockeyProfileProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function JockeyProfile({
+  onNavigate,
+}: JockeyProfileProps) {
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <button
+          onClick={() => onNavigate('jockeys')}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-all mb-8"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Jockeys
+        </button>
+
+        <div className="grid lg:grid-cols-[400px,1fr] gap-8">
+
+          <div className="bg-[#141414] border border-white/10 rounded-2xl overflow-hidden">
+
+            <img
+              src="https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1200"
+              alt="Jockey"
+              className="w-full h-[550px] object-cover"
+            />
+
+          </div>
+
+          <div className="bg-[#141414] border border-white/10 rounded-2xl p-8">
+
+            <div className="flex items-center justify-between mb-6">
+
+              <div>
+
+                <p className="text-[#e10600] uppercase tracking-[0.2em] text-sm font-bold mb-2">
+                  Professional Jockey
+                </p>
+
+                <h1 className="text-5xl font-black text-white mb-3">
+                  Marcus Sterling
+                </h1>
+
+              </div>
+
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+
+                <Trophy className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+
+                <div className="text-3xl font-black text-white">
+                  308
+                </div>
+
+                <div className="text-gray-400 text-sm">
+                  Wins
+                </div>
+
+              </div>
+
+              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+
+                <Award className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+
+                <div className="text-3xl font-black text-white">
+                  8
+                </div>
+
+                <div className="text-gray-400 text-sm">
+                  Championships
+                </div>
+
+              </div>
+
+              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+
+                <TrendingUp className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+
+                <div className="text-3xl font-black text-white">
+                  68%
+                </div>
+
+                <div className="text-gray-400 text-sm">
+                  Win Rate
+                </div>
+
+              </div>
+
+              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+
+                <Activity className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+
+                <div className="text-3xl font-black text-white">
+                  450
+                </div>
+
+                <div className="text-gray-400 text-sm">
+                  Total Races
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+}

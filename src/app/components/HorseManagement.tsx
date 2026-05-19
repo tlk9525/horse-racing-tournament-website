@@ -87,9 +87,10 @@ export default function HorseManagement({
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Header */}
+        {/* HEADER */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-10">
 
           <div>
@@ -102,7 +103,13 @@ export default function HorseManagement({
             </p>
           </div>
 
-          <button className="flex items-center justify-center gap-2 px-6 py-3 bg-[#e10600] text-white rounded-lg hover:bg-[#c00500] transition-all font-semibold shadow-lg shadow-[#e10600]/20">
+          {/* REGISTER BUTTON */}
+          <button
+            onClick={() =>
+              onNavigate('register-horse')
+            }
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-[#e10600] text-white rounded-lg hover:bg-[#c00500] transition-all font-semibold shadow-lg shadow-[#e10600]/20"
+          >
 
             <Plus className="w-5 h-5" />
 
@@ -111,7 +118,7 @@ export default function HorseManagement({
           </button>
         </div>
 
-        {/* Grid */}
+        {/* GRID */}
         <div className="grid xl:grid-cols-2 gap-8">
 
           {horses.map((horse) => (
@@ -152,7 +159,7 @@ export default function HorseManagement({
                       {horse.breed} • {horse.age} years old
                     </p>
 
-                    {/* Owner + Jockey */}
+                    {/* OWNER */}
                     <div className="space-y-3 mb-6 border-b border-white/10 pb-5">
 
                       <div className="flex items-center justify-between">
@@ -179,7 +186,7 @@ export default function HorseManagement({
 
                     </div>
 
-                    {/* Stats */}
+                    {/* STATS */}
                     <div className="grid grid-cols-3 gap-3 mb-6">
 
                       <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-4 text-center">
@@ -214,7 +221,7 @@ export default function HorseManagement({
 
                     </div>
 
-                    {/* Performance */}
+                    {/* PERFORMANCE */}
                     <div className="space-y-4">
 
                       {[
@@ -272,9 +279,11 @@ export default function HorseManagement({
 
                   </div>
 
-                  {/* BUTTON */}
+                  {/* DETAILS BUTTON */}
                   <button
-                    onClick={() => onNavigate('horse-details')}
+                    onClick={() =>
+                      onNavigate('horse-details')
+                    }
                     className="w-full mt-8 py-3 rounded-xl bg-[#e10600]/10 border border-[#e10600]/30 text-[#e10600] font-semibold hover:bg-[#e10600] hover:text-white transition-all duration-300"
                   >
                     View Details
