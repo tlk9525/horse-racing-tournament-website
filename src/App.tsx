@@ -1,3 +1,5 @@
+// App.tsx
+
 import { useState } from 'react';
 
 import Navbar from './app/components/Navbar';
@@ -5,6 +7,7 @@ import Footer from './app/components/Footer';
 
 import LandingPage from './app/components/LandingPage';
 import Dashboard from './app/components/Dashboard';
+import RaceDetails from './app/components/RaceDetails';
 
 import TournamentPage from './app/components/TournamentPage';
 import TournamentDetails from './app/components/TournamentDetails';
@@ -23,11 +26,12 @@ import RankingsPage from './app/components/RankingsPage';
 import AdminPanel from './app/components/AdminPanel';
 
 import LoginPage from './app/components/LoginPage';
+import RegisterPage from './app/components/RegisterPage';
 
 export default function App() {
 
   const [currentPage, setCurrentPage] =
-    useState('jockeys');
+    useState('dashboard');
 
   const renderPage = () => {
 
@@ -55,7 +59,14 @@ export default function App() {
         );
 
       case 'tournament-details':
-        return <TournamentDetails />;
+        return (
+          <TournamentDetails />
+        );
+
+      case 'race-details':
+        return (
+          <RaceDetails />
+        );
 
       case 'horses':
         return (
@@ -65,7 +76,9 @@ export default function App() {
         );
 
       case 'horse-details':
-        return <HorseDetails />;
+        return (
+          <HorseDetails />
+        );
 
       case 'register-horse':
         return (
@@ -89,19 +102,29 @@ export default function App() {
         );
 
       case 'live-race':
-        return <LiveRace />;
+        return (
+          <LiveRace />
+        );
 
       case 'predictions':
-        return <PredictionPage />;
+        return (
+          <PredictionPage />
+        );
 
       case 'results':
-        return <ResultsPage />;
+        return (
+          <ResultsPage />
+        );
 
       case 'rankings':
-        return <RankingsPage />;
+        return (
+          <RankingsPage />
+        );
 
       case 'admin':
-        return <AdminPanel />;
+        return (
+          <AdminPanel />
+        );
 
       case 'login':
         return (
@@ -110,9 +133,16 @@ export default function App() {
           />
         );
 
+      case 'register':
+        return (
+          <RegisterPage
+            onNavigate={setCurrentPage}
+          />
+        );
+
       default:
         return (
-          <LandingPage
+          <Dashboard
             onNavigate={setCurrentPage}
           />
         );
@@ -120,19 +150,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] dark">
+    <div className="min-h-screen bg-[#0a0a0a] dark overflow-x-hidden">
 
-      <div className="fixed top-2 right-2 z-[9999] bg-red-600 text-white px-4 py-2 rounded-xl">
-        {currentPage}
-      </div>
-
+      {/* NAVBAR */}
       <Navbar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
       />
 
-      {renderPage()}
+      {/* PAGE CONTENT */}
+      <main className="pt-16 min-h-screen">
 
+        {renderPage()}
+
+      </main>
+
+      {/* FOOTER */}
       <Footer />
 
     </div>

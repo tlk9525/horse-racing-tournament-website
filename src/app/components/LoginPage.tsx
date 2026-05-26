@@ -6,6 +6,7 @@ import {
   Eye,
   EyeOff,
   Trophy,
+  User,
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -17,6 +18,9 @@ export default function LoginPage({
 }: LoginPageProps) {
 
   const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [isRegister, setIsRegister] =
     useState(false);
 
   return (
@@ -51,12 +55,19 @@ export default function LoginPage({
             </div>
 
             <h2 className="text-5xl font-black text-white leading-tight mb-6">
-              Welcome Back
+
+              {isRegister
+                ? 'Create Account'
+                : 'Welcome Back'}
+
             </h2>
 
             <p className="text-white/80 text-lg leading-relaxed max-w-md">
-              Access your racing dashboard, manage tournaments,
-              monitor horse performance and track live races.
+
+              {isRegister
+                ? 'Join the most advanced horse racing platform and manage races, horses and tournaments.'
+                : 'Access your racing dashboard, manage tournaments, monitor horse performance and track live races.'}
+
             </p>
 
           </div>
@@ -111,20 +122,54 @@ export default function LoginPage({
             <div className="mb-10">
 
               <p className="text-[#e10600] uppercase tracking-[0.25em] text-sm font-bold mb-3">
-                Sign In
+
+                {isRegister
+                  ? 'Create Account'
+                  : 'Sign In'}
+
               </p>
 
               <h2 className="text-4xl font-black text-white mb-3">
-                Login Account
+
+                {isRegister
+                  ? 'Register Account'
+                  : 'Login Account'}
+
               </h2>
 
               <p className="text-gray-400 leading-relaxed">
-                Enter your email and password to continue.
+
+                {isRegister
+                  ? 'Create your account to continue.'
+                  : 'Enter your email and password to continue.'}
+
               </p>
 
             </div>
 
             <form className="space-y-6">
+
+              {/* FULL NAME */}
+              {isRegister && (
+                <div>
+
+                  <label className="block text-sm text-gray-300 mb-2 font-medium">
+                    Full Name
+                  </label>
+
+                  <div className="relative">
+
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+
+                    <input
+                      type="text"
+                      placeholder="Enter your full name"
+                      className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                    />
+
+                  </div>
+                </div>
+              )}
 
               {/* EMAIL */}
               <div>
@@ -188,30 +233,54 @@ export default function LoginPage({
                 </div>
               </div>
 
+              {/* CONFIRM PASSWORD */}
+              {isRegister && (
+                <div>
+
+                  <label className="block text-sm text-gray-300 mb-2 font-medium">
+                    Confirm Password
+                  </label>
+
+                  <div className="relative">
+
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+
+                    <input
+                      type="password"
+                      placeholder="Confirm password"
+                      className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                    />
+
+                  </div>
+                </div>
+              )}
+
               {/* OPTIONS */}
-              <div className="flex items-center justify-between text-sm">
+              {!isRegister && (
+                <div className="flex items-center justify-between text-sm">
 
-                <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
+                  <label className="flex items-center gap-2 text-gray-400 cursor-pointer">
 
-                  <input
-                    type="checkbox"
-                    className="accent-[#e10600]"
-                  />
+                    <input
+                      type="checkbox"
+                      className="accent-[#e10600]"
+                    />
 
-                  Remember me
+                    Remember me
 
-                </label>
+                  </label>
 
-                <button
-                  type="button"
-                  className="text-[#e10600] hover:text-red-400 transition-colors"
-                >
-                  Forgot Password?
-                </button>
+                  <button
+                    type="button"
+                    className="text-[#e10600] hover:text-red-400 transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
 
-              </div>
+                </div>
+              )}
 
-              {/* LOGIN BUTTON */}
+              {/* BUTTON */}
               <button
                 type="button"
                 onClick={() =>
@@ -219,7 +288,11 @@ export default function LoginPage({
                 }
                 className="w-full h-14 rounded-xl bg-[#e10600] hover:bg-[#c00500] transition-all text-white font-bold text-lg shadow-lg shadow-[#e10600]/30"
               >
-                Login
+
+                {isRegister
+                  ? 'Create Account'
+                  : 'Login'}
+
               </button>
 
               {/* DIVIDER */}
@@ -257,16 +330,27 @@ export default function LoginPage({
 
               </div>
 
-              {/* SIGN UP */}
+              {/* SWITCH MODE */}
               <div className="text-center pt-4 text-gray-400 text-sm">
 
-                Don’t have an account?
+                {isRegister
+                  ? 'Already have an account?'
+                  : 'Don’t have an account?'}
 
                 <button
                   type="button"
+                  onClick={() =>
+                    setIsRegister(
+                      !isRegister
+                    )
+                  }
                   className="ml-2 text-[#e10600] font-semibold hover:text-red-400 transition-colors"
                 >
-                  Create Account
+
+                  {isRegister
+                    ? 'Login'
+                    : 'Create Account'}
+
                 </button>
 
               </div>
