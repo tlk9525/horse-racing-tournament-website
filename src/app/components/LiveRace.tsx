@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+  import { useState, useEffect } from 'react';
 import { Circle, Flag, Trophy, Zap, Clock } from 'lucide-react';
 
 export default function LiveRace() {
