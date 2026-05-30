@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Award, Send, User } from 'lucide-react';
+import { Award, Plus, Send, User } from 'lucide-react';
 import NotificationsPanel from './NotificationsPanel';
 import {
   HorseRecord,
@@ -60,18 +60,48 @@ export default function HorseManagement({ onNavigate }: HorseManagementProps) {
     jockeyProfiles.find((profile) => profile.userId === userId)?.jockeyName ||
     'Not selected';
 
+  const maxHorses = 5;
+  const canAddHorse = horses.length < maxHorses;
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Owner Portal
-          </h1>
+        <div className="mb-10 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Owner Portal
+            </h1>
 
-          <p className="text-gray-400">
-            Select an approved horse, choose a published jockey profile, then send a riding request for {currentTournament.name}.
-          </p>
+            <p className="text-gray-400">
+              Select an approved horse, choose a published jockey profile, then send a riding request for {currentTournament.name}.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="rounded-xl border border-white/10 bg-[#141414] px-4 py-3 text-gray-300">
+              Horses: <span className="font-bold text-white">{horses.length}/{maxHorses}</span>
+            </div>
+
+            <button
+              onClick={() => {
+                if (!canAddHorse) {
+                  setMessage('Each owner can register up to 5 horses.');
+                  return;
+                }
+
+                onNavigate('register-horse');
+              }}
+              className={`flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-bold transition-all ${
+                canAddHorse
+                  ? 'bg-[#e10600] text-white hover:bg-[#c00500]'
+                  : 'bg-white/10 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <Plus className="w-5 h-5" />
+              Add Horse
+            </button>
+          </div>
         </div>
 
         <NotificationsPanel />
@@ -253,8 +283,14 @@ export default function HorseManagement({ onNavigate }: HorseManagementProps) {
                     </div>
 
                     <div className="text-[#e10600] font-bold mt-2">
-                      {statusLabel(invitation.status)}
+                      Jockey: {statusLabel(invitation.status)}
                     </div>
+
+                    {invitation.status === 'accepted' && (
+                      <div className="text-yellow-400 text-sm mt-1 font-semibold">
+                        Admin: {statusLabel(invitation.adminStatus || 'pending')}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -71,6 +71,29 @@ const createNotification = (db, userId, title, message) => {
 const ownerName = (db, userId) =>
   db.users.find((user) => user.id === userId)?.name || 'Unknown Owner';
 
+const jockeyName = (db, userId) =>
+  db.users.find((user) => user.id === userId)?.name || 'Unknown Jockey';
+
+const horseName = (db, horseId) =>
+  db.horses.find((horse) => horse.id === horseId)?.name || 'Unknown Horse';
+
+const raceName = (db, raceId) =>
+  db.races.find((race) => race.id === raceId)?.name || 'Unassigned race';
+
+const notifyAdmins = (db, title, message) => {
+  db.users
+    .filter((user) => user.role === 'admin')
+    .forEach((admin) => createNotification(db, admin.id, title, message));
+};
+
+const activeTournament = (db) =>
+  db.tournaments.find((tournament) =>
+    ['registration', 'approvals', 'active'].includes(tournament.status)
+  ) || db.tournaments[0];
+
+const defaultRaceForTournament = (db, tournamentId) =>
+  db.races.find((race) => race.tournamentId === tournamentId) || null;
+
 const formatApprovals = (db) => [
   ...db.horses
     .filter((horse) => horse.status === 'pending')
@@ -93,6 +116,23 @@ const formatApprovals = (db) => [
       detail: 'Account approval required',
       date: db.tournaments[0]?.registrationWindow || 'Registration window',
       targetUserId: user.id,
+    })),
+  ...(db.jockeyInvitations || [])
+    .filter(
+      (invitation) =>
+        invitation.status === 'accepted' && invitation.adminStatus === 'pending'
+    )
+    .map((invitation) => ({
+      id: invitation.id,
+      entityType: 'pairing',
+      type: 'Horse-Jockey Race Assignment',
+      name: `${horseName(db, invitation.horseId)} + ${jockeyName(db, invitation.jockeyUserId)}`,
+      detail: `Race: ${raceName(db, invitation.raceId)} • Owner: ${ownerName(db, invitation.ownerUserId)}`,
+      date:
+        db.races.find((race) => race.id === invitation.raceId)?.date ||
+        activeTournament(db)?.startDate ||
+        'Race schedule',
+      targetUserId: invitation.ownerUserId,
     })),
 ];
 
@@ -219,6 +259,7 @@ const server = createServer(async (req, res) => {
         races: db.races,
         jockeyProfiles: publicJockeyProfiles(db),
         jockeyInvitations: db.jockeyInvitations || [],
+        raceEntries: db.raceEntries || [],
         users: db.users.map(publicUser),
         notifications: db.notifications || [],
       });
@@ -239,6 +280,68 @@ const server = createServer(async (req, res) => {
         invitations: (db.jockeyInvitations || []).filter(
           (invitation) => invitation.ownerUserId === user.id
         ),
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/owner/horses') {
+      const user = await requireRole(req, db, ['owner']);
+
+      if (!user) {
+        send(res, 403, { message: 'Owner access required' });
+        return;
+      }
+
+      const ownerHorses = db.horses.filter((horse) => horse.ownerUserId === user.id);
+      const maxHorses = 5;
+
+      if (ownerHorses.length >= maxHorses) {
+        send(res, 400, {
+          message: `Each owner can register up to ${maxHorses} horses.`,
+        });
+        return;
+      }
+
+      const { name, breed, age, veterinaryCertificateUrl } = await readBody(req);
+
+      if (!name || !breed || !age || Number(age) <= 0) {
+        send(res, 400, { message: 'Horse name, breed and age are required' });
+        return;
+      }
+
+      const horse = {
+        id: randomUUID(),
+        name,
+        breed,
+        age: Number(age),
+        ownerUserId: user.id,
+        status: 'pending',
+        selectedJockeyUserId: null,
+        jockeyConfirmation: 'waiting-owner',
+        veterinaryCertificateUrl: veterinaryCertificateUrl || '',
+        createdAt: new Date().toISOString(),
+      };
+
+      db.horses.unshift(horse);
+
+      notifyAdmins(
+        db,
+        'New horse registration',
+        `${user.name} submitted ${horse.name} for admin approval.`
+      );
+
+      createNotification(
+        db,
+        user.id,
+        'Horse registration submitted',
+        `${horse.name} is waiting for admin approval.`
+      );
+
+      await writeDb(db);
+      send(res, 201, {
+        horse,
+        horseCount: ownerHorses.length + 1,
+        maxHorses,
       });
       return;
     }
@@ -274,12 +377,20 @@ const server = createServer(async (req, res) => {
 
       db.jockeyInvitations = db.jockeyInvitations || [];
 
+      const tournament = activeTournament(db);
+      const race = tournament
+        ? defaultRaceForTournament(db, tournament.id)
+        : null;
+
       const invitation = {
         id: randomUUID(),
         horseId,
         ownerUserId: user.id,
         jockeyUserId,
+        tournamentId: tournament?.id || null,
+        raceId: race?.id || null,
         status: 'pending',
+        adminStatus: null,
         createdAt: new Date().toISOString(),
       };
       db.jockeyInvitations.unshift(invitation);
@@ -385,18 +496,42 @@ const server = createServer(async (req, res) => {
       invitation.respondedAt = new Date().toISOString();
 
       const horse = db.horses.find((item) => item.id === invitation.horseId);
+      const raceLabel = raceName(db, invitation.raceId);
 
-      if (horse) {
-        horse.jockeyConfirmation =
-          decision === 'accepted' ? 'confirmed' : 'rejected';
+      if (decision === 'accepted') {
+        invitation.adminStatus = 'pending';
+
+        if (horse) {
+          horse.jockeyConfirmation = 'pending-admin';
+        }
+
+        createNotification(
+          db,
+          invitation.ownerUserId,
+          'Jockey accepted request',
+          `${user.name} accepted riding ${horse?.name || 'your horse'} for ${raceLabel}. Waiting for Admin approval.`
+        );
+
+        notifyAdmins(
+          db,
+          'Horse-Jockey pairing needs approval',
+          `${ownerName(db, invitation.ownerUserId)} / ${horse?.name || 'Horse'} + ${user.name} for ${raceLabel} is waiting for race assignment approval.`
+        );
+      } else {
+        invitation.adminStatus = null;
+
+        if (horse) {
+          horse.selectedJockeyUserId = null;
+          horse.jockeyConfirmation = 'waiting-owner';
+        }
+
+        createNotification(
+          db,
+          invitation.ownerUserId,
+          'Jockey rejected request',
+          `${user.name} rejected the request${horse ? ` for ${horse.name}` : ''}.`
+        );
       }
-
-      createNotification(
-        db,
-        invitation.ownerUserId,
-        decision === 'accepted' ? 'Jockey accepted request' : 'Jockey rejected request',
-        `${user.name} ${decision} the request${horse ? ` for ${horse.name}` : ''}.`
-      );
 
       await writeDb(db);
       send(res, 200, { invitation });
@@ -415,8 +550,222 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === 'GET' && url.pathname === '/api/admin/race-builder') {
+      const user = await requireRole(req, db, ['admin']);
+
+      if (!user) {
+        send(res, 403, { message: 'Admin access required' });
+        return;
+      }
+
+      const pairings = (db.jockeyInvitations || [])
+        .filter(
+          (invitation) =>
+            invitation.status === 'accepted' &&
+            invitation.adminStatus === 'approved'
+        )
+        .map((invitation) => {
+          const horse = db.horses.find((item) => item.id === invitation.horseId);
+          const jockey = db.users.find(
+            (item) => item.id === invitation.jockeyUserId && item.role === 'jockey'
+          );
+          const profile = (db.jockeyProfiles || []).find(
+            (item) => item.userId === invitation.jockeyUserId
+          );
+
+          if (!horse || !jockey || horse.status !== 'approved' || jockey.status !== 'active') {
+            return null;
+          }
+
+          return {
+            invitationId: invitation.id,
+            horseId: horse.id,
+            horseName: horse.name,
+            breed: horse.breed,
+            age: horse.age,
+            ownerUserId: horse.ownerUserId,
+            ownerName: ownerName(db, horse.ownerUserId),
+            jockeyUserId: jockey.id,
+            jockeyName: jockey.name,
+            jockeyWeight: Number(profile?.weight) || 0,
+          };
+        })
+        .filter(Boolean);
+
+      const referees = db.users
+        .filter((item) => item.role === 'referee' && item.status === 'active')
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+        }));
+
+      send(res, 200, { pairings, referees });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/admin/races') {
+      const user = await requireRole(req, db, ['admin']);
+
+      if (!user) {
+        send(res, 403, { message: 'Admin access required' });
+        return;
+      }
+
+      const {
+        name,
+        round,
+        date,
+        time,
+        venue,
+        distance,
+        surface,
+        raceClass,
+        totalPrize,
+        refereeUserId,
+        entries,
+      } = await readBody(req);
+
+      if (!name || !date || !time || !venue || !distance || !refereeUserId) {
+        send(res, 400, {
+          message: 'Race name, date, time, venue, distance and referee are required',
+        });
+        return;
+      }
+
+      if (!Array.isArray(entries) || entries.length === 0) {
+        send(res, 400, { message: 'Select at least one approved horse-jockey pairing' });
+        return;
+      }
+
+      const referee = db.users.find(
+        (item) =>
+          item.id === refereeUserId &&
+          item.role === 'referee' &&
+          item.status === 'active'
+      );
+
+      if (!referee) {
+        send(res, 400, { message: 'Assigned referee must be active' });
+        return;
+      }
+
+      const laneNumbers = entries.map((entry) => Number(entry.lane));
+      const uniqueLaneNumbers = new Set(laneNumbers);
+
+      if (
+        laneNumbers.some((lane) => !Number.isInteger(lane) || lane <= 0) ||
+        uniqueLaneNumbers.size !== laneNumbers.length
+      ) {
+        send(res, 400, { message: 'Lane numbers must be positive and unique' });
+        return;
+      }
+
+      const tournament = activeTournament(db);
+      const now = new Date().toISOString();
+      const race = {
+        id: randomUUID(),
+        tournamentId: tournament?.id || null,
+        name,
+        round: round || 'Qualifier',
+        date,
+        time,
+        venue,
+        distance: `${distance}m`,
+        surface: surface || 'Turf',
+        raceClass: raceClass || '',
+        totalPrize: Number(totalPrize) || 0,
+        refereeUserId,
+        referee: referee.name,
+        status: 'awaiting-confirmations',
+        participants: entries.length,
+        ownerConfirmed: 0,
+        jockeyConfirmed: 0,
+        createdBy: user.id,
+        createdAt: now,
+      };
+
+      db.races.unshift(race);
+      db.raceEntries = db.raceEntries || [];
+
+      const createdEntries = [];
+
+      for (const entry of entries) {
+        const invitation = (db.jockeyInvitations || []).find(
+          (item) =>
+            item.id === entry.invitationId &&
+            item.status === 'accepted' &&
+            item.adminStatus === 'approved'
+        );
+
+        if (!invitation) {
+          send(res, 400, { message: 'Selected pairing is not approved' });
+          return;
+        }
+
+        const horse = db.horses.find((item) => item.id === invitation.horseId);
+        const jockey = db.users.find((item) => item.id === invitation.jockeyUserId);
+
+        if (!horse || !jockey || horse.status !== 'approved' || jockey.status !== 'active') {
+          send(res, 400, { message: 'Selected pairing is no longer eligible' });
+          return;
+        }
+
+        const raceEntry = {
+          id: randomUUID(),
+          raceId: race.id,
+          horseId: invitation.horseId,
+          jockeyUserId: invitation.jockeyUserId,
+          invitationId: invitation.id,
+          status: 'approved',
+          lane: Number(entry.lane),
+          handicap: Number(entry.handicap) || 0,
+          ownerConfirmed: false,
+          jockeyConfirmed: false,
+          preRaceStatus: 'pending',
+          disqualified: false,
+          createdAt: now,
+        };
+
+        db.raceEntries.push(raceEntry);
+        createdEntries.push(raceEntry);
+
+        const scheduleMessage =
+          `${race.name} is scheduled on ${race.date} at ${race.time}, venue ${race.venue}. ` +
+          `${horse.name} / ${jockey.name}: line ${raceEntry.lane}, handicap ${raceEntry.handicap}kg.`;
+
+        createNotification(
+          db,
+          horse.ownerUserId,
+          'Race schedule published',
+          `${scheduleMessage} Please confirm horse participation.`
+        );
+
+        createNotification(
+          db,
+          jockey.id,
+          'Race schedule published',
+          `${scheduleMessage} Please confirm jockey participation.`
+        );
+      }
+
+      createNotification(
+        db,
+        referee.id,
+        'Race assignment published',
+        `${race.name} is scheduled on ${race.date} at ${race.time}. You are assigned as race referee.`
+      );
+
+      await writeDb(db);
+      send(res, 201, {
+        race,
+        entries: createdEntries,
+        notifications: db.notifications || [],
+      });
+      return;
+    }
+
     const approvalMatch = url.pathname.match(
-      /^\/api\/admin\/approvals\/(horse|jockey)\/([^/]+)$/
+      /^\/api\/admin\/approvals\/(horse|jockey|pairing)\/([^/]+)$/
     );
 
     if (req.method === 'POST' && approvalMatch) {
@@ -471,6 +820,86 @@ const server = createServer(async (req, res) => {
         );
       }
 
+      if (entityType === 'pairing') {
+        const invitation = (db.jockeyInvitations || []).find(
+          (item) =>
+            item.id === id &&
+            item.status === 'accepted' &&
+            item.adminStatus === 'pending'
+        );
+
+        if (!invitation) {
+          send(res, 404, { message: 'Horse-Jockey pairing approval not found' });
+          return;
+        }
+
+        const horse = db.horses.find((item) => item.id === invitation.horseId);
+        const raceLabel = raceName(db, invitation.raceId);
+
+        invitation.adminStatus = decision;
+
+        if (decision === 'approved') {
+          if (horse) {
+            horse.jockeyConfirmation = 'confirmed';
+          }
+
+          if (invitation.raceId) {
+            db.raceEntries = db.raceEntries || [];
+
+            const alreadyEntered = db.raceEntries.some(
+              (entry) =>
+                entry.raceId === invitation.raceId &&
+                entry.horseId === invitation.horseId
+            );
+
+            if (!alreadyEntered) {
+              db.raceEntries.push({
+                id: randomUUID(),
+                raceId: invitation.raceId,
+                horseId: invitation.horseId,
+                jockeyUserId: invitation.jockeyUserId,
+                invitationId: invitation.id,
+                status: 'approved',
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+
+          createNotification(
+            db,
+            invitation.ownerUserId,
+            'Pairing approved for race',
+            `Admin approved ${horse?.name || 'your horse'} with ${jockeyName(db, invitation.jockeyUserId)} for ${raceLabel}.`
+          );
+
+          createNotification(
+            db,
+            invitation.jockeyUserId,
+            'You are approved for the race',
+            `Admin approved your assignment to ride ${horse?.name || 'the horse'} in ${raceLabel}.`
+          );
+        } else {
+          if (horse) {
+            horse.selectedJockeyUserId = null;
+            horse.jockeyConfirmation = 'waiting-owner';
+          }
+
+          createNotification(
+            db,
+            invitation.ownerUserId,
+            'Pairing rejected for race',
+            `Admin rejected the ${horse?.name || 'horse'} + ${jockeyName(db, invitation.jockeyUserId)} assignment for ${raceLabel}.`
+          );
+
+          createNotification(
+            db,
+            invitation.jockeyUserId,
+            'Race assignment rejected',
+            `Admin rejected your assignment for ${horse?.name || 'the horse'} in ${raceLabel}.`
+          );
+        }
+      }
+
       await writeDb(db);
       send(res, 200, {
         ok: true,
@@ -518,21 +947,6 @@ const server = createServer(async (req, res) => {
       notification.read = true;
       await writeDb(db);
       send(res, 200, { notification });
-      return;
-    }
-
-    if (req.method === 'GET' && url.pathname === '/api/admin/database') {
-      const user = await requireRole(req, db, ['admin']);
-
-      if (!user) {
-        send(res, 403, { message: 'Admin access required' });
-        return;
-      }
-
-      send(res, 200, {
-        ...db,
-        users: db.users.map(publicUser),
-      });
       return;
     }
 

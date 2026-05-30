@@ -38,6 +38,12 @@ export const workflowSteps = [
     status: 'pending' as WorkflowStatus,
   },
   {
+    id: 'admin-confirm-pairing',
+    title: 'Admin duyệt ghép Horse-Jockey cho race',
+    owner: 'Admin',
+    status: 'pending' as WorkflowStatus,
+  },
+  {
     id: 'schedule-referee',
     title: 'Admin lập lịch & phân công Referee',
     owner: 'Admin',

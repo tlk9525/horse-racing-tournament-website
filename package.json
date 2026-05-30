@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "api": "node server/index.js",
+    "db:export-sql": "node scripts/export-db-to-sql.mjs",
     "build": "vite build",
     "dev": "vite"
   },

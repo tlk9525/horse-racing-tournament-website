@@ -10,7 +10,7 @@ export interface AuthUser {
 
 export interface ApprovalItem {
   id: string;
-  entityType: 'horse' | 'jockey';
+  entityType: 'horse' | 'jockey' | 'pairing';
   type: string;
   name: string;
   detail: string;
@@ -36,6 +36,7 @@ export interface HorseRecord {
   status: string;
   selectedJockeyUserId: string | null;
   jockeyConfirmation: string;
+  veterinaryCertificateUrl?: string;
 }
 
 export interface JockeyProfileRecord {
@@ -55,8 +56,36 @@ export interface JockeyInvitation {
   horseId: string;
   ownerUserId: string;
   jockeyUserId: string;
+  tournamentId: string | null;
+  raceId: string | null;
   status: string;
+  adminStatus: string | null;
   createdAt: string;
+  respondedAt?: string;
+}
+
+export interface RaceBuilderPairing {
+  invitationId: string;
+  horseId: string;
+  horseName: string;
+  breed: string;
+  age: number;
+  ownerUserId: string;
+  ownerName: string;
+  jockeyUserId: string;
+  jockeyName: string;
+  jockeyWeight: number;
+}
+
+export interface RaceBuilderReferee {
+  id: string;
+  name: string;
+}
+
+export interface RaceEntryInput {
+  invitationId: string;
+  lane: number;
+  handicap: number;
 }
 
 const API_URL = 'http://127.0.0.1:4000/api';
@@ -117,6 +146,18 @@ export const logout = async () => {
 
 export const getMe = async () => request<{ user: AuthUser }>('/me');
 
+export const getBootstrap = async () =>
+  request<{
+    tournaments: any[];
+    horses: HorseRecord[];
+    races: any[];
+    jockeyProfiles: JockeyProfileRecord[];
+    jockeyInvitations: JockeyInvitation[];
+    raceEntries: any[];
+    users: AuthUser[];
+    notifications: NotificationItem[];
+  }>('/bootstrap');
+
 export const getApprovals = async () =>
   request<{ approvals: ApprovalItem[] }>('/admin/approvals');
 
@@ -141,15 +182,26 @@ export const markNotificationRead = async (id: string) =>
     method: 'POST',
   });
 
-export const getAdminDatabase = async () =>
-  request<Record<string, unknown>>('/admin/database');
-
 export const getOwnerPortal = async () =>
   request<{
     horses: HorseRecord[];
     jockeyProfiles: JockeyProfileRecord[];
     invitations: JockeyInvitation[];
   }>('/owner/portal');
+
+export const createHorse = async (horse: {
+  name: string;
+  breed: string;
+  age: string | number;
+  veterinaryCertificateUrl?: string;
+}) =>
+  request<{ horse: HorseRecord; horseCount: number; maxHorses: number }>(
+    '/owner/horses',
+    {
+      method: 'POST',
+      body: JSON.stringify(horse),
+    }
+  );
 
 export const sendJockeyRequest = async (
   horseId: string,
@@ -185,3 +237,30 @@ export const decideJockeyInvitation = async (
     method: 'POST',
     body: JSON.stringify({ decision }),
   });
+
+export const getRaceBuilder = async () =>
+  request<{
+    pairings: RaceBuilderPairing[];
+    referees: RaceBuilderReferee[];
+  }>('/admin/race-builder');
+
+export const createRace = async (race: {
+  name: string;
+  round: string;
+  date: string;
+  time: string;
+  venue: string;
+  distance: string | number;
+  surface: string;
+  raceClass: string;
+  totalPrize: string | number;
+  refereeUserId: string;
+  entries: RaceEntryInput[];
+}) =>
+  request<{ race: any; entries: any[]; notifications: NotificationItem[] }>(
+    '/admin/races',
+    {
+      method: 'POST',
+      body: JSON.stringify(race),
+    }
+  );

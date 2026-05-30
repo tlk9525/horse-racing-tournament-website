@@ -2,7 +2,9 @@ import {
   ArrowLeft,
   Trophy,
 } from 'lucide-react';
+import { useState } from 'react';
 import { currentTournament } from '../data/tournamentWorkflow';
+import { createHorse } from '../services/api';
 
 interface RegisterHorsePageProps {
   onNavigate: (page: string) => void;
@@ -11,6 +13,32 @@ interface RegisterHorsePageProps {
 export default function RegisterHorsePage({
   onNavigate,
 }: RegisterHorsePageProps) {
+  const [name, setName] = useState('');
+  const [breed, setBreed] = useState('');
+  const [age, setAge] = useState('');
+  const [veterinaryCertificateUrl, setVeterinaryCertificateUrl] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const submit = () => {
+    setMessage('');
+    setIsSubmitting(true);
+
+    createHorse({
+      name,
+      breed,
+      age,
+      veterinaryCertificateUrl,
+    })
+      .then(({ horseCount, maxHorses }) => {
+        setMessage(`Horse registration submitted. Owner horse limit: ${horseCount}/${maxHorses}.`);
+        setTimeout(() => onNavigate('horses'), 700);
+      })
+      .catch((error) => {
+        setMessage(error instanceof Error ? error.message : 'Unable to register horse');
+      })
+      .finally(() => setIsSubmitting(false));
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
@@ -63,6 +91,8 @@ export default function RegisterHorsePage({
               <input
                 type="text"
                 placeholder="Midnight Storm"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
@@ -75,6 +105,8 @@ export default function RegisterHorsePage({
               <input
                 type="text"
                 placeholder="Thoroughbred"
+                value={breed}
+                onChange={(event) => setBreed(event.target.value)}
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
@@ -87,30 +119,35 @@ export default function RegisterHorsePage({
               <input
                 type="number"
                 placeholder="4"
+                min="1"
+                value={age}
+                onChange={(event) => setAge(event.target.value)}
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
 
             <div>
               <label className="block text-gray-300 mb-2">
-                Owner
+                Registration Status
               </label>
 
               <input
                 type="text"
-                placeholder="Sterling Stables"
+                value="Pending Admin Approval"
+                readOnly
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
 
             <div>
               <label className="block text-gray-300 mb-2">
-                Preferred Jockey
+                Jockey Pairing
               </label>
 
               <input
                 type="text"
-                placeholder="Marcus Sterling"
+                value="Select after horse approval"
+                readOnly
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
@@ -123,11 +160,19 @@ export default function RegisterHorsePage({
               <input
                 type="text"
                 placeholder="https://..."
+                value={veterinaryCertificateUrl}
+                onChange={(event) => setVeterinaryCertificateUrl(event.target.value)}
                 className="w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
               />
             </div>
 
           </div>
+
+          {message && (
+            <div className="mt-6 rounded-xl border border-[#e10600]/30 bg-[#e10600]/10 px-4 py-3 text-[#ff6b66] font-semibold">
+              {message}
+            </div>
+          )}
 
           {/* BUTTONS */}
           <div className="flex items-center justify-end gap-4 mt-10">
@@ -140,13 +185,11 @@ export default function RegisterHorsePage({
             </button>
 
             <button
-              onClick={() => {
-                alert('Horse registration submitted. Status: pending admin approval.');
-                onNavigate('horses');
-              }}
-              className="px-6 py-3 rounded-xl bg-[#e10600] hover:bg-[#c00500] text-white font-semibold transition-all"
+              onClick={submit}
+              disabled={isSubmitting}
+              className="px-6 py-3 rounded-xl bg-[#e10600] hover:bg-[#c00500] disabled:opacity-60 text-white font-semibold transition-all"
             >
-              Submit for Approval
+              {isSubmitting ? 'Submitting...' : 'Submit for Approval'}
             </button>
 
           </div>

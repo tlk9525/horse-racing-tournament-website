@@ -21,8 +21,8 @@ import {
 import {
   ApprovalItem,
   decideApproval,
-  getAdminDatabase,
   getApprovals,
+  getBootstrap,
 } from '../services/api';
 
 interface AdminPanelProps {
@@ -32,28 +32,33 @@ interface AdminPanelProps {
 export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalItem[]>([]);
-  const [adminDb, setAdminDb] = useState<Record<string, unknown> | null>(null);
   const [approvalMessage, setApprovalMessage] = useState('');
   const [isLoadingApprovals, setIsLoadingApprovals] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
 
-  const loadAdminData = () => {
+  const loadApprovals = () => {
     setIsLoadingApprovals(true);
 
-    Promise.all([getApprovals(), getAdminDatabase()])
-      .then(([approvalResult, databaseResult]) => {
+    getApprovals()
+      .then((approvalResult) => {
         setPendingApprovals(approvalResult.approvals);
-        setAdminDb(databaseResult);
       })
       .catch((error) => {
         setApprovalMessage(
-          error instanceof Error ? error.message : 'Unable to load admin data'
+          error instanceof Error ? error.message : 'Unable to load approvals'
         );
       })
       .finally(() => setIsLoadingApprovals(false));
   };
 
   useEffect(() => {
-    loadAdminData();
+    loadApprovals();
+    getBootstrap()
+      .then((data) => {
+        setRaces(data.races.length > 0 ? data.races : [...raceSchedule]);
+        setTotalUsers(data.users.length);
+      })
+      .catch(() => undefined);
   }, []);
 
   const handleDecision = (
@@ -66,9 +71,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
         setApprovalMessage(
           `${item.name} has been ${decision}. Notification sent.`
         );
-        return getAdminDatabase();
       })
-      .then(setAdminDb)
       .catch((error) => {
         setApprovalMessage(
           error instanceof Error ? error.message : 'Approval action failed'
@@ -79,10 +82,8 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   const systemStats = [
     {
       label: 'Total Users',
-      value: String(
-        Array.isArray(adminDb?.users) ? adminDb.users.length : '-'
-      ),
-      change: 'DB',
+      value: totalUsers ? String(totalUsers) : '9',
+      change: 'Accounts',
       icon: Users,
     },
 
@@ -491,31 +492,6 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="mt-8 bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-3xl font-black text-white">
-                API Database Preview
-              </h2>
-
-              <p className="text-gray-400 mt-2">
-                Live data from <span className="text-white">GET /api/admin/database</span>.
-              </p>
-            </div>
-
-            <button
-              onClick={loadAdminData}
-              className="px-5 py-3 rounded-xl bg-white/10 text-white hover:bg-white/15 transition-all font-bold"
-            >
-              Refresh
-            </button>
-          </div>
-
-          <pre className="max-h-[360px] overflow-auto rounded-2xl bg-[#0a0a0a] border border-white/10 p-5 text-sm text-gray-300">
-            {JSON.stringify(adminDb, null, 2)}
-          </pre>
         </div>
 
         {/* EDIT MODAL */}

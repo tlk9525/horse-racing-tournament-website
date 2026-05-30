@@ -68,7 +68,11 @@ export default function JockeyPage({
   const respond = (id: string, decision: 'accepted' | 'rejected') => {
     decideJockeyInvitation(id, decision)
       .then(() => {
-        setMessage(`Invitation ${decision}. Owner has been notified.`);
+        setMessage(
+          decision === 'accepted'
+            ? 'Invitation accepted. Admin has been notified to approve your race assignment.'
+            : 'Invitation rejected. Owner has been notified.'
+        );
         loadPortal();
       })
       .catch((error) =>
@@ -210,6 +214,13 @@ export default function JockeyPage({
                   <div className="text-gray-400 text-sm mt-1">
                     Status: {statusLabel(invitation.status)}
                   </div>
+
+                  {invitation.status === 'accepted' && (
+                    <div className="text-yellow-400 text-sm mt-2 font-semibold">
+                      Admin approval:{' '}
+                      {statusLabel(invitation.adminStatus || 'pending')}
+                    </div>
+                  )}
 
                   {invitation.status === 'pending' && (
                     <div className="grid grid-cols-2 gap-3 mt-4">
