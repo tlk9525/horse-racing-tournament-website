@@ -91,7 +91,7 @@ export default function TournamentPage({
       'registration-open': 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
       'registration-closed': 'border-amber-500/30 bg-amber-500/10 text-amber-300',
       published: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
-      'in-progress': 'border-[#e10600]/30 bg-[#e10600]/10 text-[#ff6b66]',
+      'in-progress': 'border-[#d4af37]/30 bg-[#d4af37]/10 text-[#f6d77a]',
       finished: 'border-violet-500/30 bg-violet-500/10 text-violet-300',
       completed: 'border-white/20 bg-white/10 text-white',
     };
@@ -137,7 +137,7 @@ export default function TournamentPage({
         ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
@@ -168,12 +168,12 @@ export default function TournamentPage({
             return (
               <div
                 key={tournament.id}
-                className="bg-[#1a1a1a] border border-white/10 rounded-2xl overflow-hidden hover:border-[#e10600]/50 transition-all duration-300"
+                className="bg-[#12304f] border border-white/10 rounded-2xl overflow-hidden hover:border-[#d4af37]/50 transition-all duration-300"
               >
                 <div className="h-52 bg-[url('https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1200')] bg-cover bg-center relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/50 to-transparent" />
 
-                  <div className="absolute top-5 right-5 px-4 py-2 bg-[#e10600] rounded-lg text-white text-xs font-bold uppercase">
+                  <div className="absolute top-5 right-5 px-4 py-2 bg-[#d4af37] rounded-lg text-white text-xs font-bold uppercase">
                     {statusLabel(tournament.status || 'registration')}
                   </div>
 
@@ -187,7 +187,7 @@ export default function TournamentPage({
                 <div className="p-7">
                   <div className="grid grid-cols-2 gap-5 mb-8">
                     <div className="flex items-start gap-3">
-                      <Calendar className="w-5 h-5 text-[#e10600] mt-1" />
+                      <Calendar className="w-5 h-5 text-[#d4af37] mt-1" />
                       <div>
                         <p className="text-gray-500 text-xs uppercase">Start Date</p>
                         <p className="text-white font-semibold mt-1">
@@ -197,7 +197,7 @@ export default function TournamentPage({
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-[#e10600] mt-1" />
+                      <MapPin className="w-5 h-5 text-[#d4af37] mt-1" />
                       <div>
                         <p className="text-gray-500 text-xs uppercase">Location</p>
                         <p className="text-white font-semibold mt-1">
@@ -207,17 +207,17 @@ export default function TournamentPage({
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <DollarSign className="w-5 h-5 text-[#e10600] mt-1" />
+                      <DollarSign className="w-5 h-5 text-[#d4af37] mt-1" />
                       <div>
                         <p className="text-gray-500 text-xs uppercase">Prize Pool</p>
-                        <p className="text-[#e10600] font-bold mt-1">
+                        <p className="text-[#d4af37] font-bold mt-1">
                           {Number(tournament.prizePool || 0).toLocaleString()}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <Users className="w-5 h-5 text-[#e10600] mt-1" />
+                      <Users className="w-5 h-5 text-[#d4af37] mt-1" />
                       <div>
                         <p className="text-gray-500 text-xs uppercase">Open Races</p>
                         <p className="text-white font-semibold mt-1">
@@ -239,7 +239,7 @@ export default function TournamentPage({
                       <button
                         onClick={() => handleJoinTournament(tournament.id)}
                         disabled={Boolean(jockeyRegistration)}
-                        className="py-4 bg-[#e10600] hover:bg-[#c00500] disabled:bg-white/10 disabled:text-gray-500 text-white rounded-xl transition-all font-bold"
+                        className="py-4 bg-[#d4af37] hover:bg-[#b8892d] disabled:bg-white/10 disabled:text-gray-500 text-white rounded-xl transition-all font-bold"
                       >
                         {jockeyRegistration
                           ? statusLabel(jockeyRegistration.status)
@@ -250,7 +250,7 @@ export default function TournamentPage({
                     {currentUser?.role === 'owner' && (
                       <button
                         onClick={() => openRaceRegistration(tournament.id)}
-                        className="py-4 bg-[#e10600] hover:bg-[#c00500] text-white rounded-xl transition-all font-bold"
+                        className="py-4 bg-[#d4af37] hover:bg-[#b8892d] text-white rounded-xl transition-all font-bold"
                       >
                         Register Horse
                       </button>
@@ -262,9 +262,9 @@ export default function TournamentPage({
           })}
         </div>
 
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#12304f] border border-white/10 rounded-2xl p-8">
           <div className="flex items-center gap-3 mb-6">
-            <Trophy className="w-7 h-7 text-[#e10600]" />
+            <Trophy className="w-7 h-7 text-[#d4af37]" />
             <h2 className="text-3xl font-bold text-white">Race Schedule</h2>
           </div>
 
@@ -284,7 +284,7 @@ export default function TournamentPage({
               return (
                 <div
                   key={race.id}
-                  className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5 hover:border-[#e10600]/40 transition-all"
+                  className="bg-[#071a2f] border border-white/10 rounded-xl p-5 hover:border-[#d4af37]/40 transition-all"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
                     <div className="min-w-0">
@@ -319,7 +319,7 @@ export default function TournamentPage({
                         openRaceView(race.id, action.page);
                       }}
                       disabled={currentUser?.role === 'owner' && !race.tournamentId}
-                      className="shrink-0 px-5 py-3 bg-[#e10600] hover:bg-[#c00500] disabled:bg-white/10 disabled:text-gray-500 text-white rounded-xl transition-all font-bold"
+                      className="shrink-0 px-5 py-3 bg-[#d4af37] hover:bg-[#b8892d] disabled:bg-white/10 disabled:text-gray-500 text-white rounded-xl transition-all font-bold"
                     >
                       {action.label}
                     </button>
@@ -328,7 +328,7 @@ export default function TournamentPage({
                   <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
                     <div className="border border-white/10 rounded-xl p-4">
                       <div className="flex items-center gap-2 text-gray-500 text-xs uppercase font-bold">
-                        <Clock className="w-4 h-4 text-[#e10600]" />
+                        <Clock className="w-4 h-4 text-[#d4af37]" />
                         Start
                       </div>
                       <p className="text-white font-semibold mt-2">
@@ -338,7 +338,7 @@ export default function TournamentPage({
 
                     <div className="border border-white/10 rounded-xl p-4">
                       <div className="flex items-center gap-2 text-gray-500 text-xs uppercase font-bold">
-                        <MapPin className="w-4 h-4 text-[#e10600]" />
+                        <MapPin className="w-4 h-4 text-[#d4af37]" />
                         Venue
                       </div>
                       <p className="text-white font-semibold mt-2">{race.venue || '-'}</p>
@@ -346,7 +346,7 @@ export default function TournamentPage({
 
                     <div className="border border-white/10 rounded-xl p-4">
                       <div className="flex items-center gap-2 text-gray-500 text-xs uppercase font-bold">
-                        <Flag className="w-4 h-4 text-[#e10600]" />
+                        <Flag className="w-4 h-4 text-[#d4af37]" />
                         Distance
                       </div>
                       <p className="text-white font-semibold mt-2">
@@ -356,7 +356,7 @@ export default function TournamentPage({
 
                     <div className="border border-white/10 rounded-xl p-4">
                       <div className="flex items-center gap-2 text-gray-500 text-xs uppercase font-bold">
-                        <Gauge className="w-4 h-4 text-[#e10600]" />
+                        <Gauge className="w-4 h-4 text-[#d4af37]" />
                         Handicap
                       </div>
                       <p className="text-white font-semibold mt-2">
@@ -399,7 +399,7 @@ export default function TournamentPage({
                         Referee
                       </p>
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-5 h-5 text-[#e10600]" />
+                        <ShieldCheck className="w-5 h-5 text-[#d4af37]" />
                         <p className="text-white font-semibold">{race.referee || '-'}</p>
                       </div>
                       <p className="text-gray-400 text-sm mt-1">
@@ -409,8 +409,8 @@ export default function TournamentPage({
                   </div>
 
                   {gateVisible ? (
-                    <div className="mt-4 border border-[#e10600]/25 bg-[#e10600]/5 rounded-xl p-4">
-                      <p className="text-[#ff6b66] text-xs uppercase font-bold mb-3">
+                    <div className="mt-4 border border-[#d4af37]/25 bg-[#d4af37]/5 rounded-xl p-4">
+                      <p className="text-[#f6d77a] text-xs uppercase font-bold mb-3">
                         Gate Assignments
                       </p>
                       {approvedEntries.length > 0 ? (
@@ -418,7 +418,7 @@ export default function TournamentPage({
                           {approvedEntries.map((entry) => (
                             <span
                               key={entry.id}
-                              className="px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm text-white"
+                              className="px-3 py-2 rounded-lg bg-[#071a2f]/40 border border-white/10 text-sm text-white"
                             >
                               Gate {entry.lane || '-'} • {entry.horseName || 'Horse'}
                             </span>

@@ -25,7 +25,7 @@ const value = (input: string | number | null | undefined, suffix = '') =>
 export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
   if (!horse) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+      <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
         <div className="max-w-4xl mx-auto px-4">
           <button
             onClick={() => onNavigate('horses')}
@@ -57,7 +57,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
           <button
@@ -70,33 +70,33 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
 
           <button
             onClick={() => onNavigate('edit-horse')}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[#e10600]/30 bg-[#e10600]/10 px-5 py-3 text-[#ff4b45] font-bold hover:bg-[#e10600]/20"
+            className="flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-[#ff4b45] font-bold hover:bg-[#d4af37]/20"
           >
             <Pencil className="w-4 h-4" />
             Edit Horse
           </button>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-[#111111] overflow-hidden mb-8">
+        <div className="rounded-2xl border border-white/10 bg-[#0b223d] overflow-hidden mb-8">
           <div className="relative min-h-[340px]">
             <img
               src="https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1600"
               alt={horse.name}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/50 to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b223d] via-[#0b223d]/50 to-[#071a2f]/20" />
 
             <div className="relative z-10 p-8 lg:p-10 flex flex-col justify-end min-h-[340px]">
               <div className="flex flex-wrap items-center gap-3 mb-4">
-                <span className="px-4 py-2 bg-[#e10600] rounded-lg text-white font-bold text-sm">
+                <span className="px-4 py-2 bg-[#d4af37] rounded-lg text-white font-bold text-sm">
                   {statusLabel(horse.status)}
                 </span>
 
-                <span className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
+                <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
                   Handicap {horse.baseHandicap || 0}
                 </span>
 
-                <span className="px-4 py-2 bg-black/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
+                <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
                   {horse.healthStatus || 'Health not set'}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
 
         <div className="grid lg:grid-cols-[1fr,380px] gap-8">
           <div className="space-y-8">
-            <div className="rounded-2xl border border-white/10 bg-[#111111] p-8">
+            <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8">
               <h2 className="text-3xl font-bold text-white mb-6">
                 Horse Profile
               </h2>
@@ -123,10 +123,10 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
                 {profileCards.map(([label, content, Icon]) => (
                   <div
                     key={String(label)}
-                    className="rounded-xl border border-white/10 bg-[#1a1a1a] p-5"
+                    className="rounded-xl border border-white/10 bg-[#12304f] p-5"
                   >
                     <div className="flex items-center gap-3 mb-2">
-                      <Icon className="w-5 h-5 text-[#e10600]" />
+                      <Icon className="w-5 h-5 text-[#d4af37]" />
                       <span className="text-gray-400 text-sm">{label}</span>
                     </div>
 
@@ -138,7 +138,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#111111] p-8">
+            <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8">
               <h2 className="text-3xl font-bold text-white mb-5">
                 Notes
               </h2>
@@ -150,13 +150,13 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
           </div>
 
           <div className="space-y-8">
-            <div className="rounded-2xl border border-white/10 bg-[#111111] p-8">
+            <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8">
               <h2 className="text-2xl font-bold text-white mb-6">
                 Documents
               </h2>
 
               <div className="space-y-4">
-                <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-5">
+                <div className="rounded-xl border border-white/10 bg-[#12304f] p-5">
                   <div className="text-gray-400 text-sm mb-2">
                     Veterinary Certificate
                   </div>
@@ -166,7 +166,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/10 bg-[#1a1a1a] p-5">
+                <div className="rounded-xl border border-white/10 bg-[#12304f] p-5">
                   <div className="text-gray-400 text-sm mb-2">
                     Owner ID
                   </div>
@@ -178,7 +178,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-[#111111] p-8">
+            <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8">
               <h2 className="text-2xl font-bold text-white mb-6">
                 Race Readiness
               </h2>

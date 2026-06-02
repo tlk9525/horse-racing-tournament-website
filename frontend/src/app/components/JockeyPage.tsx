@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, Save, XCircle } from 'lucide-react';
+import {
+  CheckCircle,
+  Flag,
+  Gauge,
+  MapPin,
+  Save,
+  XCircle,
+} from 'lucide-react';
 import NotificationsPanel from './NotificationsPanel';
 import {
   AuthUser,
@@ -90,9 +97,18 @@ export default function JockeyPage({
       );
   };
 
+  const raceById = (raceId: string) =>
+    races.find((race) => race.id === raceId);
+
+  const canViewLine = (race?: RaceRecord) =>
+    Boolean(
+      race &&
+        ['published', 'in-progress', 'finished', 'completed'].includes(race.status)
+    );
+
   if (currentUser?.role !== 'jockey') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+      <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl font-bold text-white mb-4">
             Jockey Profiles
@@ -104,7 +120,7 @@ export default function JockeyPage({
 
           <button
             onClick={() => onNavigate('horses')}
-            className="px-6 py-3 rounded-xl bg-[#e10600] text-white font-bold hover:bg-[#c00500] transition-all"
+            className="px-6 py-3 rounded-xl bg-[#d4af37] text-white font-bold hover:bg-[#b8892d] transition-all"
           >
             Go to Owner Portal
           </button>
@@ -114,7 +130,7 @@ export default function JockeyPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4">
 
         <h1 className="text-4xl font-bold text-white mb-3">
@@ -134,7 +150,7 @@ export default function JockeyPage({
         )}
 
         <div className="grid lg:grid-cols-[1fr,420px] gap-8">
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8">
+          <div className="bg-[#12304f] border border-white/10 rounded-2xl p-8">
             <h2 className="text-3xl font-black text-white mb-6">
               My Public Profile
             </h2>
@@ -147,7 +163,7 @@ export default function JockeyPage({
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
                   rows={5}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d4af37]"
                   placeholder="Describe your racing experience"
                 />
               </div>
@@ -158,7 +174,7 @@ export default function JockeyPage({
                 <input
                   value={certificate}
                   onChange={(event) => setCertificate(event.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d4af37]"
                   placeholder="Class A Racing License"
                 />
               </div>
@@ -169,7 +185,7 @@ export default function JockeyPage({
                 <input
                   value={competitionLevel}
                   onChange={(event) => setCompetitionLevel(event.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d4af37]"
                   placeholder="Elite / Qualifier / Amateur"
                 />
               </div>
@@ -181,7 +197,7 @@ export default function JockeyPage({
                   type="number"
                   value={weight}
                   onChange={(event) => setWeight(event.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#d4af37]"
                   placeholder="54"
                 />
               </div>
@@ -189,25 +205,25 @@ export default function JockeyPage({
 
             <button
               onClick={publishProfile}
-              className="mt-6 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#e10600] text-white font-bold hover:bg-[#c00500] transition-all"
+              className="mt-6 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#d4af37] text-white font-bold hover:bg-[#b8892d] transition-all"
             >
               <Save className="w-5 h-5" />
               Publish Profile
             </button>
 
-            <div className="mt-6 rounded-xl bg-[#0a0a0a] border border-white/10 p-4 text-gray-400">
+            <div className="mt-6 rounded-xl bg-[#071a2f] border border-white/10 p-4 text-gray-400">
               Current status: <span className="text-white font-bold">{profile?.status || 'No profile'}</span>
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl p-8">
+          <div className="bg-[#12304f] border border-white/10 rounded-2xl p-8">
             <h2 className="text-3xl font-black text-white mb-6">
               Race Participation
             </h2>
 
             <div className="space-y-4">
               {invitations.length === 0 && (
-                <div className="rounded-xl bg-[#0a0a0a] border border-white/10 p-4 text-gray-500">
+                <div className="rounded-xl bg-[#071a2f] border border-white/10 p-4 text-gray-500">
                   No owner requests yet.
                 </div>
               )}
@@ -215,7 +231,7 @@ export default function JockeyPage({
               {invitations.map((invitation) => (
                 <div
                   key={invitation.id}
-                  className="rounded-xl bg-[#0a0a0a] border border-white/10 p-4"
+                  className="rounded-xl bg-[#071a2f] border border-white/10 p-4"
                 >
                   <div className="text-white font-bold">
                     {horses.find((horse) => horse.id === invitation.horseId)?.name || 'Horse'}
@@ -262,29 +278,86 @@ export default function JockeyPage({
 
               <div className="space-y-4">
                 {raceEntries.length === 0 && (
-                  <div className="rounded-xl bg-[#0a0a0a] border border-white/10 p-4 text-gray-500">
+                  <div className="rounded-xl bg-[#071a2f] border border-white/10 p-4 text-gray-500">
                     No approved assignments yet.
                   </div>
                 )}
 
-                {raceEntries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-xl bg-[#0a0a0a] border border-white/10 p-4"
-                  >
-                    <div className="text-white font-bold">
-                      {entry.horseName}
-                    </div>
+                {raceEntries.map((entry) => {
+                  const race = raceById(entry.raceId);
+                  const lineVisible = canViewLine(race);
 
-                    <div className="text-gray-400 text-sm mt-1">
-                      {entry.raceName} • Gate {entry.lane || 'TBD'} • Handicap {entry.handicap || 0}kg
-                    </div>
+                  return (
+                    <div
+                      key={entry.id}
+                      className="rounded-xl bg-[#071a2f] border border-white/10 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-white font-bold">
+                            {entry.horseName}
+                          </div>
 
-                    <div className="text-[#e10600] font-bold mt-2">
-                      {statusLabel(entry.status)}
+                          <div className="text-gray-400 text-sm mt-1">
+                            {entry.raceName} • {statusLabel(race?.status || entry.status)}
+                          </div>
+                        </div>
+
+                        <span className="px-3 py-1 rounded-lg border border-[#d4af37]/30 bg-[#d4af37]/10 text-[#f6d77a] text-xs font-bold">
+                          {race?.raceNumber || 'Race'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 rounded-xl border border-white/10 bg-[#0b223d] p-4">
+                        <div className="flex items-center gap-2 text-gray-400 text-xs uppercase font-bold mb-3">
+                          <Flag className="w-4 h-4 text-[#d4af37]" />
+                          Starting Line / Gate Assignment
+                        </div>
+
+                        {lineVisible ? (
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-gray-500 text-xs">Gate / Line</p>
+                              <p className="text-white text-2xl font-black">
+                                {entry.lane || 'TBD'}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-gray-500 text-xs">Handicap</p>
+                              <p className="text-white text-2xl font-black">
+                                {entry.handicap || 0}kg
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-400 text-sm">
+                            Line/gate is hidden until Admin closes registration and publishes this race.
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-3 mt-3 text-sm">
+                        <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-gray-300">
+                          <MapPin className="inline-block w-4 h-4 mr-1 text-[#d4af37]" />
+                          {race?.venue || 'Venue pending'}
+                        </div>
+
+                        <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-gray-300">
+                          <Gauge className="inline-block w-4 h-4 mr-1 text-[#d4af37]" />
+                          {race?.distance || 'Distance pending'}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => onNavigate('live-race')}
+                        className="mt-4 w-full rounded-xl bg-white/10 px-4 py-3 text-white font-bold hover:bg-white/15 transition-all"
+                      >
+                        View Race Operations
+                      </button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

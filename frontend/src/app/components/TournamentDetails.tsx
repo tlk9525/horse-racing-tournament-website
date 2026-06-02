@@ -10,14 +10,14 @@ export default function TournamentDetails() {
   const race = raceSchedule[0];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-6xl mx-auto px-4 space-y-8">
 
-        <div className="bg-[#111111] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#0b223d] border border-white/10 rounded-2xl p-8">
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
             <div>
-              <p className="text-[#e10600] text-sm uppercase tracking-widest">
+              <p className="text-[#d4af37] text-sm uppercase tracking-widest">
                 Tournament
               </p>
 
@@ -60,9 +60,9 @@ export default function TournamentDetails() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="bg-[#1a1a1a] rounded-xl p-5 border border-white/10"
+                className="bg-[#12304f] rounded-xl p-5 border border-white/10"
               >
-                <item.icon className="w-5 h-5 text-[#e10600] mb-3" />
+                <item.icon className="w-5 h-5 text-[#d4af37] mb-3" />
 
                 <p className="text-gray-400 text-sm mb-2">{item.label}</p>
 
@@ -75,12 +75,12 @@ export default function TournamentDetails() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          <div className="bg-[#111111] border border-white/10 rounded-2xl p-6">
+          <div className="bg-[#0b223d] border border-white/10 rounded-2xl p-6">
             <h2 className="text-2xl font-bold text-white mb-6">
               Race Schedule & Referee
             </h2>
 
-            <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-5">
+            <div className="bg-[#071a2f] border border-white/10 rounded-xl p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-white text-xl font-bold">
@@ -113,7 +113,7 @@ export default function TournamentDetails() {
             </div>
           </div>
 
-          <div className="bg-[#111111] border border-white/10 rounded-2xl p-6">
+          <div className="bg-[#0b223d] border border-white/10 rounded-2xl p-6">
             <h2 className="text-2xl font-bold text-white mb-6">
               Entries
             </h2>
@@ -122,7 +122,7 @@ export default function TournamentDetails() {
               {tournamentHorses.map((horse) => (
                 <div
                   key={horse.id}
-                  className="flex items-center justify-between bg-[#0a0a0a] border border-white/10 rounded-xl p-4"
+                  className="flex items-center justify-between bg-[#071a2f] border border-white/10 rounded-xl p-4"
                 >
                   <div>
                     <h3 className="text-white font-semibold">
@@ -135,7 +135,7 @@ export default function TournamentDetails() {
                   </div>
 
                   <div className="text-right text-sm">
-                    <div className="text-[#e10600] font-bold">
+                    <div className="text-[#d4af37] font-bold">
                       {statusLabel(horse.profileStatus)}
                     </div>
 

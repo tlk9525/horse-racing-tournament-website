@@ -84,7 +84,8 @@ export default function Navbar({
     { name: 'Dashboard', page: 'dashboard', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Tournaments', page: 'tournaments', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Horses', page: 'horses', roles: ['admin', 'owner'] },
-    { name: 'Jockeys', page: 'jockeys', roles: ['admin', 'owner', 'jockey'] },
+    { name: 'Jockey Profiles', page: 'jockey-profiles', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
+    { name: 'Jockey Portal', page: 'jockeys', roles: ['admin', 'owner', 'jockey'] },
     { name: 'Live Race', page: 'live-race', roles: ['admin', 'referee', 'spectator'] },
     { name: 'Rankings', page: 'rankings', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Predictions', page: 'predictions', roles: ['spectator'] },
@@ -99,7 +100,7 @@ export default function Navbar({
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[#0a0a0a]/95 backdrop-blur-lg border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-[9999] bg-[#071a2f]/95 backdrop-blur-lg border-b border-white/10">
 
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -111,7 +112,7 @@ export default function Navbar({
             onClick={() => onNavigate('home')}
           >
 
-            <div className="w-12 h-12 bg-gradient-to-br from-[#e10600] to-[#b00500] rounded-md flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#d4af37] to-[#7a4a24] rounded-md flex items-center justify-center group-hover:scale-105 transition-transform">
 
               <TrendingUp className="w-7 h-7 text-white" />
 
@@ -123,7 +124,7 @@ export default function Navbar({
                 HORSE RACING
               </div>
 
-              <div className="text-[#8a8a8a] text-xs tracking-widest">
+              <div className="text-[#d8d2c4] text-xs tracking-widest">
                 TOURNAMENT SYSTEM
               </div>
 
@@ -141,8 +142,8 @@ export default function Navbar({
                 }
                 className={`px-4 py-2 rounded-lg transition-all font-medium ${
                   currentPage === item.page
-                    ? 'bg-[#e10600] text-white'
-                    : 'text-[#8a8a8a] hover:text-white hover:bg-white/5'
+                    ? 'bg-[#d4af37] text-white'
+                    : 'text-[#d8d2c4] hover:text-white hover:bg-white/5'
                 }`}
               >
                 {item.name}
@@ -155,9 +156,9 @@ export default function Navbar({
           <div className="hidden lg:flex items-center gap-5">
 
             {/* LIVE */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] rounded-lg border border-[#e10600]/30">
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#12304f] rounded-lg border border-[#d4af37]/30">
 
-              <Circle className="w-2 h-2 fill-[#e10600] text-[#e10600] animate-pulse" />
+              <Circle className="w-2 h-2 fill-[#d4af37] text-[#d4af37] animate-pulse" />
 
               <span className="text-white text-sm font-semibold">
                 LIVE
@@ -166,9 +167,9 @@ export default function Navbar({
             </div>
 
             {/* COUNTDOWN */}
-            <div className="flex items-center gap-4 px-4 py-2 bg-[#1a1a1a] rounded-lg border border-white/10">
+            <div className="flex items-center gap-4 px-4 py-2 bg-[#12304f] rounded-lg border border-white/10">
 
-              <span className="text-[#8a8a8a] text-xs uppercase tracking-wider">
+              <span className="text-[#d8d2c4] text-xs uppercase tracking-wider">
                 Next Race
               </span>
 
@@ -205,14 +206,14 @@ export default function Navbar({
                           .padStart(2, '0')}
                       </span>
 
-                      <span className="text-[#8a8a8a] text-xs">
+                      <span className="text-[#d8d2c4] text-xs">
                         {item.label}
                       </span>
 
                     </div>
 
                     {index !== 3 && (
-                      <span className="text-[#8a8a8a]">
+                      <span className="text-[#d8d2c4]">
                         :
                       </span>
                     )}
@@ -230,7 +231,7 @@ export default function Navbar({
                     {currentUser.name}
                   </div>
 
-                  <div className="text-[#8a8a8a] text-xs uppercase">
+                  <div className="text-[#d8d2c4] text-xs uppercase">
                     {currentUser.role}
                   </div>
                 </div>
@@ -246,7 +247,7 @@ export default function Navbar({
             ) : (
               <button
                 onClick={() => onNavigate('login')}
-                className="px-6 py-2 bg-[#e10600] text-white rounded-lg hover:bg-[#c00500] transition-all font-semibold"
+                className="px-6 py-2 bg-[#d4af37] text-white rounded-lg hover:bg-[#b8892d] transition-all font-semibold"
               >
                 Login
               </button>
@@ -259,7 +260,7 @@ export default function Navbar({
             onClick={() =>
               setIsMenuOpen(!isMenuOpen)
             }
-            className="xl:hidden text-white hover:text-[#e10600] transition-colors"
+            className="xl:hidden text-white hover:text-[#d4af37] transition-colors"
           >
 
             {isMenuOpen ? (
@@ -291,8 +292,8 @@ export default function Navbar({
                   }}
                   className={`px-4 py-3 rounded-lg text-left transition-all ${
                     currentPage === item.page
-                      ? 'bg-[#e10600] text-white'
-                      : 'text-[#8a8a8a] hover:text-white hover:bg-white/5'
+                      ? 'bg-[#d4af37] text-white'
+                      : 'text-[#d8d2c4] hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {item.name}
@@ -316,7 +317,7 @@ export default function Navbar({
                     onNavigate('login');
                     setIsMenuOpen(false);
                   }}
-                  className="mt-2 px-4 py-3 bg-[#e10600] text-white rounded-lg hover:bg-[#c00500] transition-all font-semibold"
+                  className="mt-2 px-4 py-3 bg-[#d4af37] text-white rounded-lg hover:bg-[#b8892d] transition-all font-semibold"
                 >
                   Login / Register
                 </button>

@@ -50,7 +50,7 @@ export default function ResultsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -65,7 +65,7 @@ export default function ResultsPage() {
           <h2 className="text-2xl font-bold text-white mb-6">Recent Race Results</h2>
           <div className="space-y-6">
             {recentResults.map((result) => (
-              <div key={result.id} className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
+              <div key={result.id} className="bg-[#12304f] border border-white/10 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="text-2xl font-bold text-white mb-1">{result.race}</h3>
@@ -79,7 +79,7 @@ export default function ResultsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[#e10600] font-bold text-2xl">{result.prize}</div>
+                    <div className="text-[#d4af37] font-bold text-2xl">{result.prize}</div>
                     <div className="text-gray-400 text-sm">Prize Money</div>
                   </div>
                 </div>
@@ -100,10 +100,10 @@ export default function ResultsPage() {
                         <div
                           className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl ${
                             pos.position === 1
-                              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black'
+                              ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#071a2f]'
                               : pos.position === 2
-                              ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black'
-                              : 'bg-gradient-to-br from-orange-400 to-orange-600 text-black'
+                              ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-[#071a2f]'
+                              : 'bg-gradient-to-br from-orange-400 to-orange-600 text-[#071a2f]'
                           }`}
                         >
                           {pos.position}
@@ -127,9 +127,9 @@ export default function ResultsPage() {
         {/* Rankings */}
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Horse Rankings */}
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
+          <div className="bg-[#12304f] border border-white/10 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Trophy className="w-6 h-6 text-[#e10600]" />
+              <Trophy className="w-6 h-6 text-[#d4af37]" />
               <h2 className="text-2xl font-bold text-white">Horse Rankings</h2>
             </div>
 
@@ -137,17 +137,17 @@ export default function ResultsPage() {
               {horseRankings.map((entry) => (
                 <div
                   key={entry.rank}
-                  className="bg-[#0a0a0a] border border-white/10 rounded-lg p-4 hover:border-[#e10600]/50 transition-all"
+                  className="bg-[#071a2f] border border-white/10 rounded-lg p-4 hover:border-[#d4af37]/50 transition-all"
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-12 h-12 rounded flex items-center justify-center font-bold text-xl ${
                         entry.rank === 1
-                          ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black'
+                          ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#071a2f]'
                           : entry.rank === 2
-                          ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black'
+                          ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-[#071a2f]'
                           : entry.rank === 3
-                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-black'
+                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-[#071a2f]'
                           : 'bg-[#2a2a2a] text-white'
                       }`}
                     >
@@ -166,7 +166,7 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="text-right">
-                      <div className="text-[#e10600] font-bold text-xl">{entry.points}</div>
+                      <div className="text-[#d4af37] font-bold text-xl">{entry.points}</div>
                       <div className="text-gray-400 text-xs">Points</div>
                     </div>
                   </div>
@@ -174,15 +174,15 @@ export default function ResultsPage() {
               ))}
             </div>
 
-            <button className="w-full mt-6 py-3 bg-[#e10600]/10 text-[#e10600] rounded hover:bg-[#e10600] hover:text-white transition-all font-semibold border border-[#e10600]/30">
+            <button className="w-full mt-6 py-3 bg-[#d4af37]/10 text-[#d4af37] rounded hover:bg-[#d4af37] hover:text-white transition-all font-semibold border border-[#d4af37]/30">
               View Full Rankings
             </button>
           </div>
 
           {/* Jockey Rankings */}
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-6">
+          <div className="bg-[#12304f] border border-white/10 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-6">
-              <TrendingUp className="w-6 h-6 text-[#e10600]" />
+              <TrendingUp className="w-6 h-6 text-[#d4af37]" />
               <h2 className="text-2xl font-bold text-white">Jockey Rankings</h2>
             </div>
 
@@ -190,17 +190,17 @@ export default function ResultsPage() {
               {jockeyRankings.map((entry) => (
                 <div
                   key={entry.rank}
-                  className="bg-[#0a0a0a] border border-white/10 rounded-lg p-4 hover:border-[#e10600]/50 transition-all"
+                  className="bg-[#071a2f] border border-white/10 rounded-lg p-4 hover:border-[#d4af37]/50 transition-all"
                 >
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-12 h-12 rounded flex items-center justify-center font-bold text-xl ${
                         entry.rank === 1
-                          ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black'
+                          ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-[#071a2f]'
                           : entry.rank === 2
-                          ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-black'
+                          ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-[#071a2f]'
                           : entry.rank === 3
-                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-black'
+                          ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-[#071a2f]'
                           : 'bg-[#2a2a2a] text-white'
                       }`}
                     >
@@ -219,7 +219,7 @@ export default function ResultsPage() {
                     </div>
 
                     <div className="text-right">
-                      <div className="text-[#e10600] font-bold text-lg">{entry.earnings}</div>
+                      <div className="text-[#d4af37] font-bold text-lg">{entry.earnings}</div>
                       <div className="text-gray-400 text-xs">Earnings</div>
                     </div>
                   </div>
@@ -227,7 +227,7 @@ export default function ResultsPage() {
               ))}
             </div>
 
-            <button className="w-full mt-6 py-3 bg-[#e10600]/10 text-[#e10600] rounded hover:bg-[#e10600] hover:text-white transition-all font-semibold border border-[#e10600]/30">
+            <button className="w-full mt-6 py-3 bg-[#d4af37]/10 text-[#d4af37] rounded hover:bg-[#d4af37] hover:text-white transition-all font-semibold border border-[#d4af37]/30">
               View Full Rankings
             </button>
           </div>

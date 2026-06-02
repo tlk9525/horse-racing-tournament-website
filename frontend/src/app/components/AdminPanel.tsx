@@ -202,7 +202,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
 
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -231,13 +231,13 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
               <div
                 key={index}
-                className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-6"
+                className="bg-[#12304f] border border-white/10 rounded-3xl p-6"
               >
 
                 <div className="flex items-center justify-between mb-4">
 
-                  <div className="w-14 h-14 bg-[#e10600]/10 rounded-2xl flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-[#e10600]" />
+                  <div className="w-14 h-14 bg-[#d4af37]/10 rounded-2xl flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-[#d4af37]" />
                   </div>
 
                   <span className="text-green-500 font-bold">
@@ -265,7 +265,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
             {/* PENDING */}
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+            <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
 
               <div className="flex items-center justify-between mb-8">
 
@@ -273,7 +273,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                   Pending Approvals
                 </h2>
 
-                <div className="px-4 py-2 bg-[#e10600]/20 border border-[#e10600] rounded-xl text-[#e10600] font-bold">
+                <div className="px-4 py-2 bg-[#d4af37]/20 border border-[#d4af37] rounded-xl text-[#d4af37] font-bold">
                   {pendingApprovals.length} Pending
                 </div>
               </div>
@@ -287,13 +287,13 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
               <div className="space-y-5">
 
                 {isLoadingApprovals && (
-                  <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 text-gray-400">
+                  <div className="bg-[#071a2f] border border-white/10 rounded-2xl p-5 text-gray-400">
                     Loading approvals from API...
                   </div>
                 )}
 
                 {!isLoadingApprovals && pendingApprovals.length === 0 && (
-                  <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 text-gray-400">
+                  <div className="bg-[#071a2f] border border-white/10 rounded-2xl p-5 text-gray-400">
                     No pending approvals.
                   </div>
                 )}
@@ -302,7 +302,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                   <div
                     key={item.id}
-                    className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5"
+                    className="bg-[#071a2f] border border-white/10 rounded-2xl p-5"
                   >
 
                     <div className="flex items-center justify-between mb-4">
@@ -355,7 +355,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
             {/* RACES */}
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+            <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
 
               <div className="flex items-center justify-between mb-8">
 
@@ -366,7 +366,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                 <button
                   onClick={() => tournaments.length > 0 && onNavigate('create-race')}
                   disabled={tournaments.length === 0}
-                  className="flex items-center gap-2 px-5 py-3 bg-[#e10600] disabled:bg-white/10 disabled:text-gray-500 rounded-xl hover:bg-[#c00500] transition-all text-white font-bold"
+                  className="flex items-center gap-2 px-5 py-3 bg-[#d4af37] disabled:bg-white/10 disabled:text-gray-500 rounded-xl hover:bg-[#b8892d] transition-all text-white font-bold"
                 >
                   <Plus className="w-5 h-5" />
                   Create Race
@@ -379,7 +379,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                   <div
                     key={race.id}
-                    className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5"
+                    className="bg-[#071a2f] border border-white/10 rounded-2xl p-5"
                   >
 
                     <div className="flex items-center justify-between">
@@ -506,7 +506,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                           onClick={() =>
                             setEditRace(race)
                           }
-                          className="flex items-center gap-2 px-4 py-2 bg-[#e10600]/10 text-[#e10600] rounded-xl hover:bg-[#e10600] hover:text-white transition-all border border-[#e10600]/30"
+                          className="flex items-center gap-2 px-4 py-2 bg-[#d4af37]/10 text-[#d4af37] rounded-xl hover:bg-[#d4af37] hover:text-white transition-all border border-[#d4af37]/30"
                         >
                           <Pencil className="w-4 h-4" />
                           Edit
@@ -537,7 +537,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
             {/* QUICK ACTIONS */}
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+            <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
 
               <h2 className="text-3xl font-black text-white mb-8">
                 Quick Actions
@@ -586,10 +586,10 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                     <button
                       key={index}
                       onClick={action.onClick}
-                      className="w-full flex items-center gap-4 px-5 py-4 bg-[#0a0a0a] border border-white/10 rounded-2xl hover:bg-[#e10600]/10 hover:border-[#e10600]/50 transition-all text-white"
+                      className="w-full flex items-center gap-4 px-5 py-4 bg-[#071a2f] border border-white/10 rounded-2xl hover:bg-[#d4af37]/10 hover:border-[#d4af37]/50 transition-all text-white"
                     >
 
-                      <Icon className="w-6 h-6 text-[#e10600]" />
+                      <Icon className="w-6 h-6 text-[#d4af37]" />
 
                       <span className="font-semibold">
                         {action.label}
@@ -602,7 +602,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
             {/* RECENT ACTIVITY */}
 
-            <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+            <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
 
               <h2 className="text-3xl font-black text-white mb-8">
                 Recent Activity
@@ -619,7 +619,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                   <div
                     key={index}
-                    className="border-l-2 border-[#e10600] pl-4"
+                    className="border-l-2 border-[#d4af37] pl-4"
                   >
 
                     <div className="text-gray-400 text-xs mb-1">
@@ -640,9 +640,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
         {editRace && (
 
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-[#071a2f]/80 flex items-center justify-center z-50">
 
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl w-full max-w-lg border border-white/10">
+            <div className="bg-[#12304f] p-8 rounded-3xl w-full max-w-lg border border-white/10">
 
               <h2 className="text-3xl font-black text-white mb-8">
                 Edit Race
@@ -660,7 +660,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                         e.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -673,7 +673,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                         e.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -686,7 +686,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                         e.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
               </div>
 
@@ -703,7 +703,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                 <button
                   onClick={updateRace}
-                  className="flex-1 py-4 bg-[#e10600] rounded-2xl text-white font-bold"
+                  className="flex-1 py-4 bg-[#d4af37] rounded-2xl text-white font-bold"
                 >
                   Save
                 </button>
@@ -714,9 +714,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
         {showCreateTournament && (
 
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-[#071a2f]/80 flex items-center justify-center z-50 p-4">
 
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl w-full max-w-2xl border border-white/10">
+            <div className="bg-[#12304f] p-8 rounded-3xl w-full max-w-2xl border border-white/10">
 
               <h2 className="text-3xl font-black text-white mb-2">
                 Create Tournament
@@ -743,7 +743,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       name: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -756,7 +756,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       registrationWindow: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -768,7 +768,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       startDate: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -780,7 +780,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       finalDate: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -793,7 +793,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       location: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
 
                 <input
@@ -807,7 +807,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                       prizePool: event.target.value,
                     })
                   }
-                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-5 py-4 text-white"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white"
                 />
               </div>
 
@@ -822,7 +822,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                 <button
                   onClick={handleCreateTournament}
-                  className="flex-1 py-4 bg-[#e10600] rounded-2xl text-white font-bold"
+                  className="flex-1 py-4 bg-[#d4af37] rounded-2xl text-white font-bold"
                 >
                   Create & Open Registration
                 </button>
@@ -835,9 +835,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
         {showViewModal && (
 
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-[#071a2f]/80 flex items-center justify-center z-50">
 
-            <div className="bg-[#1a1a1a] p-8 rounded-3xl w-full max-w-lg border border-white/10">
+            <div className="bg-[#12304f] p-8 rounded-3xl w-full max-w-lg border border-white/10">
 
               <h2 className="text-3xl font-black text-white mb-8">
                 Race Details
@@ -909,7 +909,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                 onClick={() =>
                   setShowViewModal(null)
                 }
-                className="w-full mt-8 py-4 bg-[#e10600] rounded-2xl text-white font-bold"
+                className="w-full mt-8 py-4 bg-[#d4af37] rounded-2xl text-white font-bold"
               >
                 Close
               </button>

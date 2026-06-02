@@ -19,6 +19,7 @@ import RegisterHorsePage from './app/components/RegisterHorsePage';
 
 import JockeyPage from './app/components/JockeyPage';
 import JockeyProfile from './app/components/JockeyProfile';
+import JockeyDirectoryPage from './app/components/JockeyDirectoryPage';
 
 import LiveRace from './app/components/LiveRace';
 import PredictionPage from './app/components/PredictionPage';
@@ -47,6 +48,7 @@ const protectedPages: Record<string, string[]> = {
   'register-horse': ['owner'],
   'edit-horse': ['owner'],
   'horse-details': ['admin', 'owner'],
+  'jockey-profiles': ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   jockeys: ['admin', 'owner', 'jockey'],
   'jockey-profile': ['jockey', 'admin'],
   'live-race': ['admin', 'referee', 'spectator'],
@@ -183,6 +185,11 @@ export default function App() {
           />
         );
 
+      case 'jockey-profiles':
+        return (
+          <JockeyDirectoryPage />
+        );
+
       case 'jockey-profile':
         return (
           <JockeyProfile
@@ -252,7 +259,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] dark overflow-x-hidden">
+    <div className="min-h-screen bg-[#071a2f] dark overflow-x-hidden">
 
       {/* NAVBAR */}
       <Navbar

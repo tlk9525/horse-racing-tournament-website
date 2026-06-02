@@ -34,7 +34,7 @@ export default function RegisterHorsePage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEdit = mode === 'edit' && horse;
   const fieldClass =
-    'w-full h-12 px-4 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]';
+    'w-full h-12 px-4 bg-[#071a2f] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#d4af37]';
 
   useEffect(() => {
     if (!horse) return;
@@ -95,7 +95,7 @@ export default function RegisterHorsePage({
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
 
       <div className="max-w-4xl mx-auto px-4">
 
@@ -109,17 +109,17 @@ export default function RegisterHorsePage({
         </button>
 
         {/* CARD */}
-        <div className="bg-[#111111] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#0b223d] border border-white/10 rounded-2xl p-8">
 
           {/* HEADER */}
           <div className="flex items-center gap-4 mb-10">
 
-            <div className="w-16 h-16 rounded-2xl bg-[#e10600]/20 flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-[#e10600]" />
+            <div className="w-16 h-16 rounded-2xl bg-[#d4af37]/20 flex items-center justify-center">
+              <Trophy className="w-8 h-8 text-[#d4af37]" />
             </div>
 
             <div>
-              <p className="text-[#e10600] uppercase tracking-[0.2em] text-sm font-bold">
+              <p className="text-[#d4af37] uppercase tracking-[0.2em] text-sm font-bold">
                 {isEdit ? 'Horse Owner Profile' : 'Horse Owner Registration'}
               </p>
 
@@ -314,7 +314,7 @@ export default function RegisterHorsePage({
               placeholder="Training notes, running style, medical notes..."
               value={profileNotes}
               onChange={(event) => setProfileNotes(event.target.value)}
-              className="w-full min-h-[120px] px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#e10600]"
+              className="w-full min-h-[120px] px-4 py-3 bg-[#071a2f] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#d4af37]"
             />
           </div>
 
@@ -337,7 +337,7 @@ export default function RegisterHorsePage({
             <button
               onClick={submit}
               disabled={isSubmitting}
-              className="px-6 py-3 rounded-xl bg-[#e10600] hover:bg-[#c00500] disabled:opacity-60 text-white font-semibold transition-all"
+              className="px-6 py-3 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] disabled:opacity-60 text-white font-semibold transition-all"
             >
               {isSubmitting ? 'Saving...' : isEdit ? 'Save Changes' : 'Submit for Approval'}
             </button>

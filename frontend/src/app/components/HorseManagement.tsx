@@ -44,7 +44,7 @@ export default function HorseManagement({
     raceEntries.filter((entry) => entry.horseId === horseId).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div>
@@ -58,7 +58,7 @@ export default function HorseManagement({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-            <div className="rounded-xl border border-white/10 bg-[#141414] px-4 py-3 text-gray-300">
+            <div className="rounded-xl border border-white/10 bg-[#102a46] px-4 py-3 text-gray-300">
               Horses: <span className="font-bold text-white">{horses.length}/{maxHorses}</span>
             </div>
 
@@ -73,7 +73,7 @@ export default function HorseManagement({
               }}
               className={`flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-bold transition-all ${
                 canAddHorse
-                  ? 'bg-[#e10600] text-white hover:bg-[#c00500]'
+                  ? 'bg-[#d4af37] text-white hover:bg-[#b8892d]'
                   : 'bg-white/10 text-gray-500 cursor-not-allowed'
               }`}
             >
@@ -93,7 +93,7 @@ export default function HorseManagement({
 
         <div className="grid xl:grid-cols-3 md:grid-cols-2 gap-6">
           {horses.length === 0 && (
-            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-[#141414] p-8 text-gray-400">
+            <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-[#102a46] p-8 text-gray-400">
               No horses yet. Add a horse profile before joining race registrations.
             </div>
           )}
@@ -101,7 +101,7 @@ export default function HorseManagement({
           {horses.map((horse) => (
             <div
               key={horse.id}
-              className="rounded-2xl border border-white/10 bg-[#141414] p-6"
+              className="rounded-2xl border border-white/10 bg-[#102a46] p-6"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -118,7 +118,7 @@ export default function HorseManagement({
                   </p>
                 </div>
 
-                <span className="px-3 py-1 rounded-xl bg-[#e10600]/10 text-[#e10600] border border-[#e10600]/30 text-sm font-bold">
+                <span className="px-3 py-1 rounded-xl bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/30 text-sm font-bold">
                   {statusLabel(horse.status)}
                 </span>
               </div>
@@ -174,7 +174,7 @@ export default function HorseManagement({
                     onSelectHorse(horse);
                     onNavigate('edit-horse');
                   }}
-                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#e10600]/10 text-[#e10600] hover:bg-[#e10600]/20 transition-all font-semibold border border-[#e10600]/30"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#d4af37]/10 text-[#d4af37] hover:bg-[#d4af37]/20 transition-all font-semibold border border-[#d4af37]/30"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit

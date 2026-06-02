@@ -111,12 +111,12 @@ export default function RaceDetails() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-10">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-10">
 
       <div className="max-w-[1850px] mx-auto px-4">
 
         {/* HEADER */}
-        <div className="bg-[#151515] border border-white/10 rounded-2xl overflow-hidden mb-6">
+        <div className="bg-[#102a46] border border-white/10 rounded-2xl overflow-hidden mb-6">
 
           {/* TOP */}
           <div className="border-b border-white/10 px-6 py-5 bg-[#111]">
@@ -127,11 +127,11 @@ export default function RaceDetails() {
 
                 <div className="flex flex-wrap items-center gap-3 mb-4">
 
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#e10600]/15 border border-[#e10600]/30">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#d4af37]/15 border border-[#d4af37]/30">
 
-                    <Circle className="w-2 h-2 fill-[#e10600] text-[#e10600] animate-pulse" />
+                    <Circle className="w-2 h-2 fill-[#d4af37] text-[#d4af37] animate-pulse" />
 
-                    <span className="text-[#e10600] text-xs font-bold uppercase tracking-wider">
+                    <span className="text-[#d4af37] text-xs font-bold uppercase tracking-wider">
                       Awaiting Confirmations
                     </span>
                   </div>
@@ -152,22 +152,22 @@ export default function RaceDetails() {
                 <div className="flex flex-wrap items-center gap-5 mt-5 text-sm text-gray-400">
 
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#e10600]" />
+                    <MapPin className="w-4 h-4 text-[#d4af37]" />
                     {race.venue}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Timer className="w-4 h-4 text-[#e10600]" />
+                    <Timer className="w-4 h-4 text-[#d4af37]" />
                     {race.distance} {race.surface}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-[#e10600]" />
+                    <Trophy className="w-4 h-4 text-[#d4af37]" />
                     Prize Pool: {currentTournament.prizePool}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-[#e10600]" />
+                    <Activity className="w-4 h-4 text-[#d4af37]" />
                     Good Track
                   </div>
                 </div>
@@ -176,17 +176,17 @@ export default function RaceDetails() {
               {/* RIGHT INFO */}
               <div className="grid grid-cols-2 gap-4 min-w-[340px]">
 
-                <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
                     Owner Confirmed
                   </div>
 
-                  <div className="text-2xl font-black text-[#e10600]">
+                  <div className="text-2xl font-black text-[#d4af37]">
                     {race.ownerConfirmed}/{race.participants}
                   </div>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
                     Jockey Confirmed
                   </div>
@@ -196,18 +196,18 @@ export default function RaceDetails() {
                   </div>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
                     Weather
                   </div>
 
                   <div className="flex items-center gap-2 text-white font-bold">
-                    <CloudSun className="w-5 h-5 text-[#e10600]" />
+                    <CloudSun className="w-5 h-5 text-[#d4af37]" />
                     Sunny
                   </div>
                 </div>
 
-                <div className="bg-black/40 border border-white/10 rounded-xl p-4">
+                <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
                     Referee
                   </div>
@@ -231,8 +231,8 @@ export default function RaceDetails() {
                   key={race}
                   className={`w-20 h-16 rounded-2xl font-black text-2xl transition-all duration-300 ${
                     race === 4
-                      ? 'bg-[#e10600] text-white shadow-xl shadow-[#e10600]/30'
-                      : 'bg-[#1b1b1b] text-gray-400 hover:bg-[#252525]'
+                      ? 'bg-[#d4af37] text-white shadow-xl shadow-[#d4af37]/30'
+                      : 'bg-[#1b1b1b] text-gray-400 hover:bg-[#1f3a5c]'
                   }`}
                 >
                   R{race}
@@ -256,7 +256,7 @@ export default function RaceDetails() {
 
               <div className="flex items-center gap-3">
 
-                <div className="px-4 py-2 rounded-lg bg-[#e10600]/10 border border-[#e10600]/20 text-[#e10600] font-bold text-sm">
+                <div className="px-4 py-2 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#d4af37] font-bold text-sm">
                   RACE CONFIRMATION
                 </div>
 
@@ -342,7 +342,7 @@ export default function RaceDetails() {
                     {/* HORSE NO */}
                     <td className="py-5 px-3">
 
-                      <div className="w-11 h-11 rounded-xl bg-[#e10600] flex items-center justify-center text-white font-black shadow-lg shadow-[#e10600]/20">
+                      <div className="w-11 h-11 rounded-xl bg-[#d4af37] flex items-center justify-center text-white font-black shadow-lg shadow-[#d4af37]/20">
                         {horse.no}
                       </div>
                     </td>
@@ -428,7 +428,7 @@ export default function RaceDetails() {
                     <td className="py-5 px-3 text-center">
 
                       <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#222] border border-white/10 text-gray-300 font-semibold">
-                        <Gauge className="w-4 h-4 text-[#e10600]" />
+                        <Gauge className="w-4 h-4 text-[#d4af37]" />
                         {horse.gear}
                       </div>
                     </td>
@@ -436,7 +436,7 @@ export default function RaceDetails() {
                     {/* ODDS */}
                     <td className="py-5 px-3 text-right">
 
-                      <div className="inline-flex px-5 py-3 rounded-xl bg-[#e10600]/10 border border-[#e10600]/20 text-[#e10600] font-black text-lg">
+                      <div className="inline-flex px-5 py-3 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#d4af37] font-black text-lg">
                         {horse.odds}x
                       </div>
                     </td>

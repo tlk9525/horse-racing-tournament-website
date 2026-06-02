@@ -68,12 +68,12 @@ export default function LoginPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] flex items-center justify-center px-4 pt-24 pb-12">
 
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 overflow-hidden rounded-3xl border border-white/10 bg-[#111111] shadow-2xl shadow-black/40">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 overflow-hidden rounded-3xl border border-white/10 bg-[#0b223d] shadow-2xl shadow-[#071a2f]/40">
 
         {/* LEFT SIDE */}
-        <div className="relative hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-[#e10600] to-[#7a0000] overflow-hidden">
+        <div className="relative hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-[#d4af37] to-[#7a0000] overflow-hidden">
 
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,white,transparent_40%)]" />
 
@@ -159,13 +159,13 @@ export default function LoginPage({
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="p-8 lg:p-14 flex items-center justify-center bg-[#111111]">
+        <div className="p-8 lg:p-14 flex items-center justify-center bg-[#0b223d]">
 
           <div className="w-full max-w-md">
 
             <div className="mb-10">
 
-              <p className="text-[#e10600] uppercase tracking-[0.25em] text-sm font-bold mb-3">
+              <p className="text-[#d4af37] uppercase tracking-[0.25em] text-sm font-bold mb-3">
 
                 {isRegister
                   ? 'Create Account'
@@ -210,7 +210,7 @@ export default function LoginPage({
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       placeholder="Enter your full name"
-                      className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                      className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37] transition-all"
                     />
 
                   </div>
@@ -233,7 +233,7 @@ export default function LoginPage({
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter your email"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37] transition-all"
                   />
 
                 </div>
@@ -249,7 +249,7 @@ export default function LoginPage({
                   <select
                     value={role}
                     onChange={(event) => setRole(event.target.value as UserRole)}
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-[#e10600] transition-all"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-[#d4af37] transition-all"
                   >
                     <option value="owner">Horse Owner</option>
                     <option value="jockey">Jockey</option>
@@ -280,7 +280,7 @@ export default function LoginPage({
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter your password"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37] transition-all"
                   />
 
                   <button
@@ -321,7 +321,7 @@ export default function LoginPage({
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       placeholder="Confirm password"
-                      className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600] transition-all"
+                      className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37] transition-all"
                     />
 
                   </div>
@@ -342,7 +342,7 @@ export default function LoginPage({
 
                     <input
                       type="checkbox"
-                      className="accent-[#e10600]"
+                      className="accent-[#d4af37]"
                     />
 
                     Remember me
@@ -351,7 +351,7 @@ export default function LoginPage({
 
                   <button
                     type="button"
-                    className="text-[#e10600] hover:text-red-400 transition-colors"
+                    className="text-[#d4af37] hover:text-red-400 transition-colors"
                   >
                     Forgot Password?
                   </button>
@@ -364,7 +364,7 @@ export default function LoginPage({
                 type="button"
                 onClick={submit}
                 disabled={isSubmitting}
-                className="w-full h-14 rounded-xl bg-[#e10600] hover:bg-[#c00500] transition-all text-white font-bold text-lg shadow-lg shadow-[#e10600]/30"
+                className="w-full h-14 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] transition-all text-white font-bold text-lg shadow-lg shadow-[#d4af37]/30"
               >
 
                 {isSubmitting
@@ -384,7 +384,7 @@ export default function LoginPage({
 
                 <div className="relative flex justify-center">
 
-                  <span className="bg-[#111111] px-4 text-sm text-gray-500">
+                  <span className="bg-[#0b223d] px-4 text-sm text-gray-500">
                     OR CONTINUE WITH
                   </span>
 
@@ -396,14 +396,14 @@ export default function LoginPage({
 
                 <button
                   type="button"
-                  className="h-12 rounded-xl border border-white/10 bg-[#1a1a1a] text-white hover:border-[#e10600]/50 transition-all"
+                  className="h-12 rounded-xl border border-white/10 bg-[#12304f] text-white hover:border-[#d4af37]/50 transition-all"
                 >
                   Google
                 </button>
 
                 <button
                   type="button"
-                  className="h-12 rounded-xl border border-white/10 bg-[#1a1a1a] text-white hover:border-[#e10600]/50 transition-all"
+                  className="h-12 rounded-xl border border-white/10 bg-[#12304f] text-white hover:border-[#d4af37]/50 transition-all"
                 >
                   Discord
                 </button>
@@ -424,7 +424,7 @@ export default function LoginPage({
                       !isRegister
                     )
                   }
-                  className="ml-2 text-[#e10600] font-semibold hover:text-red-400 transition-colors"
+                  className="ml-2 text-[#d4af37] font-semibold hover:text-red-400 transition-colors"
                 >
 
                   {isRegister

@@ -16,7 +16,7 @@ interface RaceRegistrationPageProps {
 
 export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPageProps) {
   const fieldClass =
-    'w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#e10600]';
+    'w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#d4af37]';
 
   const [tournament, setTournament] = useState<any>(null);
   const [horses, setHorses] = useState<HorseRecord[]>([]);
@@ -85,7 +85,7 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-5xl mx-auto px-4">
         <button
           onClick={() => onNavigate('tournaments')}
@@ -95,9 +95,9 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
           Back to Tournaments
         </button>
 
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+        <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
           <div className="mb-8">
-            <p className="text-[#e10600] text-sm uppercase tracking-widest">
+            <p className="text-[#d4af37] text-sm uppercase tracking-widest">
               Race Registration
             </p>
 
@@ -196,7 +196,7 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
 
           <button
             onClick={submitRegistration}
-            className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-[#e10600] hover:bg-[#c00500] text-white font-bold transition-all"
+            className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] text-white font-bold transition-all"
           >
             <Send className="w-5 h-5" />
             Submit Registration

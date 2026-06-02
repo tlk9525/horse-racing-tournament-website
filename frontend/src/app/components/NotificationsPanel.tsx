@@ -23,10 +23,10 @@ export default function NotificationsPanel() {
   const unreadCount = notifications.filter((item) => !item.read).length;
 
   return (
-    <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 mb-8">
+    <div className="bg-[#102a46] border border-white/10 rounded-2xl p-6 mb-8">
       <div className="flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
-          <Bell className="w-6 h-6 text-[#e10600]" />
+          <Bell className="w-6 h-6 text-[#d4af37]" />
 
           <div>
             <h2 className="text-2xl font-black text-white">
@@ -39,13 +39,13 @@ export default function NotificationsPanel() {
           </div>
         </div>
 
-        <span className="px-4 py-2 rounded-xl bg-[#e10600]/10 border border-[#e10600]/30 text-[#e10600] font-bold">
+        <span className="px-4 py-2 rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#d4af37] font-bold">
           {unreadCount} unread
         </span>
       </div>
 
       {notifications.length === 0 ? (
-        <div className="text-gray-500 bg-[#0a0a0a] border border-white/10 rounded-xl p-4">
+        <div className="text-gray-500 bg-[#071a2f] border border-white/10 rounded-xl p-4">
           No notifications yet.
         </div>
       ) : (

@@ -183,7 +183,7 @@ export default function RankingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 text-white">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
@@ -191,7 +191,7 @@ export default function RankingsPage() {
 
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Crown className="w-6 h-6 text-[#e10600]" />
+              <Crown className="w-6 h-6 text-[#d4af37]" />
 
               <h1 className="text-4xl font-bold">
                 World Rankings
@@ -211,7 +211,7 @@ export default function RankingsPage() {
             <select
               value={season}
               onChange={(e) => setSeason(e.target.value)}
-              className="bg-[#1a1a1a] border border-white/10 rounded px-3 py-2 text-sm"
+              className="bg-[#12304f] border border-white/10 rounded px-3 py-2 text-sm"
             >
               <option value="2026">2026</option>
               <option value="2025">2025</option>
@@ -220,7 +220,7 @@ export default function RankingsPage() {
           </div>
         </div>
 
-        <div className="mb-8 border border-white/10 bg-[#111111] rounded-lg p-5">
+        <div className="mb-8 border border-white/10 bg-[#0b223d] rounded-lg p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-white font-bold">
@@ -246,8 +246,8 @@ export default function RankingsPage() {
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-2 px-5 py-2 rounded transition-all ${
                 activeTab === tab.key
-                  ? 'bg-[#e10600] text-white'
-                  : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#252525]'
+                  ? 'bg-[#d4af37] text-white'
+                  : 'bg-[#12304f] text-gray-400 hover:bg-[#1f3a5c]'
               }`}
             >
               {tab.icon}
@@ -298,10 +298,10 @@ export default function RankingsPage() {
         </div>
 
         {/* Rankings Table */}
-        <div className="bg-[#111111] border border-white/10 rounded-lg overflow-hidden">
+        <div className="bg-[#0b223d] border border-white/10 rounded-lg overflow-hidden">
 
           <div className="px-6 py-4 border-b border-white/10 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#e10600]" />
+            <TrendingUp className="w-4 h-4 text-[#d4af37]" />
 
             <h2 className="font-semibold">
               {tabs.find((t) => t.key === activeTab)?.label} Rankings

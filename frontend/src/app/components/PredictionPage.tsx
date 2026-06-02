@@ -183,7 +183,7 @@ export default function PredictionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black pt-24 pb-12 text-white">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12 text-white">
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
         <NotificationsPanel />
 
@@ -218,8 +218,8 @@ export default function PredictionPage() {
 
           <div className="bg-[#121212] border border-white/10 rounded-3xl p-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-2xl flex items-center justify-center">
-                <Trophy className="text-[#e10600]" />
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-2xl flex items-center justify-center">
+                <Trophy className="text-[#d4af37]" />
               </div>
 
               <div>
@@ -236,8 +236,8 @@ export default function PredictionPage() {
 
           <div className="bg-[#121212] border border-white/10 rounded-3xl p-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-2xl flex items-center justify-center">
-                  <Target className="text-[#e10600]" />
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-2xl flex items-center justify-center">
+                  <Target className="text-[#d4af37]" />
               </div>
 
               <div>
@@ -245,7 +245,7 @@ export default function PredictionPage() {
                   Prediction Accuracy
                 </div>
 
-                <div className="text-3xl font-black text-[#e10600]">
+                <div className="text-3xl font-black text-[#d4af37]">
                   73%
                 </div>
               </div>
@@ -254,8 +254,8 @@ export default function PredictionPage() {
 
           <div className="bg-[#121212] border border-white/10 rounded-3xl p-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-2xl flex items-center justify-center">
-                <TrendingUp className="text-[#e10600]" />
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-2xl flex items-center justify-center">
+                <TrendingUp className="text-[#d4af37]" />
               </div>
 
               <div>
@@ -272,8 +272,8 @@ export default function PredictionPage() {
 
           <div className="bg-[#121212] border border-white/10 rounded-3xl p-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-2xl flex items-center justify-center">
-                <Award className="text-[#e10600]" />
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-2xl flex items-center justify-center">
+                <Award className="text-[#d4af37]" />
               </div>
 
               <div>
@@ -317,7 +317,7 @@ export default function PredictionPage() {
 
                   <div
                     key={race.id}
-                    className="bg-black border border-white/10 rounded-3xl p-6"
+                    className="bg-[#071a2f] border border-white/10 rounded-3xl p-6"
                   >
 
                     <div className="flex items-center justify-between mb-6">
@@ -347,7 +347,7 @@ export default function PredictionPage() {
                         </div>
                       </div>
 
-                      <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl px-5 py-4">
+                      <div className="bg-[#12304f] border border-white/10 rounded-2xl px-5 py-4">
                         <div className="text-yellow-500 text-sm">
                           Predictions open after
                         </div>
@@ -379,8 +379,8 @@ export default function PredictionPage() {
                             }
                             className={`rounded-2xl border p-5 transition-all text-left ${
                               isSelected
-                                ? 'border-[#e10600] bg-[#e10600]/10'
-                                : 'border-white/10 bg-[#121212] hover:border-[#e10600]/50'
+                                ? 'border-[#d4af37] bg-[#d4af37]/10'
+                                : 'border-white/10 bg-[#121212] hover:border-[#d4af37]/50'
                             }`}
                           >
 
@@ -400,7 +400,7 @@ export default function PredictionPage() {
                               <div
                                 className={`w-10 h-10 rounded-full border-2 flex items-center justify-center ${
                                   isSelected
-                                    ? 'border-[#e10600] bg-[#e10600]'
+                                    ? 'border-[#d4af37] bg-[#d4af37]'
                                     : 'border-white/20'
                                 }`}
                               >
@@ -424,7 +424,7 @@ export default function PredictionPage() {
 
               <div className="flex items-center gap-3 mb-8">
 
-                <CircleDollarSign className="text-[#e10600]" />
+                <CircleDollarSign className="text-[#d4af37]" />
 
                 <h2 className="text-3xl font-black">
                   My Prediction History
@@ -437,7 +437,7 @@ export default function PredictionPage() {
 
                   <div
                     key={index}
-                    className="bg-black border border-white/10 rounded-2xl p-5"
+                    className="bg-[#071a2f] border border-white/10 rounded-2xl p-5"
                   >
 
                     <div className="flex items-center justify-between">
@@ -470,7 +470,7 @@ export default function PredictionPage() {
                             Odds
                           </div>
 
-                          <div className="text-[#e10600] font-bold">
+                          <div className="text-[#d4af37] font-bold">
                             {bet.odds}x
                           </div>
                         </div>
@@ -520,7 +520,7 @@ export default function PredictionPage() {
 
               <div className="flex items-center gap-3 mb-8">
 
-                <DollarSign className="text-[#e10600]" />
+                <DollarSign className="text-[#d4af37]" />
 
                 <h2 className="text-3xl font-black">
                   Prediction Slip
@@ -531,20 +531,20 @@ export default function PredictionPage() {
 
                 <div className="space-y-6">
 
-                  <div className="bg-black border border-white/10 rounded-2xl p-5">
+                  <div className="bg-[#071a2f] border border-white/10 rounded-2xl p-5">
 
                     <div className="text-gray-400 text-sm mb-2">
                       Selected Horse
                     </div>
 
-                    <div className="text-2xl font-black text-[#e10600]">
+                    <div className="text-2xl font-black text-[#d4af37]">
                       {selectedHorse.name}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
 
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
+                    <div className="bg-[#071a2f] border border-white/10 rounded-2xl p-5">
 
                       <div className="text-gray-400 text-sm mb-2">
                       Multiplier
@@ -555,7 +555,7 @@ export default function PredictionPage() {
                       </div>
                     </div>
 
-                    <div className="bg-black border border-white/10 rounded-2xl p-5">
+                    <div className="bg-[#071a2f] border border-white/10 rounded-2xl p-5">
 
                       <div className="text-gray-400 text-sm mb-2">
                       Potential Reward
@@ -582,13 +582,13 @@ export default function PredictionPage() {
                         )
                       }
                       placeholder="Enter amount"
-                      className="w-full bg-black border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#e10600]"
+                      className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#d4af37]"
                     />
                   </div>
 
                   <button
                     onClick={placeBet}
-                    className="w-full py-4 bg-[#e10600] hover:bg-[#c00500] rounded-2xl text-lg font-black transition-all"
+                    className="w-full py-4 bg-[#d4af37] hover:bg-[#b8892d] rounded-2xl text-lg font-black transition-all"
                   >
                     Submit Prediction
                   </button>
@@ -606,7 +606,7 @@ export default function PredictionPage() {
 
               <div className="flex items-center gap-3 mb-8">
 
-                <Wallet className="text-[#e10600]" />
+                <Wallet className="text-[#d4af37]" />
 
                 <h2 className="text-3xl font-black">
                   Deposit Funds
@@ -624,7 +624,7 @@ export default function PredictionPage() {
                     )
                   }
                   placeholder="Enter amount"
-                  className="w-full bg-black border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full bg-[#071a2f] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#d4af37]"
                 />
 
                 <PayPalScriptProvider
@@ -730,7 +730,7 @@ export default function PredictionPage() {
 
               <div className="flex items-center gap-3 mb-8">
 
-                <Trophy className="text-[#e10600]" />
+                <Trophy className="text-[#d4af37]" />
 
                 <h2 className="text-3xl font-black">
                   Global Leaderboard
@@ -745,8 +745,8 @@ export default function PredictionPage() {
                     key={entry.rank}
                     className={`rounded-2xl p-5 border ${
                       entry.user === 'You'
-                        ? 'border-[#e10600] bg-[#e10600]/10'
-                        : 'border-white/10 bg-black'
+                        ? 'border-[#d4af37] bg-[#d4af37]/10'
+                        : 'border-white/10 bg-[#071a2f]'
                     }`}
                   >
 
@@ -755,12 +755,12 @@ export default function PredictionPage() {
                       <div
                         className={`w-12 h-12 rounded-xl flex items-center justify-center font-black ${
                           entry.rank === 1
-                            ? 'bg-yellow-400 text-black'
+                            ? 'bg-yellow-400 text-[#071a2f]'
                             : entry.rank === 2
-                            ? 'bg-gray-300 text-black'
+                            ? 'bg-gray-300 text-[#071a2f]'
                             : entry.rank === 3
-                            ? 'bg-orange-500 text-black'
-                            : 'bg-[#1a1a1a]'
+                            ? 'bg-orange-500 text-[#071a2f]'
+                            : 'bg-[#12304f]'
                         }`}
                       >
                         {entry.rank}
@@ -782,7 +782,7 @@ export default function PredictionPage() {
 
                       <div className="text-right">
 
-                        <div className="text-[#e10600] text-xl font-black">
+                        <div className="text-[#d4af37] text-xl font-black">
                           {entry.points}
                         </div>
 
@@ -810,7 +810,7 @@ export default function PredictionPage() {
 
                   <div
                     key={index}
-                    className="bg-black border border-white/10 rounded-2xl p-5 flex items-center justify-between"
+                    className="bg-[#071a2f] border border-white/10 rounded-2xl p-5 flex items-center justify-between"
                   >
 
                     <div>

@@ -53,12 +53,12 @@ export default function RegisterPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] flex items-center justify-center px-4 pt-24 pb-12">
 
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 overflow-hidden rounded-3xl border border-white/10 bg-[#111111] shadow-2xl shadow-black/40">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 overflow-hidden rounded-3xl border border-white/10 bg-[#0b223d] shadow-2xl shadow-[#071a2f]/40">
 
         {/* LEFT */}
-        <div className="relative hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-[#e10600] to-[#7a0000] overflow-hidden">
+        <div className="relative hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-[#d4af37] to-[#7a0000] overflow-hidden">
 
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,white,transparent_40%)]" />
 
@@ -130,13 +130,13 @@ export default function RegisterPage({
         </div>
 
         {/* RIGHT */}
-        <div className="p-8 lg:p-14 flex items-center justify-center bg-[#111111]">
+        <div className="p-8 lg:p-14 flex items-center justify-center bg-[#0b223d]">
 
           <div className="w-full max-w-md">
 
             <div className="mb-10">
 
-              <p className="text-[#e10600] uppercase tracking-[0.25em] text-sm font-bold mb-3">
+              <p className="text-[#d4af37] uppercase tracking-[0.25em] text-sm font-bold mb-3">
                 Register
               </p>
 
@@ -168,7 +168,7 @@ export default function RegisterPage({
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     placeholder="Enter your full name"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600]"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37]"
                   />
 
                 </div>
@@ -190,7 +190,7 @@ export default function RegisterPage({
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter your email"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600]"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37]"
                   />
 
                 </div>
@@ -206,7 +206,7 @@ export default function RegisterPage({
                 <select
                   value={role}
                   onChange={(event) => setRole(event.target.value as UserRole)}
-                  className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-[#e10600]"
+                  className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl px-4 text-white focus:outline-none focus:border-[#d4af37]"
                 >
                   <option value="owner">Horse Owner</option>
                   <option value="jockey">Jockey</option>
@@ -232,7 +232,7 @@ export default function RegisterPage({
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter password"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600]"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37]"
                   />
 
                   <button
@@ -274,7 +274,7 @@ export default function RegisterPage({
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     placeholder="Confirm password"
-                    className="w-full h-14 bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#e10600]"
+                    className="w-full h-14 bg-[#071a2f] border border-white/10 rounded-xl pl-12 pr-14 text-white placeholder:text-gray-500 focus:outline-none focus:border-[#d4af37]"
                   />
 
                   <button
@@ -309,7 +309,7 @@ export default function RegisterPage({
                 type="button"
                 onClick={submit}
                 disabled={isSubmitting}
-                className="w-full h-14 rounded-xl bg-[#e10600] hover:bg-[#c00500] transition-all text-white font-bold text-lg shadow-lg shadow-[#e10600]/30"
+                className="w-full h-14 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] transition-all text-white font-bold text-lg shadow-lg shadow-[#d4af37]/30"
               >
                 {isSubmitting ? 'Please wait...' : 'Create Account'}
               </button>
@@ -322,7 +322,7 @@ export default function RegisterPage({
                 <button
                   type="button"
                   onClick={() => onNavigate('login')}
-                  className="ml-2 text-[#e10600] font-semibold hover:text-red-400 transition-colors"
+                  className="ml-2 text-[#d4af37] font-semibold hover:text-red-400 transition-colors"
                 >
                   Login
                 </button>

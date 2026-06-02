@@ -19,7 +19,7 @@ export default function JockeyProfile({
 }: JockeyProfileProps) {
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -33,7 +33,7 @@ export default function JockeyProfile({
 
         <div className="grid lg:grid-cols-[400px,1fr] gap-8">
 
-          <div className="bg-[#141414] border border-white/10 rounded-2xl overflow-hidden">
+          <div className="bg-[#102a46] border border-white/10 rounded-2xl overflow-hidden">
 
             <img
               src="https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1200"
@@ -43,13 +43,13 @@ export default function JockeyProfile({
 
           </div>
 
-          <div className="bg-[#141414] border border-white/10 rounded-2xl p-8">
+          <div className="bg-[#102a46] border border-white/10 rounded-2xl p-8">
 
             <div className="flex items-center justify-between mb-6">
 
               <div>
 
-                <p className="text-[#e10600] uppercase tracking-[0.2em] text-sm font-bold mb-2">
+                <p className="text-[#d4af37] uppercase tracking-[0.2em] text-sm font-bold mb-2">
                   Professional Jockey
                 </p>
 
@@ -63,9 +63,9 @@ export default function JockeyProfile({
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+              <div className="bg-[#071a2f] rounded-xl p-5 text-center">
 
-                <Trophy className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+                <Trophy className="w-7 h-7 text-[#d4af37] mx-auto mb-3" />
 
                 <div className="text-3xl font-black text-white">
                   308
@@ -77,9 +77,9 @@ export default function JockeyProfile({
 
               </div>
 
-              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+              <div className="bg-[#071a2f] rounded-xl p-5 text-center">
 
-                <Award className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+                <Award className="w-7 h-7 text-[#d4af37] mx-auto mb-3" />
 
                 <div className="text-3xl font-black text-white">
                   8
@@ -91,9 +91,9 @@ export default function JockeyProfile({
 
               </div>
 
-              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+              <div className="bg-[#071a2f] rounded-xl p-5 text-center">
 
-                <TrendingUp className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+                <TrendingUp className="w-7 h-7 text-[#d4af37] mx-auto mb-3" />
 
                 <div className="text-3xl font-black text-white">
                   68%
@@ -105,9 +105,9 @@ export default function JockeyProfile({
 
               </div>
 
-              <div className="bg-[#0a0a0a] rounded-xl p-5 text-center">
+              <div className="bg-[#071a2f] rounded-xl p-5 text-center">
 
-                <Activity className="w-7 h-7 text-[#e10600] mx-auto mb-3" />
+                <Activity className="w-7 h-7 text-[#d4af37] mx-auto mb-3" />
 
                 <div className="text-3xl font-black text-white">
                   450
@@ -121,8 +121,8 @@ export default function JockeyProfile({
 
             </div>
 
-            <div className="mt-8 bg-[#0a0a0a] border border-white/10 rounded-2xl p-6">
-              <p className="text-[#e10600] uppercase tracking-[0.2em] text-sm font-bold">
+            <div className="mt-8 bg-[#071a2f] border border-white/10 rounded-2xl p-6">
+              <p className="text-[#d4af37] uppercase tracking-[0.2em] text-sm font-bold">
                 Pending Jockey Action
               </p>
 
@@ -147,7 +147,7 @@ export default function JockeyProfile({
                     alert('Jockey confirmed the pairing and race participation.');
                     onNavigate('jockeys');
                   }}
-                  className="px-6 py-3 rounded-xl bg-[#e10600] text-white font-bold hover:bg-[#c00500] transition-all"
+                  className="px-6 py-3 rounded-xl bg-[#d4af37] text-white font-bold hover:bg-[#b8892d] transition-all"
                 >
                   Confirm Pairing
                 </button>

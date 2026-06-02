@@ -1307,7 +1307,41 @@ const server = createServer(async (req, res) => {
           return;
         }
 
+        const raceEntries = (db.raceEntries || []).filter(
+          (entry) => entry.raceId === race.id && entry.status === 'approved'
+        );
+        const readyEntries = raceEntries.filter(
+          (entry) => entry.preRaceStatus === 'ready' && !entry.disqualified
+        );
+        const uncheckedEntries = raceEntries.filter(
+          (entry) =>
+            !['ready', 'absent'].includes(entry.preRaceStatus) &&
+            !entry.disqualified
+        );
+
+        if (readyEntries.length === 0) {
+          send(res, 400, { message: 'Mark at least one participant Ready before starting the race' });
+          return;
+        }
+
+        if (uncheckedEntries.length > 0) {
+          send(res, 400, { message: 'Check every participant as Ready or Absent before starting the race' });
+          return;
+        }
+
         race.status = 'in-progress';
+
+        raceEntries.forEach((entry) => {
+          if (entry.preRaceStatus === 'absent') {
+            entry.disqualified = true;
+          }
+        });
+
+        notifyAdmins(
+          db,
+          'Race started',
+          `${race.name} has been started by ${user.name}.`
+        );
       }
 
       if (action === 'submit-results') {

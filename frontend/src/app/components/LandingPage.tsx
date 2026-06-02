@@ -6,7 +6,7 @@ interface LandingPageProps {
 
 export default function LandingPage({ onNavigate }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#071a2f]">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
@@ -16,21 +16,21 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             alt="Horse Racing"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-[#e10600]/20 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#071a2f]/70 via-[#071a2f]/50 to-[#071a2f]"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37]/20 to-transparent"></div>
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-[#e10600]/10 border border-[#e10600]/30 rounded-full backdrop-blur-sm">
-            <div className="w-2 h-2 bg-[#e10600] rounded-full animate-pulse"></div>
-            <span className="text-[#e10600] text-sm font-semibold tracking-wider">SEASON 2026 LIVE</span>
+          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-full backdrop-blur-sm">
+            <div className="w-2 h-2 bg-[#d4af37] rounded-full animate-pulse"></div>
+            <span className="text-[#d4af37] text-sm font-semibold tracking-wider">SEASON 2026 LIVE</span>
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-8xl font-bold text-white mb-6 tracking-tight">
             HORSE RACING
             <br />
-            <span className="text-[#e10600]">TOURNAMENT SYSTEM</span>
+            <span className="text-[#d4af37]">TOURNAMENT SYSTEM</span>
           </h1>
 
           <p className="text-xl sm:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
@@ -43,7 +43,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <button
               onClick={() => onNavigate('tournaments')}
-              className="group px-8 py-4 bg-[#e10600] text-white rounded hover:bg-[#c00500] transition-all flex items-center gap-2 min-w-[200px] justify-center"
+              className="group px-8 py-4 bg-[#d4af37] text-white rounded hover:bg-[#b8892d] transition-all flex items-center gap-2 min-w-[200px] justify-center"
             >
               <Trophy className="w-5 h-5" />
               View Tournaments
@@ -60,20 +60,20 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
           {/* Stats Bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <div className="bg-black/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#e10600] mb-2">250+</div>
+            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
+              <div className="text-4xl font-bold text-[#d4af37] mb-2">250+</div>
               <div className="text-gray-400 text-sm uppercase tracking-wider">Active Horses</div>
             </div>
-            <div className="bg-black/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#e10600] mb-2">180+</div>
+            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
+              <div className="text-4xl font-bold text-[#d4af37] mb-2">180+</div>
               <div className="text-gray-400 text-sm uppercase tracking-wider">Pro Jockeys</div>
             </div>
-            <div className="bg-black/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#e10600] mb-2">45</div>
+            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
+              <div className="text-4xl font-bold text-[#d4af37] mb-2">45</div>
               <div className="text-gray-400 text-sm uppercase tracking-wider">Tournaments</div>
             </div>
-            <div className="bg-black/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#e10600] mb-2">$2.5M</div>
+            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
+              <div className="text-4xl font-bold text-[#d4af37] mb-2">$2.5M</div>
               <div className="text-gray-400 text-sm uppercase tracking-wider">Prize Pool</div>
             </div>
           </div>
@@ -88,11 +88,11 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-gradient-to-b from-black to-[#0a0a0a]">
+      <section className="py-24 bg-gradient-to-b from-[#071a2f] to-[#071a2f]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-              Premium Racing <span className="text-[#e10600]">Platform</span>
+              Premium Racing <span className="text-[#d4af37]">Platform</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
               Built for the modern era of competitive horse racing with cutting-edge technology
@@ -101,9 +101,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Feature Card 1 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <Trophy className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <Trophy className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Tournament Management</h3>
               <p className="text-gray-400">
@@ -112,9 +112,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </div>
 
             {/* Feature Card 2 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <TrendingUp className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <TrendingUp className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Live Race Tracking</h3>
               <p className="text-gray-400">
@@ -123,9 +123,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </div>
 
             {/* Feature Card 3 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <Users className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <Users className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Jockey & Horse Profiles</h3>
               <p className="text-gray-400">
@@ -134,9 +134,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </div>
 
             {/* Feature Card 4 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <Calendar className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <Calendar className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Race Calendar</h3>
               <p className="text-gray-400">
@@ -145,9 +145,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </div>
 
             {/* Feature Card 5 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <TrendingUp className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <TrendingUp className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Predictions & Betting</h3>
               <p className="text-gray-400">
@@ -156,9 +156,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </div>
 
             {/* Feature Card 6 */}
-            <div className="group bg-[#1a1a1a] border border-white/10 rounded-lg p-8 hover:border-[#e10600]/50 transition-all hover:shadow-lg hover:shadow-[#e10600]/10">
-              <div className="w-14 h-14 bg-[#e10600]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#e10600]/20 transition-colors">
-                <Trophy className="w-7 h-7 text-[#e10600]" />
+            <div className="group bg-[#12304f] border border-white/10 rounded-lg p-8 hover:border-[#d4af37]/50 transition-all hover:shadow-lg hover:shadow-[#d4af37]/10">
+              <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
+                <Trophy className="w-7 h-7 text-[#d4af37]" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Rankings & Results</h3>
               <p className="text-gray-400">
@@ -170,7 +170,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-b from-[#0a0a0a] to-black">
+      <section className="py-24 bg-gradient-to-b from-[#071a2f] to-[#071a2f]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
             Ready to Experience the Future?
@@ -180,7 +180,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
           </p>
           <button
             onClick={() => onNavigate('dashboard')}
-            className="group px-10 py-5 bg-[#e10600] text-white rounded-lg hover:bg-[#c00500] transition-all text-lg font-semibold flex items-center gap-3 mx-auto"
+            className="group px-10 py-5 bg-[#d4af37] text-white rounded-lg hover:bg-[#b8892d] transition-all text-lg font-semibold flex items-center gap-3 mx-auto"
           >
             Get Started Now
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />

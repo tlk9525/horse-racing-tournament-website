@@ -15,7 +15,7 @@ interface CreateRacePageProps {
 
 export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
   const fieldClass =
-    'w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 outline-none focus:border-[#e10600]/70 focus:ring-2 focus:ring-[#e10600]/20';
+    'w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 outline-none focus:border-[#d4af37]/70 focus:ring-2 focus:ring-[#d4af37]/20';
 
   const [tournaments, setTournaments] = useState<any[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
@@ -150,7 +150,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-10 px-6">
+    <div className="min-h-screen bg-[#071a2f] py-10 px-6">
       <div className="max-w-6xl mx-auto">
         <button
           onClick={() => onNavigate('admin')}
@@ -160,7 +160,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
           Back
         </button>
 
-        <div className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8">
+        <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 mb-8">
             <div>
               <h1 className="text-4xl font-black text-white">
@@ -172,14 +172,14 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[#e10600]/30 bg-[#e10600]/10 px-5 py-3 text-[#ff6b66] font-bold">
+            <div className="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-[#f6d77a] font-bold">
               Default registration: {form.registrationPeriodMinutes || 10} minutes
             </div>
           </div>
 
-          <div className="mb-6 rounded-2xl border border-[#e10600]/30 bg-[#e10600]/10 p-5">
+          <div className="mb-6 rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-5">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="w-6 h-6 text-[#e10600] mt-0.5" />
+              <ShieldCheck className="w-6 h-6 text-[#d4af37] mt-0.5" />
 
               <div>
                 <div className="text-white font-bold">
@@ -211,7 +211,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
 
               <button
                 onClick={() => onNavigate('admin')}
-                className="px-5 py-3 rounded-xl bg-[#e10600] text-white font-bold hover:bg-[#c00500]"
+                className="px-5 py-3 rounded-xl bg-[#d4af37] text-white font-bold hover:bg-[#b8892d]"
               >
                 Back to Admin Panel
               </button>
@@ -496,9 +496,9 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
             </div>
 
             <div className="space-y-5">
-              <div className="rounded-2xl border border-white/10 bg-[#111111] p-6 sticky top-24">
+              <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-6 sticky top-24">
                 <div className="flex items-center gap-3 mb-4">
-                  <Bell className="w-6 h-6 text-[#e10600]" />
+                  <Bell className="w-6 h-6 text-[#d4af37]" />
 
                   <h2 className="text-2xl font-black text-white">
                     Open Registration
@@ -529,7 +529,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || tournaments.length === 0}
-                  className="w-full px-8 py-4 bg-[#e10600] hover:bg-[#c00500] disabled:opacity-60 rounded-2xl text-white font-bold transition-all"
+                  className="w-full px-8 py-4 bg-[#d4af37] hover:bg-[#b8892d] disabled:opacity-60 rounded-2xl text-white font-bold transition-all"
                 >
                   <CalendarClock className="inline-block w-5 h-5 mr-2" />
                   {isSubmitting ? 'Creating Race...' : 'Create Race'}

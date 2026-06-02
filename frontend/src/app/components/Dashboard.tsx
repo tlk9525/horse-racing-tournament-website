@@ -97,12 +97,12 @@ export default function Dashboard({
 
   const statusTone = (status: string) => {
     const tones: Record<string, string> = {
-      live: 'bg-[#e10600]/20 border-[#e10600] text-[#ff6b66]',
+      live: 'bg-[#d4af37]/20 border-[#d4af37] text-[#f6d77a]',
       upcoming: 'bg-sky-500/10 border-sky-500/30 text-sky-300',
       'registration-open': 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
       'registration-closed': 'bg-amber-500/10 border-amber-500/30 text-amber-300',
       published: 'bg-sky-500/10 border-sky-500/30 text-sky-300',
-      'in-progress': 'bg-[#e10600]/20 border-[#e10600] text-[#ff6b66]',
+      'in-progress': 'bg-[#d4af37]/20 border-[#d4af37] text-[#f6d77a]',
       finished: 'bg-violet-500/10 border-violet-500/30 text-violet-300',
       completed: 'bg-white/10 border-white/20 text-white',
     };
@@ -142,14 +142,14 @@ export default function Dashboard({
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12">
+    <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
 
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* HERO */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#111111] via-[#161616] to-[#0b0b0b] p-8 mb-10">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#0b223d] via-[#161616] to-[#0b0b0b] p-8 mb-10">
 
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#e10600]/10 blur-3xl rounded-full"></div>
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#d4af37]/10 blur-3xl rounded-full"></div>
 
           <div className="relative z-10 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-10">
 
@@ -158,11 +158,11 @@ export default function Dashboard({
 
               <div className="flex items-center gap-3 mb-5">
 
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#e10600]/30 bg-[#e10600]/10">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10">
 
-                  <Circle className="w-3 h-3 fill-[#e10600] text-[#e10600] animate-pulse" />
+                  <Circle className="w-3 h-3 fill-[#d4af37] text-[#d4af37] animate-pulse" />
 
-                  <span className="text-[#e10600] text-sm font-bold uppercase">
+                  <span className="text-[#d4af37] text-sm font-bold uppercase">
                     Live Racing
                   </span>
 
@@ -176,7 +176,7 @@ export default function Dashboard({
 
               <h1 className="text-6xl font-black text-white leading-tight mb-5">
                 Racing Command
-                <span className="block text-[#e10600]">
+                <span className="block text-[#d4af37]">
                   Center
                 </span>
               </h1>
@@ -211,10 +211,10 @@ export default function Dashboard({
 
                 <div
                   key={index}
-                  className="bg-black/40 border border-white/10 rounded-2xl p-6"
+                  className="bg-[#071a2f]/40 border border-white/10 rounded-2xl p-6"
                 >
 
-                  <div className="text-[#e10600] uppercase tracking-wider text-sm mb-2">
+                  <div className="text-[#d4af37] uppercase tracking-wider text-sm mb-2">
                     {item.label}
                   </div>
 
@@ -263,13 +263,13 @@ export default function Dashboard({
 
             <div
               key={index}
-              className="bg-[#151515] border border-white/10 rounded-2xl p-6 hover:border-[#e10600]/40 transition-all"
+              className="bg-[#102a46] border border-white/10 rounded-2xl p-6 hover:border-[#d4af37]/40 transition-all"
             >
 
               <div className="flex items-center justify-between mb-6">
 
-                <div className="w-14 h-14 rounded-xl bg-[#e10600]/10 flex items-center justify-center">
-                  <item.icon className="w-7 h-7 text-[#e10600]" />
+                <div className="w-14 h-14 rounded-xl bg-[#d4af37]/10 flex items-center justify-center">
+                  <item.icon className="w-7 h-7 text-[#d4af37]" />
                 </div>
 
                 <div className="flex items-center gap-1 text-green-500">
@@ -302,7 +302,7 @@ export default function Dashboard({
           <div className="xl:col-span-2 space-y-8">
 
             {/* UPCOMING RACES */}
-            <div className="bg-[#151515] border border-white/10 rounded-2xl p-6">
+            <div className="bg-[#102a46] border border-white/10 rounded-2xl p-6">
 
               <div className="flex items-center justify-between mb-8">
 
@@ -322,7 +322,7 @@ export default function Dashboard({
                   onClick={() =>
                     setShowAllRaces(!showAllRaces)
                   }
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#e10600]/30 bg-[#e10600]/10 text-[#e10600]"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]"
                 >
 
                   {showAllRaces
@@ -347,7 +347,7 @@ export default function Dashboard({
 
                   <div
                     key={race.id}
-                    className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-5 hover:border-[#e10600]/40 transition-all"
+                    className="bg-[#0d0d0d] border border-white/10 rounded-2xl p-5 hover:border-[#d4af37]/40 transition-all"
                   >
 
                     <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
@@ -422,7 +422,7 @@ export default function Dashboard({
                                 Referee
                               </p>
                               <p className="text-white text-sm font-semibold mt-1 flex items-center gap-1">
-                                <ShieldCheck className="w-4 h-4 text-[#e10600]" />
+                                <ShieldCheck className="w-4 h-4 text-[#d4af37]" />
                                 {race.referee}
                               </p>
                             </div>
@@ -463,7 +463,7 @@ export default function Dashboard({
                             );
 
                           }}
-                          className="relative z-[9999] px-5 py-3 rounded-xl bg-[#e10600] hover:bg-[#ff2a2a] text-white font-semibold transition-all cursor-pointer"
+                          className="relative z-[9999] px-5 py-3 rounded-xl bg-[#d4af37] hover:bg-[#ff2a2a] text-white font-semibold transition-all cursor-pointer"
                         >
                           View Race
                         </button>
@@ -486,7 +486,7 @@ export default function Dashboard({
           <div className="space-y-8">
 
             {/* TOP JOCKEYS */}
-            <div className="bg-[#151515] border border-white/10 rounded-2xl p-6">
+            <div className="bg-[#102a46] border border-white/10 rounded-2xl p-6">
 
               <div className="flex items-center justify-between mb-8">
 
@@ -502,7 +502,7 @@ export default function Dashboard({
 
                 </div>
 
-                <Crown className="w-7 h-7 text-[#e10600]" />
+                <Crown className="w-7 h-7 text-[#d4af37]" />
 
               </div>
 
@@ -545,7 +545,7 @@ export default function Dashboard({
                             {jockey.wins} Wins
                           </span>
 
-                          <span className="text-[#e10600] font-bold">
+                          <span className="text-[#d4af37] font-bold">
                             {jockey.winRate}%
                           </span>
 
@@ -564,7 +564,7 @@ export default function Dashboard({
             </div>
 
             {/* PERFORMANCE */}
-            <div className="bg-[#151515] border border-white/10 rounded-2xl p-6">
+            <div className="bg-[#102a46] border border-white/10 rounded-2xl p-6">
 
               <h2 className="text-3xl font-black text-white mb-8">
                 Performance Overview
@@ -607,7 +607,7 @@ export default function Dashboard({
                     <div className="h-3 bg-white/5 rounded-full overflow-hidden">
 
                       <div
-                        className="h-full bg-gradient-to-r from-[#e10600] to-[#ff4500]"
+                        className="h-full bg-gradient-to-r from-[#d4af37] to-[#ff4500]"
                         style={{
                           width: item.width,
                         }}
