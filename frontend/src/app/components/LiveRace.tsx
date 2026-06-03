@@ -252,7 +252,7 @@ export default function LiveRace() {
                           </div>
 
                           <div className="text-gray-400 mt-1">
-                            Jockey: {entry.jockeyName} • Handicap {entry.handicap || 0}kg
+                            Jockey: {entry.jockeyName} • Rating {entry.ratingSnapshot || 'TBD'} • Handicap {entry.handicap || 0}kg
                           </div>
 
                           <div className="text-[#d4af37] font-bold mt-2">

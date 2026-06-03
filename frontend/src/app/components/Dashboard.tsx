@@ -182,7 +182,7 @@ export default function Dashboard({
               </h1>
 
               <p className="text-lg text-gray-400 max-w-2xl">
-                Manage approvals, owner and jockey confirmations, referee checks, predictions, official results, rankings and awards.
+                Manage approvals, owner and jockey confirmations, referee checks, race cards, official results, rankings and awards.
               </p>
 
             </div>

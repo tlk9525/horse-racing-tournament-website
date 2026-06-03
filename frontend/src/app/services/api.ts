@@ -38,6 +38,11 @@ export interface HorseRecord {
   weightKg?: number;
   heightCm?: number;
   baseHandicap?: number;
+  speedRating?: number;
+  staminaRating?: number;
+  formRating?: number;
+  healthRating?: number;
+  overallRating?: number;
   healthStatus?: string;
   profileNotes?: string;
   ownerUserId: string;
@@ -132,6 +137,7 @@ export interface RaceEntryRecord {
   status: string;
   lane: number | null;
   handicap: number;
+  ratingSnapshot?: number;
   ownerConfirmed: boolean;
   jockeyConfirmed: boolean;
   preRaceStatus: string;
@@ -315,6 +321,11 @@ export const createHorse = async (horse: {
   weightKg?: string | number;
   heightCm?: string | number;
   baseHandicap?: string | number;
+  speedRating?: string | number;
+  staminaRating?: string | number;
+  formRating?: string | number;
+  healthRating?: string | number;
+  overallRating?: string | number;
   healthStatus?: string;
   profileNotes?: string;
   veterinaryCertificateUrl?: string;
@@ -339,6 +350,11 @@ export const updateHorse = async (
     weightKg?: string | number;
     heightCm?: string | number;
     baseHandicap?: string | number;
+    speedRating?: string | number;
+    staminaRating?: string | number;
+    formRating?: string | number;
+    healthRating?: string | number;
+    overallRating?: string | number;
     healthStatus?: string;
     profileNotes?: string;
     veterinaryCertificateUrl?: string;

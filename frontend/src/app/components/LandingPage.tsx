@@ -149,9 +149,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
               <div className="w-14 h-14 bg-[#d4af37]/10 rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/20 transition-colors">
                 <TrendingUp className="w-7 h-7 text-[#d4af37]" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Predictions & Betting</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Race Cards & Standings</h3>
               <p className="text-gray-400">
-                Engage with intelligent prediction systems, leaderboards, and reward points.
+                Review race cards, line assignments, results, awards, and tournament ranking updates.
               </p>
             </div>
 

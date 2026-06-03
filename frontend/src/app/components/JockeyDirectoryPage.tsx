@@ -242,6 +242,14 @@ export default function JockeyDirectoryPage() {
                             <span className="rounded-lg border border-white/10 bg-[#071a2f]/30 px-3 py-1 text-sm text-gray-300">
                               Gate {entry.lane || 'TBD'}
                             </span>
+
+                            <span className="rounded-lg border border-white/10 bg-[#071a2f]/30 px-3 py-1 text-sm text-gray-300">
+                              Rating {entry.ratingSnapshot || 'TBD'}
+                            </span>
+
+                            <span className="rounded-lg border border-white/10 bg-[#071a2f]/30 px-3 py-1 text-sm text-gray-300">
+                              Handicap {entry.handicap || 0}kg
+                            </span>
                           </div>
                         </div>
                       </div>

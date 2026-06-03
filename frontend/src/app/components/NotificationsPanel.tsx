@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   NotificationItem,
   getNotifications,
@@ -9,6 +9,7 @@ import { messageTone } from '../utils/messageTone';
 
 export default function NotificationsPanel() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const loadNotifications = () => {
     getNotifications()
@@ -21,6 +22,10 @@ export default function NotificationsPanel() {
   }, []);
 
   const unreadCount = notifications.filter((item) => !item.read).length;
+  const visibleNotifications = isExpanded
+    ? notifications
+    : notifications.slice(0, 3);
+  const hasMoreNotifications = notifications.length > 3;
 
   return (
     <div className="bg-[#102a46] border border-white/10 rounded-2xl p-6 mb-8">
@@ -50,7 +55,7 @@ export default function NotificationsPanel() {
         </div>
       ) : (
         <div className="space-y-3">
-          {notifications.slice(0, 5).map((notification) => {
+          {visibleNotifications.map((notification) => {
             const tone = messageTone(`${notification.title} ${notification.message}`);
             const toneClass =
               tone === 'success'
@@ -83,6 +88,25 @@ export default function NotificationsPanel() {
               </button>
             );
           })}
+
+          {hasMoreNotifications && (
+            <button
+              onClick={() => setIsExpanded((current) => !current)}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-[#071a2f] px-4 py-3 text-gray-300 font-bold hover:bg-white/5 hover:text-white transition-all"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="w-4 h-4 text-[#d4af37]" />
+                  Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 text-[#d4af37]" />
+                  View {notifications.length - 3} more
+                </>
+              )}
+            </button>
+          )}
         </div>
       )}
     </div>

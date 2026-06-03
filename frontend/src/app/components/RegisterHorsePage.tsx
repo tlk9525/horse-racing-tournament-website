@@ -27,6 +27,10 @@ export default function RegisterHorsePage({
   const [weightKg, setWeightKg] = useState('');
   const [heightCm, setHeightCm] = useState('');
   const [baseHandicap, setBaseHandicap] = useState('');
+  const [speedRating, setSpeedRating] = useState('75');
+  const [staminaRating, setStaminaRating] = useState('75');
+  const [formRating, setFormRating] = useState('75');
+  const [healthRating, setHealthRating] = useState('80');
   const [healthStatus, setHealthStatus] = useState('');
   const [profileNotes, setProfileNotes] = useState('');
   const [veterinaryCertificateUrl, setVeterinaryCertificateUrl] = useState('');
@@ -35,6 +39,18 @@ export default function RegisterHorsePage({
   const isEdit = mode === 'edit' && horse;
   const fieldClass =
     'w-full h-12 px-4 bg-[#071a2f] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#d4af37]';
+  const ratingValue = (value: string, fallback: number) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+  const overallRating = Number(
+    (
+      ratingValue(speedRating, 75) * 0.4 +
+      ratingValue(staminaRating, 75) * 0.3 +
+      ratingValue(formRating, 75) * 0.2 +
+      ratingValue(healthRating, 80) * 0.1
+    ).toFixed(2)
+  );
 
   useEffect(() => {
     if (!horse) return;
@@ -48,6 +64,10 @@ export default function RegisterHorsePage({
     setWeightKg(horse.weightKg ? String(horse.weightKg) : '');
     setHeightCm(horse.heightCm ? String(horse.heightCm) : '');
     setBaseHandicap(horse.baseHandicap ? String(horse.baseHandicap) : '');
+    setSpeedRating(horse.speedRating ? String(horse.speedRating) : '75');
+    setStaminaRating(horse.staminaRating ? String(horse.staminaRating) : '75');
+    setFormRating(horse.formRating ? String(horse.formRating) : '75');
+    setHealthRating(horse.healthRating ? String(horse.healthRating) : '80');
     setHealthStatus(horse.healthStatus || '');
     setProfileNotes(horse.profileNotes || '');
     setVeterinaryCertificateUrl(horse.veterinaryCertificateUrl || '');
@@ -67,6 +87,11 @@ export default function RegisterHorsePage({
       weightKg,
       heightCm,
       baseHandicap,
+      speedRating,
+      staminaRating,
+      formRating,
+      healthRating,
+      overallRating,
       healthStatus,
       profileNotes,
       veterinaryCertificateUrl,
@@ -273,6 +298,54 @@ export default function RegisterHorsePage({
                 onChange={(event) => setBaseHandicap(event.target.value)}
                 className={fieldClass}
               />
+            </div>
+
+            <div className="md:col-span-2 rounded-2xl border border-white/10 bg-[#12304f] p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                <div>
+                  <h2 className="text-xl font-black text-white">
+                    Performance Rating
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Used by Admin when closing registration to prepare handicap and line assignment.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-3">
+                  <div className="text-[#f6d77a] text-xs uppercase font-bold">
+                    Overall Rating
+                  </div>
+                  <div className="text-white text-2xl font-black">
+                    {overallRating}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-4">
+                {[
+                  ['Speed', speedRating, setSpeedRating],
+                  ['Stamina', staminaRating, setStaminaRating],
+                  ['Current Form', formRating, setFormRating],
+                  ['Health', healthRating, setHealthRating],
+                ].map(([label, value, setter]) => (
+                  <div key={String(label)}>
+                    <label className="block text-gray-300 mb-2">
+                      {String(label)}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={String(value)}
+                      onChange={(event) =>
+                        (setter as (next: string) => void)(event.target.value)
+                      }
+                      className={fieldClass}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>

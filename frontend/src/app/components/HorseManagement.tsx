@@ -14,6 +14,17 @@ interface HorseManagementProps {
   onSelectHorse: (horse: HorseRecord) => void;
 }
 
+const horseRating = (horse: HorseRecord) =>
+  Number(
+    (
+      Number(horse.overallRating || 0) ||
+      Number(horse.speedRating || 75) * 0.4 +
+        Number(horse.staminaRating || 75) * 0.3 +
+        Number(horse.formRating || 75) * 0.2 +
+        Number(horse.healthRating || 80) * 0.1
+    ).toFixed(2)
+  );
+
 export default function HorseManagement({
   onNavigate,
   onSelectHorse,
@@ -114,7 +125,7 @@ export default function HorseManagement({
                   </p>
 
                   <p className="text-gray-500 mt-1">
-                    {horse.species || 'Species not set'} • {horse.weightKg || 0}kg • Handicap {horse.baseHandicap || 0}
+                    {horse.species || 'Species not set'} • {horse.weightKg || 0}kg • Handicap {horse.baseHandicap || 0} • Rating {horseRating(horse)}
                   </p>
                 </div>
 
@@ -146,6 +157,13 @@ export default function HorseManagement({
                   <span className="text-gray-400">Height</span>
                   <span className="text-white font-semibold">
                     {horse.heightCm ? `${horse.heightCm}cm` : 'Not set'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Overall Rating</span>
+                  <span className="text-white font-semibold">
+                    {horseRating(horse)}
                   </span>
                 </div>
 

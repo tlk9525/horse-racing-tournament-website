@@ -56,7 +56,7 @@ export default function ResultsPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Results Publishing</h1>
           <p className="text-gray-400">
-            Referee confirms results, Admin publishes them, then rankings and prediction rewards are updated for {currentTournament.name}.
+            Referee confirms results, Admin publishes them, then rankings and awards are updated for {currentTournament.name}.
           </p>
         </div>
 

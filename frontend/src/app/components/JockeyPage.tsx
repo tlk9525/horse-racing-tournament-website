@@ -315,11 +315,18 @@ export default function JockeyPage({
                         </div>
 
                         {lineVisible ? (
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-3 gap-3">
                             <div>
                               <p className="text-gray-500 text-xs">Gate / Line</p>
                               <p className="text-white text-2xl font-black">
                                 {entry.lane || 'TBD'}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-gray-500 text-xs">Rating</p>
+                              <p className="text-white text-2xl font-black">
+                                {entry.ratingSnapshot || 'TBD'}
                               </p>
                             </div>
 

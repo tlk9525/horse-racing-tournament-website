@@ -2,6 +2,7 @@ import {
   Activity,
   ArrowLeft,
   FileText,
+  Gauge,
   HeartPulse,
   Pencil,
   Ruler,
@@ -22,6 +23,17 @@ const value = (input: string | number | null | undefined, suffix = '') =>
     ? 'Not set'
     : `${input}${suffix}`;
 
+const overall = (horse: HorseRecord) =>
+  Number(
+    (
+      Number(horse.overallRating || 0) ||
+      Number(horse.speedRating || 75) * 0.4 +
+        Number(horse.staminaRating || 75) * 0.3 +
+        Number(horse.formRating || 75) * 0.2 +
+        Number(horse.healthRating || 80) * 0.1
+    ).toFixed(2)
+  );
+
 export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
   if (!horse) {
     return (
@@ -35,7 +47,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
             Back to Horses
           </button>
 
-          <div className="rounded-2xl border border-white/10 bg-[#111] p-8 text-gray-300">
+          <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8 text-gray-300">
             Select a horse from the Horses page to view its details.
           </div>
         </div>
@@ -52,6 +64,11 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
     ['Weight', value(horse.weightKg, 'kg'), Scale],
     ['Height', value(horse.heightCm, 'cm'), Ruler],
     ['Base Handicap', value(horse.baseHandicap), Trophy],
+    ['Speed Rating', value(horse.speedRating), Gauge],
+    ['Stamina Rating', value(horse.staminaRating), Activity],
+    ['Form Rating', value(horse.formRating), Trophy],
+    ['Health Rating', value(horse.healthRating), HeartPulse],
+    ['Overall Rating', overall(horse), Gauge],
     ['Health Status', horse.healthStatus || 'Not set', HeartPulse],
     ['Jockey Pairing', statusLabel(horse.jockeyConfirmation), ShieldCheck],
   ];
@@ -70,7 +87,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
 
           <button
             onClick={() => onNavigate('edit-horse')}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-[#ff4b45] font-bold hover:bg-[#d4af37]/20"
+            className="flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-[#d4af37] font-bold hover:bg-[#d4af37]/20"
           >
             <Pencil className="w-4 h-4" />
             Edit Horse
@@ -94,6 +111,10 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
 
                 <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
                   Handicap {horse.baseHandicap || 0}
+                </span>
+
+                <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
+                  Rating {overall(horse)}
                 </span>
 
                 <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
@@ -197,6 +218,11 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-400">Handicap</span>
                   <span className="text-white font-bold">{horse.baseHandicap || 0}</span>
+                </div>
+
+                <div className="flex justify-between gap-4">
+                  <span className="text-gray-400">Overall rating</span>
+                  <span className="text-white font-bold">{overall(horse)}</span>
                 </div>
               </div>
             </div>

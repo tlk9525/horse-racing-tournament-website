@@ -131,7 +131,7 @@ export default function JockeyProfile({
               </h2>
 
               <p className="text-gray-400 mt-2">
-                Horse Owner selected this jockey for {raceSchedule[0].name}. The race cannot open predictions until the jockey confirmation is completed.
+                Horse Owner selected this jockey for {raceSchedule[0].name}. The race card cannot be finalized until the jockey confirmation is completed.
               </p>
 
               <div className="flex flex-wrap gap-4 mt-6">

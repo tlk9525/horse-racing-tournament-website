@@ -22,7 +22,6 @@ import JockeyProfile from './app/components/JockeyProfile';
 import JockeyDirectoryPage from './app/components/JockeyDirectoryPage';
 
 import LiveRace from './app/components/LiveRace';
-import PredictionPage from './app/components/PredictionPage';
 import ResultsPage from './app/components/ResultsPage';
 import RankingsPage from './app/components/RankingsPage';
 import AdminPanel from './app/components/AdminPanel';
@@ -37,7 +36,7 @@ const roleHome: Record<string, string> = {
   owner: 'horses',
   jockey: 'jockeys',
   referee: 'live-race',
-  spectator: 'predictions',
+  spectator: 'tournaments',
 };
 
 const protectedPages: Record<string, string[]> = {
@@ -52,7 +51,6 @@ const protectedPages: Record<string, string[]> = {
   jockeys: ['admin', 'owner', 'jockey'],
   'jockey-profile': ['jockey', 'admin'],
   'live-race': ['admin', 'referee', 'spectator'],
-  predictions: ['spectator'],
   results: ['admin', 'referee', 'spectator'],
 };
 
@@ -137,7 +135,9 @@ export default function App() {
 
       case 'tournament-details':
         return (
-          <TournamentDetails />
+          <TournamentDetails
+            onNavigate={navigate}
+          />
         );
 
       case 'race-details':
@@ -200,11 +200,6 @@ export default function App() {
       case 'live-race':
         return (
           <LiveRace />
-        );
-
-      case 'predictions':
-        return (
-          <PredictionPage />
         );
 
       case 'results':

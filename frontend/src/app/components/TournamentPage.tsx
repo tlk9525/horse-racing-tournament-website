@@ -27,6 +27,11 @@ interface TournamentPageProps {
   onNavigate: (page: string) => void;
 }
 
+const MAX_RACE_FIELD_SIZE = 10;
+
+const raceNumberValue = (raceNumber?: string) =>
+  Number(String(raceNumber || '').replace(/\D/g, '')) || 999;
+
 export default function TournamentPage({
   currentUser,
   onNavigate,
@@ -35,6 +40,11 @@ export default function TournamentPage({
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
   const [registrations, setRegistrations] = useState<JockeyTournamentRegistration[]>([]);
+  const [selectedTournamentId, setSelectedTournamentId] = useState(
+    sessionStorage.getItem('selectedTournamentId') || ''
+  );
+  const [scheduleExpanded, setScheduleExpanded] = useState(false);
+  const [expandedGateRaceIds, setExpandedGateRaceIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
 
   const loadTournaments = () => {
@@ -44,6 +54,16 @@ export default function TournamentPage({
         setRaces(data.races);
         setRaceEntries(data.raceEntries || []);
         setRegistrations(data.jockeyTournamentRegistrations || []);
+        setSelectedTournamentId((current) => {
+          const stored = sessionStorage.getItem('selectedTournamentId');
+          const next = current || stored || data.tournaments?.[0]?.id || '';
+
+          if (next) {
+            sessionStorage.setItem('selectedTournamentId', next);
+          }
+
+          return next;
+        });
       })
       .catch((error) =>
         setMessage(error instanceof Error ? error.message : 'Unable to load tournaments')
@@ -75,9 +95,45 @@ export default function TournamentPage({
       );
   };
 
-  const openRaceRegistration = (tournamentId: string) => {
+  const selectTournament = (tournamentId: string) => {
+    setSelectedTournamentId(tournamentId);
+    setScheduleExpanded(false);
+    setExpandedGateRaceIds([]);
     sessionStorage.setItem('selectedTournamentId', tournamentId);
+  };
+
+  const toggleGateAssignments = (raceId: string) => {
+    setExpandedGateRaceIds((current) =>
+      current.includes(raceId)
+        ? current.filter((id) => id !== raceId)
+        : [...current, raceId]
+    );
+  };
+
+  const openRaceRegistration = (tournamentId: string) => {
+    selectTournament(tournamentId);
     onNavigate('race-registration');
+  };
+
+  const openTournamentDetails = (tournamentId: string) => {
+    selectTournament(tournamentId);
+    onNavigate('tournament-details');
+  };
+
+  const openTournamentRaces = (tournamentId: string) => {
+    selectTournament(tournamentId);
+
+    const firstRace = races
+      .filter((race) => race.tournamentId === tournamentId)
+      .sort((a, b) => {
+        return raceNumberValue(a.raceNumber) - raceNumberValue(b.raceNumber);
+      })[0];
+
+    if (firstRace) {
+      sessionStorage.setItem('selectedRaceId', firstRace.id);
+    }
+
+    onNavigate('race-details');
   };
 
   const openRaceView = (raceId: string, page = 'race-details') => {
@@ -100,6 +156,12 @@ export default function TournamentPage({
   };
 
   const raceAction = (race: RaceRecord) => {
+    const tournament = tournaments.find((item) => item.id === race.tournamentId);
+
+    if (race.status === 'completed' || tournament?.status === 'completed') {
+      return { label: 'View Race', page: 'race-details' };
+    }
+
     if (currentUser?.role === 'owner') {
       return race.status === 'registration-open'
         ? { label: 'Register Horse', page: 'race-registration' }
@@ -136,6 +198,18 @@ export default function TournamentPage({
           },
         ];
 
+  const selectedTournament =
+    displayTournaments.find((tournament) => tournament.id === selectedTournamentId) ||
+    displayTournaments[0];
+
+  const selectedTournamentRaces = races
+    .filter((race) => race.tournamentId === selectedTournament?.id)
+    .sort((a, b) => raceNumberValue(a.raceNumber) - raceNumberValue(b.raceNumber));
+
+  const visibleScheduleRaces = scheduleExpanded
+    ? selectedTournamentRaces
+    : selectedTournamentRaces.slice(0, 4);
+
   return (
     <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,11 +238,17 @@ export default function TournamentPage({
               (race) => race.status === 'registration-open'
             ).length;
             const jockeyRegistration = jockeyRegistrationByTournament.get(tournament.id);
+            const isCompletedTournament = tournament.status === 'completed';
 
             return (
               <div
                 key={tournament.id}
-                className="bg-[#12304f] border border-white/10 rounded-2xl overflow-hidden hover:border-[#d4af37]/50 transition-all duration-300"
+                onClick={() => selectTournament(tournament.id)}
+                className={`bg-[#12304f] border rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer ${
+                  selectedTournament?.id === tournament.id
+                    ? 'border-[#d4af37] shadow-[0_0_0_1px_rgba(212,175,55,0.35)]'
+                    : 'border-white/10 hover:border-[#d4af37]/50'
+                }`}
               >
                 <div className="h-52 bg-[url('https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1200')] bg-cover bg-center relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-[#111]/50 to-transparent" />
@@ -229,15 +309,34 @@ export default function TournamentPage({
 
                   <div className="grid sm:grid-cols-2 gap-3">
                     <button
-                      onClick={() => onNavigate('tournament-details')}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openTournamentDetails(tournament.id);
+                      }}
                       className="py-4 bg-white/10 hover:bg-white/15 text-white rounded-xl transition-all font-bold"
                     >
                       View Details
                     </button>
 
-                    {currentUser?.role === 'jockey' && (
+                    {isCompletedTournament && (
                       <button
-                        onClick={() => handleJoinTournament(tournament.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openTournamentRaces(tournament.id);
+                        }}
+                        className="py-4 bg-[#d4af37] hover:bg-[#b8892d] text-white rounded-xl transition-all font-bold"
+                      >
+                        View Races
+                      </button>
+                    )}
+
+                    {!isCompletedTournament && currentUser?.role === 'jockey' && (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          selectTournament(tournament.id);
+                          handleJoinTournament(tournament.id);
+                        }}
                         disabled={Boolean(jockeyRegistration)}
                         className="py-4 bg-[#d4af37] hover:bg-[#b8892d] disabled:bg-white/10 disabled:text-gray-500 text-white rounded-xl transition-all font-bold"
                       >
@@ -247,9 +346,12 @@ export default function TournamentPage({
                       </button>
                     )}
 
-                    {currentUser?.role === 'owner' && (
+                    {!isCompletedTournament && currentUser?.role === 'owner' && (
                       <button
-                        onClick={() => openRaceRegistration(tournament.id)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openRaceRegistration(tournament.id);
+                        }}
                         className="py-4 bg-[#d4af37] hover:bg-[#b8892d] text-white rounded-xl transition-all font-bold"
                       >
                         Register Horse
@@ -263,16 +365,32 @@ export default function TournamentPage({
         </div>
 
         <div className="bg-[#12304f] border border-white/10 rounded-2xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Trophy className="w-7 h-7 text-[#d4af37]" />
-            <h2 className="text-3xl font-bold text-white">Race Schedule</h2>
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+            <div>
+              <div className="flex items-center gap-3">
+                <Trophy className="w-7 h-7 text-[#d4af37]" />
+                <h2 className="text-3xl font-bold text-white">Race Schedule</h2>
+              </div>
+
+              <p className="text-gray-400 mt-2">
+                {selectedTournament?.name || 'Select a tournament'} • Showing {visibleScheduleRaces.length}/{selectedTournamentRaces.length} races
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-3 text-[#f6d77a] font-bold">
+              Selected: {selectedTournament?.name || '-'}
+            </div>
           </div>
 
           <div className="grid xl:grid-cols-2 gap-5">
-            {races.map((race) => {
+            {visibleScheduleRaces.map((race) => {
               const approvedEntries = raceEntries.filter(
                 (entry) => entry.raceId === race.id && entry.status === 'approved'
               );
+              const gateExpanded = expandedGateRaceIds.includes(race.id);
+              const visibleGateEntries = gateExpanded
+                ? approvedEntries
+                : approvedEntries.slice(0, 4);
               const gateVisible = ['published', 'in-progress', 'finished', 'completed'].includes(
                 race.status
               );
@@ -385,12 +503,11 @@ export default function TournamentPage({
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                         <p className="text-white font-semibold">
-                          {approvedEntries.length || race.participants || 0} horses
+                          {approvedEntries.length || race.participants || 0}/{MAX_RACE_FIELD_SIZE} horses
                         </p>
                       </div>
                       <p className="text-gray-400 text-sm mt-1">
-                        Owner {race.ownerConfirmed}/{race.participants || approvedEntries.length || 0} • Jockey{' '}
-                        {race.jockeyConfirmed}/{race.participants || approvedEntries.length || 0}
+                        Track limit: {MAX_RACE_FIELD_SIZE} horses / {MAX_RACE_FIELD_SIZE} jockeys
                       </p>
                     </div>
 
@@ -411,19 +528,32 @@ export default function TournamentPage({
                   {gateVisible ? (
                     <div className="mt-4 border border-[#d4af37]/25 bg-[#d4af37]/5 rounded-xl p-4">
                       <p className="text-[#f6d77a] text-xs uppercase font-bold mb-3">
-                        Gate Assignments
+                        Gate Assignments • Showing {visibleGateEntries.length}/{approvedEntries.length}
                       </p>
                       {approvedEntries.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {approvedEntries.map((entry) => (
-                            <span
-                              key={entry.id}
-                              className="px-3 py-2 rounded-lg bg-[#071a2f]/40 border border-white/10 text-sm text-white"
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            {visibleGateEntries.map((entry) => (
+                              <span
+                                key={entry.id}
+                                className="px-3 py-2 rounded-lg bg-[#071a2f]/40 border border-white/10 text-sm text-white"
+                              >
+                                Gate {entry.lane || '-'} • {entry.horseName || 'Horse'} • Rating {entry.ratingSnapshot || 'TBD'} • Handicap {entry.handicap || 0}kg
+                              </span>
+                            ))}
+                          </div>
+
+                          {approvedEntries.length > 4 && (
+                            <button
+                              onClick={() => toggleGateAssignments(race.id)}
+                              className="mt-4 rounded-lg border border-[#d4af37]/40 bg-[#d4af37] px-5 py-2 text-sm font-bold text-[#071a2f] hover:bg-[#f0d66c]"
                             >
-                              Gate {entry.lane || '-'} • {entry.horseName || 'Horse'}
-                            </span>
-                          ))}
-                        </div>
+                              {gateExpanded
+                                ? 'Show first 4 gates'
+                                : `View all ${approvedEntries.length} gates`}
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <p className="text-gray-400 text-sm">
                           Gate assignments will appear after approved entries are collected.
@@ -440,7 +570,26 @@ export default function TournamentPage({
                 </div>
               );
             })}
+
+            {visibleScheduleRaces.length === 0 && (
+              <div className="xl:col-span-2 rounded-xl border border-white/10 bg-[#071a2f] p-8 text-center text-gray-400">
+                This tournament has no races yet.
+              </div>
+            )}
           </div>
+
+          {selectedTournamentRaces.length > 4 && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => setScheduleExpanded((expanded) => !expanded)}
+                className="rounded-xl border border-[#d4af37]/40 bg-[#d4af37] px-8 py-4 font-bold text-[#071a2f] hover:bg-[#f0d66c]"
+              >
+                {scheduleExpanded
+                  ? 'Show first 4 races'
+                  : `View all ${selectedTournamentRaces.length} races`}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
