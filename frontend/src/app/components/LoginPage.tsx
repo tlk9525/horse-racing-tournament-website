@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   Mail,
@@ -12,17 +12,18 @@ import {
   AuthUser,
   UserRole,
   login,
-  loginWithGoogle,
   register,
   storeToken,
 } from '../services/api';
 
 interface LoginPageProps {
+  initialMode?: 'login' | 'register';
   onLogin: (user: AuthUser) => void;
   onNavigate: (page: string) => void;
 }
 
 export default function LoginPage({
+  initialMode = 'login',
   onLogin,
   onNavigate,
 }: LoginPageProps) {
@@ -31,7 +32,7 @@ export default function LoginPage({
     useState(false);
 
   const [isRegister, setIsRegister] =
-    useState(false);
+    useState(initialMode === 'register');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,75 +40,16 @@ export default function LoginPage({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('spectator');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const googleButtonRef = useRef<HTMLDivElement | null>(null);
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
   useEffect(() => {
-    if (!googleClientId || !googleButtonRef.current) return;
-
-    const renderGoogleButton = () => {
-      const google = (window as any).google;
-
-      if (!google?.accounts?.id || !googleButtonRef.current) return;
-
-      googleButtonRef.current.innerHTML = '';
-
-      google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: async (response: { credential?: string }) => {
-          if (!response.credential) {
-            setError('Google did not return a login credential.');
-            return;
-          }
-
-          setError('');
-          setIsSubmitting(true);
-
-          try {
-            const result = await loginWithGoogle(response.credential, role);
-            storeToken(result.token);
-            onLogin(result.user);
-          } catch (err) {
-            setError(err instanceof Error ? err.message : 'Google login failed');
-          } finally {
-            setIsSubmitting(false);
-          }
-        },
-      });
-
-      google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: 'outline',
-        size: 'large',
-        width: 190,
-        text: isRegister ? 'signup_with' : 'signin_with',
-      });
-    };
-
-    if ((window as any).google?.accounts?.id) {
-      renderGoogleButton();
-      return;
-    }
-
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      'script[src="https://accounts.google.com/gsi/client"]'
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener('load', renderGoogleButton, { once: true });
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = renderGoogleButton;
-    document.head.appendChild(script);
-  }, [googleClientId, isRegister, onLogin, role]);
+    setIsRegister(initialMode === 'register');
+  }, [initialMode]);
 
   const submit = async () => {
     setError('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
@@ -116,11 +58,20 @@ export default function LoginPage({
           throw new Error('Password confirmation does not match');
         }
 
-        const { user } = await register(name, email, password, role);
+        const result = await register(name, email, password, role);
 
-        const result = await login(email, password);
-        storeToken(result.token);
-        onLogin(result.user);
+        if (result.requiresApproval || result.user.status !== 'active') {
+          setNotice(
+            result.message ||
+              'Account request submitted. Please wait for Admin approval before logging in.'
+          );
+          setIsRegister(false);
+          return;
+        }
+
+        const loginResult = await login(email, password);
+        storeToken(loginResult.token);
+        onLogin(loginResult.user);
       } else {
         const result = await login(email, password);
         storeToken(result.token);
@@ -176,51 +127,14 @@ export default function LoginPage({
 
               {isRegister
                 ? 'Join the most advanced horse racing platform and manage races, horses and tournaments.'
-                : 'Access your racing dashboard, manage tournaments, monitor horse performance and track live races.'}
+                : 'Access tournaments, manage horses, monitor performance and track live races.'}
 
             </p>
 
           </div>
 
-          {/* STATS */}
-          <div className="relative z-10 grid grid-cols-3 gap-4">
-
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10">
-
-              <div className="text-3xl font-black text-white mb-1">
-                250+
-              </div>
-
-              <div className="text-white/70 text-sm">
-                Racing Horses
-              </div>
-
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10">
-
-              <div className="text-3xl font-black text-white mb-1">
-                180+
-              </div>
-
-              <div className="text-white/70 text-sm">
-                Professional Jockeys
-              </div>
-
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10">
-
-              <div className="text-3xl font-black text-white mb-1">
-                24
-              </div>
-
-              <div className="text-white/70 text-sm">
-                Active Tournaments
-              </div>
-
-            </div>
-
+          <div className="relative z-10 rounded-2xl border border-white/10 bg-white/10 p-5 text-white/80 backdrop-blur-md">
+            Role-based access for Admin, Owner, Jockey, Referee and Spectator workflows.
           </div>
         </div>
 
@@ -399,6 +313,12 @@ export default function LoginPage({
                 </div>
               )}
 
+              {notice && (
+                <div className="rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 px-4 py-3 text-[#f6d77a] text-sm">
+                  {notice}
+                </div>
+              )}
+
               {/* OPTIONS */}
               {!isRegister && (
                 <div className="flex items-center justify-between text-sm">
@@ -439,33 +359,6 @@ export default function LoginPage({
                   : 'Login'}
 
               </button>
-
-              {/* DIVIDER */}
-              {googleClientId && (
-                <div className="relative py-2">
-
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10" />
-                  </div>
-
-                  <div className="relative flex justify-center">
-
-                    <span className="bg-[#0b223d] px-4 text-sm text-gray-500">
-                      OR CONTINUE WITH
-                    </span>
-
-                  </div>
-                </div>
-              )}
-
-              {/* SOCIAL */}
-              {googleClientId && (
-                <div className="grid gap-4">
-                  <div className="min-h-12 rounded-xl border border-white/10 bg-white flex items-center justify-center overflow-hidden">
-                    <div ref={googleButtonRef} />
-                  </div>
-                </div>
-              )}
 
               {/* SWITCH MODE */}
               <div className="text-center pt-4 text-gray-400 text-sm">

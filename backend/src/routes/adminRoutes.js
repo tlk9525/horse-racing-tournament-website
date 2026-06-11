@@ -1,14 +1,19 @@
 import { randomUUID } from 'node:crypto';
-import { MAX_RACE_FIELD_SIZE } from '../config/constants.js';
+import {
+  ACTIVE_TOURNAMENT_STATUSES,
+  MAX_RACE_FIELD_SIZE,
+} from '../config/constants.js';
 import { requireRole } from '../services/authService.js';
 import {
   approvedRaceEntries,
   formatApprovals,
   jockeyName,
   publicRaceEntries,
+  raceRefereeIds,
   raceName,
 } from '../services/domainService.js';
 import { computeRaceHandicap } from '../services/handicapService.js';
+import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
 import {
   createNotification,
   notifyAdmins,
@@ -59,6 +64,7 @@ export const handleAdminRoutes = async ({
       return true;
     }
 
+    const createdAt = new Date().toISOString();
     const tournament = {
       id: randomUUID(),
       name,
@@ -68,6 +74,8 @@ export const handleAdminRoutes = async ({
       finalDate: finalDate || '',
       location,
       prizePool: Number(prizePool) || 0,
+      createdAt,
+      updatedAt: createdAt,
     };
 
     db.tournaments.unshift(tournament);
@@ -174,7 +182,7 @@ export const handleAdminRoutes = async ({
     const tournament = db.tournaments.find(
       (item) =>
         item.id === tournamentId &&
-        ['registration', 'approvals', 'active'].includes(item.status)
+        ACTIVE_TOURNAMENT_STATUSES.includes(item.status)
     );
 
     if (!tournament) {
@@ -204,9 +212,6 @@ export const handleAdminRoutes = async ({
       handicapMin: Number(handicapMin) || 0,
       handicapMax: Number(handicapMax) || 0,
       totalPrize: Number(totalPrize) || 0,
-      refereeUserId: referee.id,
-      refereeUserIds: selectedRefereeIds.join(','),
-      referee: selectedReferees.map((item) => item.name).join(', '),
       status: 'registration-open',
       participants: 0,
       ownerConfirmed: 0,
@@ -218,9 +223,21 @@ export const handleAdminRoutes = async ({
       awardsPublished: false,
       createdBy: user.id,
       createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
 
     db.races.unshift(race);
+    db.raceRefereeAssignments = db.raceRefereeAssignments || [];
+    selectedReferees.forEach((item) =>
+      db.raceRefereeAssignments.push({
+        id: randomUUID(),
+        raceId: race.id,
+        refereeUserId: item.id,
+        assignedBy: user.id,
+        status: 'assigned',
+        assignedAt: now.toISOString(),
+      })
+    );
 
     selectedReferees.forEach((item) =>
       createNotification(
@@ -232,8 +249,14 @@ export const handleAdminRoutes = async ({
     );
 
     await writeDb(db);
+    broadcastRaceUpdate(race.id);
     send(res, 201, {
-      race,
+      race: {
+        ...race,
+        refereeUserId: referee.id,
+        refereeUserIds: selectedRefereeIds.join(','),
+        referee: selectedReferees.map((item) => item.name).join(', '),
+      },
       entries: [],
       notifications: db.notifications || [],
     });
@@ -276,6 +299,7 @@ export const handleAdminRoutes = async ({
       race.participants = entries.length;
       race.ownerConfirmed = entries.length;
       race.jockeyConfirmed = entries.length;
+      race.updatedAt = new Date().toISOString();
 
       const sortedEntries = [...entries].sort((a, b) => {
         const horseA = db.horses.find((horse) => horse.id === a.horseId);
@@ -296,9 +320,7 @@ export const handleAdminRoutes = async ({
         entry.preRaceStatus = 'ready-for-referee';
       });
 
-      String(race.refereeUserIds || race.refereeUserId || '')
-        .split(',')
-        .filter(Boolean)
+      raceRefereeIds(db, race)
         .forEach((refereeId) =>
           createNotification(
             db,
@@ -316,6 +338,7 @@ export const handleAdminRoutes = async ({
       }
 
       race.status = 'published';
+      race.updatedAt = new Date().toISOString();
       entries.forEach((entry) => {
         const horse = db.horses.find((item) => item.id === entry.horseId);
         createNotification(
@@ -341,10 +364,42 @@ export const handleAdminRoutes = async ({
 
       race.status = 'finished';
       race.resultStatus = 'approved';
+      race.updatedAt = new Date().toISOString();
+
+      entries.forEach((entry) => {
+        entry.resultStatus = 'official';
+      });
+
+      const recipientIds = new Set();
+
+      entries.forEach((entry) => {
+        const horse = db.horses.find((item) => item.id === entry.horseId);
+        if (horse?.ownerUserId) recipientIds.add(horse.ownerUserId);
+        if (entry.jockeyUserId) recipientIds.add(entry.jockeyUserId);
+      });
+
+      raceRefereeIds(db, race).forEach((refereeId) => recipientIds.add(refereeId));
+
+      db.users
+        .filter((item) => item.role === 'spectator')
+        .forEach((spectator) => recipientIds.add(spectator.id));
+
+      recipientIds.forEach((recipientId) =>
+        createNotification(
+          db,
+          recipientId,
+          'Official results published',
+          `${race.name} official results have been approved by Admin and published for viewing.`
+        )
+      );
     }
 
     if (action === 'reject-results') {
       race.resultStatus = 'rejected';
+      race.updatedAt = new Date().toISOString();
+      entries.forEach((entry) => {
+        entry.resultStatus = 'draft';
+      });
     }
 
     if (action === 'complete') {
@@ -355,9 +410,11 @@ export const handleAdminRoutes = async ({
 
       race.status = 'completed';
       race.awardsPublished = true;
+      race.updatedAt = new Date().toISOString();
     }
 
     await writeDb(db);
+    broadcastRaceUpdate(race.id);
     send(res, 200, {
       race,
       entries: publicRaceEntries(db).filter((entry) => entry.raceId === race.id),
@@ -367,7 +424,7 @@ export const handleAdminRoutes = async ({
   }
 
   const approvalMatch = url.pathname.match(
-    /^\/api\/admin\/approvals\/(horse|jockey|jockeyTournament|raceEntry|pairing)\/([^/]+)$/
+    /^\/api\/admin\/approvals\/(horse|account|jockey|jockeyTournament|raceEntry|pairing)\/([^/]+)$/
   );
 
   if (req.method === 'POST' && approvalMatch) {
@@ -380,6 +437,7 @@ export const handleAdminRoutes = async ({
 
     const [, entityType, id] = approvalMatch;
     const { decision } = await readBody(req);
+    const raceIdsToBroadcast = new Set();
 
     if (!['approved', 'rejected'].includes(decision)) {
       send(res, 400, { message: 'Decision must be approved or rejected' });
@@ -395,6 +453,7 @@ export const handleAdminRoutes = async ({
       }
 
       horse.status = decision;
+      horse.updatedAt = new Date().toISOString();
 
       createNotification(
         db,
@@ -413,12 +472,39 @@ export const handleAdminRoutes = async ({
       }
 
       jockey.status = decision === 'approved' ? 'active' : 'rejected';
+      jockey.updatedAt = new Date().toISOString();
 
       createNotification(
         db,
         jockey.id,
         decision === 'approved' ? 'Jockey account approved' : 'Jockey account rejected',
         `Your jockey application has been ${decision} by Admin.`
+      );
+    }
+
+    if (entityType === 'account') {
+      const account = db.users.find(
+        (item) =>
+          item.id === id &&
+          ['owner', 'jockey', 'referee'].includes(item.role) &&
+          item.status === 'pending'
+      );
+
+      if (!account) {
+        send(res, 404, { message: 'Account approval request not found' });
+        return true;
+      }
+
+      account.status = decision === 'approved' ? 'active' : 'rejected';
+      account.updatedAt = new Date().toISOString();
+
+      createNotification(
+        db,
+        account.id,
+        decision === 'approved' ? 'Account approved' : 'Account rejected',
+        decision === 'approved'
+          ? 'Admin approved your account. You can now log in.'
+          : 'Admin rejected your account request.'
       );
     }
 
@@ -479,6 +565,7 @@ export const handleAdminRoutes = async ({
 
       if (race) {
         race.participants = approvedRaceEntries(db, race.id).length;
+        raceIdsToBroadcast.add(race.id);
       }
 
       createNotification(
@@ -517,6 +604,7 @@ export const handleAdminRoutes = async ({
       if (decision === 'approved') {
         if (horse) {
           horse.jockeyConfirmation = 'confirmed';
+          horse.updatedAt = new Date().toISOString();
         }
 
         if (invitation.raceId) {
@@ -551,10 +639,15 @@ export const handleAdminRoutes = async ({
               lane: null,
               handicap: 0,
               ratingSnapshot: 0,
-              ownerConfirmed: false,
-              jockeyConfirmed: false,
+              ownerConfirmed: true,
+              jockeyConfirmed: true,
               preRaceStatus: 'pending',
               disqualified: false,
+              resultStatus: 'draft',
+              notes: invitation.notes || '',
+              violationNotes: '',
+              finishTime: '',
+              position: null,
               createdAt: new Date().toISOString(),
             });
           }
@@ -562,6 +655,7 @@ export const handleAdminRoutes = async ({
           const race = db.races.find((item) => item.id === invitation.raceId);
           if (race) {
             race.participants = approvedRaceEntries(db, race.id).length;
+            raceIdsToBroadcast.add(race.id);
           }
         }
 
@@ -580,8 +674,8 @@ export const handleAdminRoutes = async ({
         );
       } else {
         if (horse) {
-          horse.selectedJockeyUserId = null;
           horse.jockeyConfirmation = 'waiting-owner';
+          horse.updatedAt = new Date().toISOString();
         }
 
         createNotification(
@@ -601,6 +695,7 @@ export const handleAdminRoutes = async ({
     }
 
     await writeDb(db);
+    raceIdsToBroadcast.forEach((raceId) => broadcastRaceUpdate(raceId));
     send(res, 200, {
       ok: true,
       approvals: formatApprovals(db),

@@ -39,21 +39,11 @@
   Copy `.env.example` to `.env` if you want to keep local settings in one file.
   The commands below also work when the variables are passed inline.
 
-  Start PostgreSQL with Docker:
-
-  ```bash
-  docker run --name horse-postgres \
-    -e POSTGRES_PASSWORD=postgres \
-    -e POSTGRES_DB=horse_racing \
-    -p 5433:5432 \
-    -d postgres:16
-  ```
-
   Initialize the PostgreSQL database:
 
   ```bash
   POSTGRES_HOST=127.0.0.1 \
-  POSTGRES_PORT=5433 \
+  POSTGRES_PORT=5432 \
   POSTGRES_DATABASE=horse_racing \
   POSTGRES_USER=postgres \
   POSTGRES_PASSWORD=postgres \
@@ -64,43 +54,23 @@
 
   ```bash
   POSTGRES_HOST=127.0.0.1 \
-  POSTGRES_PORT=5433 \
+  POSTGRES_PORT=5432 \
   POSTGRES_DATABASE=horse_racing \
   POSTGRES_USER=postgres \
   POSTGRES_PASSWORD=postgres \
   npm run api
   ```
 
-  If your existing database was created before Google login was added, run:
+  If you already have an older local database and want to upgrade it without
+  recreating data, run the single migration file:
 
   ```bash
   POSTGRES_HOST=127.0.0.1 \
-  POSTGRES_PORT=5433 \
+  POSTGRES_PORT=5432 \
   POSTGRES_DATABASE=horse_racing \
   POSTGRES_USER=postgres \
   POSTGRES_PASSWORD=postgres \
-  node scripts/run-postgres-file.mjs database/postgres/migrations/001_google_auth.sql
-  ```
-
-  ### Google Login
-
-  Create an OAuth Client ID in Google Cloud Console and allow this origin:
-
-  ```text
-  http://127.0.0.1:5173
-  ```
-
-  Then run backend and frontend with the same client ID:
-
-  ```bash
-  GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
-  VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
-  npm run api
-  ```
-
-  ```bash
-  VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com \
-  npm run dev
+  node scripts/run-postgres-file.mjs database/postgres/migrations/001_upgrade_existing_database.sql
   ```
 
   ### Frontend

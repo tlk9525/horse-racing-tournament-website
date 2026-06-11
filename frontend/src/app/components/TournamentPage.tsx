@@ -16,18 +16,17 @@ import {
   JockeyTournamentRegistration,
   RaceEntryRecord,
   RaceRecord,
+  TournamentRecord,
   getBootstrap,
   joinTournamentAsJockey,
 } from '../services/api';
-import { currentTournament, statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface TournamentPageProps {
   currentUser: AuthUser | null;
   onNavigate: (page: string) => void;
 }
-
-const MAX_RACE_FIELD_SIZE = 10;
 
 const raceNumberValue = (raceNumber?: string) =>
   Number(String(raceNumber || '').replace(/\D/g, '')) || 999;
@@ -36,10 +35,11 @@ export default function TournamentPage({
   currentUser,
   onNavigate,
 }: TournamentPageProps) {
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
   const [registrations, setRegistrations] = useState<JockeyTournamentRegistration[]>([]);
+  const [maxRaceFieldSize, setMaxRaceFieldSize] = useState(10);
   const [selectedTournamentId, setSelectedTournamentId] = useState(
     sessionStorage.getItem('selectedTournamentId') || ''
   );
@@ -54,6 +54,7 @@ export default function TournamentPage({
         setRaces(data.races);
         setRaceEntries(data.raceEntries || []);
         setRegistrations(data.jockeyTournamentRegistrations || []);
+        setMaxRaceFieldSize(data.limits?.maxRaceFieldSize || 10);
         setSelectedTournamentId((current) => {
           const stored = sessionStorage.getItem('selectedTournamentId');
           const next = current || stored || data.tournaments?.[0]?.id || '';
@@ -110,11 +111,6 @@ export default function TournamentPage({
     );
   };
 
-  const openRaceRegistration = (tournamentId: string) => {
-    selectTournament(tournamentId);
-    onNavigate('race-registration');
-  };
-
   const openTournamentDetails = (tournamentId: string) => {
     selectTournament(tournamentId);
     onNavigate('tournament-details');
@@ -131,6 +127,10 @@ export default function TournamentPage({
 
     if (firstRace) {
       sessionStorage.setItem('selectedRaceId', firstRace.id);
+    } else {
+      sessionStorage.removeItem('selectedRaceId');
+      setMessage('This tournament does not have races yet.');
+      return;
     }
 
     onNavigate('race-details');
@@ -163,9 +163,7 @@ export default function TournamentPage({
     }
 
     if (currentUser?.role === 'owner') {
-      return race.status === 'registration-open'
-        ? { label: 'Register Horse', page: 'race-registration' }
-        : { label: 'View Race', page: 'race-details' };
+      return { label: 'View Race', page: 'race-details' };
     }
 
     if (currentUser?.role === 'jockey') {
@@ -183,20 +181,7 @@ export default function TournamentPage({
     return { label: 'View Race', page: 'race-details' };
   };
 
-  const displayTournaments =
-    tournaments.length > 0
-      ? tournaments
-      : [
-          {
-            id: currentTournament.id,
-            name: currentTournament.name,
-            status: currentTournament.status,
-            startDate: currentTournament.startDate,
-            finalDate: currentTournament.finalDate,
-            location: currentTournament.location,
-            prizePool: currentTournament.prizePool,
-          },
-        ];
+  const displayTournaments = tournaments;
 
   const selectedTournament =
     displayTournaments.find((tournament) => tournament.id === selectedTournamentId) ||
@@ -219,7 +204,7 @@ export default function TournamentPage({
           </h1>
 
           <p className="text-gray-400 text-lg">
-            Jockeys join tournaments here. Owners register horses for races from a tournament.
+            Jockeys join tournaments here. Owners register horses once for a tournament, then approved horses run the full race schedule.
           </p>
         </div>
 
@@ -239,6 +224,9 @@ export default function TournamentPage({
             ).length;
             const jockeyRegistration = jockeyRegistrationByTournament.get(tournament.id);
             const isCompletedTournament = tournament.status === 'completed';
+            const shouldShowViewRaces =
+              isCompletedTournament || currentUser?.role === 'spectator';
+            const hasTournamentRaces = tournamentRaces.length > 0;
 
             return (
               <div
@@ -318,13 +306,14 @@ export default function TournamentPage({
                       View Details
                     </button>
 
-                    {isCompletedTournament && (
+                    {shouldShowViewRaces && (
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
                           openTournamentRaces(tournament.id);
                         }}
-                        className="py-4 bg-[#d4af37] hover:bg-[#b8892d] text-white rounded-xl transition-all font-bold"
+                        disabled={!hasTournamentRaces}
+                        className="py-4 bg-[#d4af37] hover:bg-[#b8892d] disabled:bg-white/10 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded-xl transition-all font-bold"
                       >
                         View Races
                       </button>
@@ -350,11 +339,12 @@ export default function TournamentPage({
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
-                          openRaceRegistration(tournament.id);
+                          selectTournament(tournament.id);
+                          onNavigate('register-horse');
                         }}
                         className="py-4 bg-[#d4af37] hover:bg-[#b8892d] text-white rounded-xl transition-all font-bold"
                       >
-                        Register Horse
+                        Register Tournament Horse
                       </button>
                     )}
                   </div>
@@ -429,11 +419,6 @@ export default function TournamentPage({
 
                     <button
                       onClick={() => {
-                        if (currentUser?.role === 'owner' && action.page === 'race-registration') {
-                          openRaceRegistration(race.tournamentId || '');
-                          return;
-                        }
-
                         openRaceView(race.id, action.page);
                       }}
                       disabled={currentUser?.role === 'owner' && !race.tournamentId}
@@ -503,11 +488,11 @@ export default function TournamentPage({
                       <div className="flex items-center gap-3">
                         <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                         <p className="text-white font-semibold">
-                          {approvedEntries.length || race.participants || 0}/{MAX_RACE_FIELD_SIZE} horses
+                          {approvedEntries.length || race.participants || 0}/{maxRaceFieldSize} horses
                         </p>
                       </div>
                       <p className="text-gray-400 text-sm mt-1">
-                        Track limit: {MAX_RACE_FIELD_SIZE} horses / {MAX_RACE_FIELD_SIZE} jockeys
+                        Track limit: {maxRaceFieldSize} horses / {maxRaceFieldSize} jockeys
                       </p>
                     </div>
 

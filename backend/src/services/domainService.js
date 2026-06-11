@@ -1,3 +1,5 @@
+import { ACTIVE_TOURNAMENT_STATUSES, USER_ROLES } from '../config/constants.js';
+
 export const ownerName = (db, userId) =>
   db.users.find((user) => user.id === userId)?.name || 'Unknown Owner';
 
@@ -12,7 +14,7 @@ export const raceName = (db, raceId) =>
 
 export const activeTournament = (db) =>
   db.tournaments.find((tournament) =>
-    ['registration', 'approvals', 'active'].includes(tournament.status)
+    ACTIVE_TOURNAMENT_STATUSES.includes(tournament.status)
   ) || null;
 
 export const defaultRaceForTournament = (db, tournamentId) =>
@@ -76,13 +78,28 @@ export const publicTournamentJockeyProfiles = (db, tournamentId) => {
   );
 };
 
-export const canRefereeRace = (race, user) =>
-  user?.role === 'admin' ||
-  race?.refereeUserId === user?.id ||
-  String(race?.refereeUserIds || '')
-    .split(',')
-    .map((id) => id.trim())
-    .includes(user?.id);
+export const raceRefereeIds = (db, race) => {
+  const assignmentIds = (db?.raceRefereeAssignments || [])
+    .filter(
+      (assignment) =>
+        assignment.raceId === race?.id && assignment.status !== 'removed'
+    )
+    .map((assignment) => assignment.refereeUserId);
+
+  return Array.from(
+    new Set([
+      ...assignmentIds,
+      race?.refereeUserId,
+      ...String(race?.refereeUserIds || '')
+        .split(',')
+        .map((id) => id.trim()),
+    ].filter(Boolean))
+  );
+};
+
+export const canRefereeRace = (race, user, db) =>
+  user?.role === USER_ROLES.ADMIN ||
+  raceRefereeIds(db, race).includes(user?.id);
 
 export const formatApprovals = (db) => [
   ...db.horses
@@ -97,13 +114,17 @@ export const formatApprovals = (db) => [
       targetUserId: horse.ownerUserId,
     })),
   ...db.users
-    .filter((user) => user.role === 'jockey' && user.status === 'pending')
+    .filter(
+      (user) =>
+        [USER_ROLES.OWNER, USER_ROLES.JOCKEY, USER_ROLES.REFEREE].includes(user.role) &&
+        user.status === 'pending'
+    )
     .map((user) => ({
       id: user.id,
-      entityType: 'jockey',
-      type: 'Jockey Application',
+      entityType: 'account',
+      type: `${user.role.charAt(0).toUpperCase()}${user.role.slice(1)} Account Request`,
       name: user.name,
-      detail: 'Account approval required',
+      detail: `Email: ${user.email} • Role: ${user.role}`,
       date: db.tournaments[0]?.registrationWindow || 'Registration window',
       targetUserId: user.id,
     })),

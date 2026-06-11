@@ -1,9 +1,11 @@
+import { randomUUID } from 'node:crypto';
 import { requireRole } from '../services/authService.js';
 import {
   canRefereeRace,
   findEntry,
   publicRaceEntries,
 } from '../services/domainService.js';
+import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
 import { notifyAdmins } from '../services/notificationService.js';
 
 export const handleRefereeRoutes = async ({
@@ -30,7 +32,7 @@ export const handleRefereeRoutes = async ({
     const [, raceId, action] = refereeRaceActionMatch;
     const race = db.races.find((item) => item.id === raceId);
 
-    if (!race || !canRefereeRace(race, user)) {
+    if (!race || !canRefereeRace(race, user, db)) {
       send(res, 404, { message: 'Assigned race not found' });
       return true;
     }
@@ -64,6 +66,7 @@ export const handleRefereeRoutes = async ({
       }
 
       race.status = 'in-progress';
+      race.updatedAt = new Date().toISOString();
 
       raceEntries.forEach((entry) => {
         if (entry.preRaceStatus === 'absent') {
@@ -84,7 +87,36 @@ export const handleRefereeRoutes = async ({
         return true;
       }
 
+      const raceEntries = (db.raceEntries || []).filter(
+        (entry) => entry.raceId === race.id && entry.status === 'approved'
+      );
+      const competingEntries = raceEntries.filter(
+        (entry) => entry.preRaceStatus !== 'absent' && !entry.disqualified
+      );
+      const entriesMissingResult = competingEntries.filter(
+        (entry) => !entry.position || !entry.finishTime
+      );
+      const positions = competingEntries
+        .map((entry) => Number(entry.position))
+        .filter((position) => Number.isInteger(position));
+      const uniquePositions = new Set(positions);
+
+      if (entriesMissingResult.length > 0) {
+        send(res, 400, {
+          message: 'Record a finishing position and finish time for every competing participant before submitting results',
+        });
+        return true;
+      }
+
+      if (uniquePositions.size !== positions.length) {
+        send(res, 400, {
+          message: 'Each competing participant must have a unique finishing position',
+        });
+        return true;
+      }
+
       race.resultStatus = 'submitted';
+      race.updatedAt = new Date().toISOString();
       notifyAdmins(
         db,
         'Race results submitted',
@@ -93,6 +125,7 @@ export const handleRefereeRoutes = async ({
     }
 
     await writeDb(db);
+    broadcastRaceUpdate(race.id);
     send(res, 200, { race });
     return true;
   }
@@ -113,7 +146,7 @@ export const handleRefereeRoutes = async ({
     const entry = findEntry(db, entryId);
     const race = db.races.find((item) => item.id === entry?.raceId);
 
-    if (!entry || !race || !canRefereeRace(race, user)) {
+    if (!entry || !race || !canRefereeRace(race, user, db)) {
       send(res, 404, { message: 'Race entry not found' });
       return true;
     }
@@ -122,6 +155,7 @@ export const handleRefereeRoutes = async ({
     entry.disqualified = readiness === 'absent';
 
     await writeDb(db);
+    broadcastRaceUpdate(race.id);
     send(res, 200, {
       entry,
       entries: publicRaceEntries(db).filter((item) => item.raceId === race.id),
@@ -144,7 +178,7 @@ export const handleRefereeRoutes = async ({
     const entry = findEntry(db, refereeEntryResultMatch[1]);
     const race = db.races.find((item) => item.id === entry?.raceId);
 
-    if (!entry || !race || !canRefereeRace(race, user)) {
+    if (!entry || !race || !canRefereeRace(race, user, db)) {
       send(res, 404, { message: 'Race entry not found' });
       return true;
     }
@@ -155,14 +189,80 @@ export const handleRefereeRoutes = async ({
     }
 
     const { position, finishTime, notes, violationNotes } = await readBody(req);
+    const numericPosition = Number(position);
+    const raceEntries = (db.raceEntries || []).filter(
+      (item) => item.raceId === race.id && item.status === 'approved'
+    );
+    const competingEntries = raceEntries.filter(
+      (item) => item.preRaceStatus !== 'absent' && !item.disqualified
+    );
+    const duplicatePosition = competingEntries.some(
+      (item) =>
+        item.id !== entry.id &&
+        Number(item.position) === numericPosition
+    );
 
-    entry.position = Number(position) || null;
+    if (
+      !Number.isInteger(numericPosition) ||
+      numericPosition < 1 ||
+      numericPosition > competingEntries.length
+    ) {
+      send(res, 400, {
+        message: `Position must be between 1 and ${competingEntries.length}`,
+      });
+      return true;
+    }
+
+    if (duplicatePosition) {
+      send(res, 400, {
+        message: `Position ${numericPosition} is already recorded for another participant`,
+      });
+      return true;
+    }
+
+    if (!finishTime) {
+      send(res, 400, { message: 'Finish time is required before recording a result' });
+      return true;
+    }
+
+    entry.position = numericPosition;
     entry.finishTime = finishTime || '';
     entry.notes = notes || '';
     entry.violationNotes = violationNotes || '';
     entry.resultStatus = 'draft';
 
+    if (String(violationNotes || '').trim()) {
+      db.refereeReports = db.refereeReports || [];
+
+      const existingReport = db.refereeReports.find(
+        (report) =>
+          report.raceEntryId === entry.id &&
+          report.refereeUserId === user.id &&
+          report.reportType === 'violation'
+      );
+
+      if (existingReport) {
+        existingReport.description = violationNotes;
+        existingReport.violation = violationNotes;
+        existingReport.status = 'submitted';
+      } else {
+        db.refereeReports.unshift({
+          id: randomUUID(),
+          raceId: race.id,
+          raceEntryId: entry.id,
+          refereeUserId: user.id,
+          reportType: 'violation',
+          description: violationNotes,
+          violation: violationNotes,
+          status: 'submitted',
+          createdAt: new Date().toISOString(),
+          reviewedAt: null,
+        });
+      }
+    }
+
     await writeDb(db);
+    broadcastRaceUpdate(race.id);
     send(res, 200, {
       entry,
       entries: publicRaceEntries(db).filter((item) => item.raceId === race.id),

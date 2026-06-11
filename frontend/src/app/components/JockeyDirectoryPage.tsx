@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   BadgeCheck,
+  ChevronDown,
+  ChevronUp,
   Mail,
   Scale,
   Search,
@@ -14,7 +16,7 @@ import {
   RaceEntryRecord,
   getBootstrap,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 
 export default function JockeyDirectoryPage() {
   const [jockeys, setJockeys] = useState<JockeyProfileRecord[]>([]);
@@ -22,6 +24,7 @@ export default function JockeyDirectoryPage() {
   const [selectedJockeyId, setSelectedJockeyId] = useState('');
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState('');
+  const [assignmentsExpanded, setAssignmentsExpanded] = useState(false);
 
   useEffect(() => {
     getBootstrap()
@@ -61,6 +64,10 @@ export default function JockeyDirectoryPage() {
   const selectedAssignments = selectedJockey
     ? raceEntries.filter((entry) => entry.jockeyUserId === selectedJockey.userId)
     : [];
+
+  const visibleAssignments = assignmentsExpanded
+    ? selectedAssignments
+    : selectedAssignments.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
@@ -107,7 +114,10 @@ export default function JockeyDirectoryPage() {
               {filteredJockeys.map((jockey) => (
                 <button
                   key={jockey.id}
-                  onClick={() => setSelectedJockeyId(jockey.userId)}
+                  onClick={() => {
+                    setSelectedJockeyId(jockey.userId);
+                    setAssignmentsExpanded(false);
+                  }}
                   className={`w-full rounded-xl border p-4 text-left transition-all ${
                     selectedJockey?.userId === jockey.userId
                       ? 'border-[#d4af37]/60 bg-[#d4af37]/10'
@@ -207,9 +217,31 @@ export default function JockeyDirectoryPage() {
                 </div>
 
                 <div className="rounded-2xl border border-white/10 bg-[#071a2f] p-6">
-                  <h3 className="text-2xl font-black text-white mb-5">
-                    Race Assignments
-                  </h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                    <div>
+                      <h3 className="text-2xl font-black text-white">
+                        Race Assignments
+                      </h3>
+
+                      <p className="text-gray-400 text-sm mt-1">
+                        Showing {visibleAssignments.length}/{selectedAssignments.length} assignments
+                      </p>
+                    </div>
+
+                    {selectedAssignments.length > 4 && (
+                      <button
+                        onClick={() => setAssignmentsExpanded((current) => !current)}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-2 text-[#d4af37] font-bold hover:bg-[#d4af37]/20 transition-all"
+                      >
+                        {assignmentsExpanded ? 'Show Less' : 'View All'}
+                        {assignmentsExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                  </div>
 
                   <div className="space-y-3">
                     {selectedAssignments.length === 0 && (
@@ -218,7 +250,7 @@ export default function JockeyDirectoryPage() {
                       </div>
                     )}
 
-                    {selectedAssignments.map((entry) => (
+                    {visibleAssignments.map((entry) => (
                       <div
                         key={entry.id}
                         className="rounded-xl border border-white/10 bg-[#0b223d] p-4"

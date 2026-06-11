@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Award, Edit3, Eye, Plus } from 'lucide-react';
+import {
+  Award,
+  Edit3,
+  Eye,
+  Plus,
+  Search,
+} from 'lucide-react';
 import NotificationsPanel from './NotificationsPanel';
 import {
   HorseRecord,
   RaceEntryRecord,
   getOwnerPortal,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface HorseManagementProps {
@@ -31,6 +37,9 @@ export default function HorseManagement({
 }: HorseManagementProps) {
   const [horses, setHorses] = useState<HorseRecord[]>([]);
   const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
+  const [maxHorses, setMaxHorses] = useState(5);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [message, setMessage] = useState('');
 
   const loadPortal = () => {
@@ -38,6 +47,7 @@ export default function HorseManagement({
       .then((data) => {
         setHorses(data.horses);
         setRaceEntries(data.raceEntries);
+        setMaxHorses(data.limits?.maxOwnerHorses || 5);
       })
       .catch((error) =>
         setMessage(error instanceof Error ? error.message : 'Unable to load horses')
@@ -48,11 +58,29 @@ export default function HorseManagement({
     loadPortal();
   }, []);
 
-  const maxHorses = 5;
   const canAddHorse = horses.length < maxHorses;
 
   const horseEntryCount = (horseId: string) =>
     raceEntries.filter((entry) => entry.horseId === horseId).length;
+
+  const filteredHorses = horses.filter((horse) => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const matchesQuery =
+      !normalizedQuery ||
+      [
+        horse.name,
+        horse.breed,
+        horse.species,
+        horse.healthStatus,
+        horse.jockeyConfirmation,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedQuery);
+    const matchesStatus = !statusFilter || horse.status === statusFilter;
+
+    return matchesQuery && matchesStatus;
+  });
 
   return (
     <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
@@ -64,7 +92,7 @@ export default function HorseManagement({
             </h1>
 
             <p className="text-gray-400">
-              Manage owned horses and horse profiles. Tournament and race registration are handled from the Tournaments page.
+              Manage owned horses and horse profiles. Approved horses are entered for the full tournament race schedule.
             </p>
           </div>
 
@@ -76,7 +104,7 @@ export default function HorseManagement({
             <button
               onClick={() => {
                 if (!canAddHorse) {
-                  setMessage('Each owner can register up to 5 horses.');
+                  setMessage(`Each owner can register up to ${maxHorses} horses.`);
                   return;
                 }
 
@@ -102,14 +130,39 @@ export default function HorseManagement({
           </div>
         )}
 
+        <div className="mb-8 grid gap-4 rounded-2xl border border-white/10 bg-[#102a46] p-5 md:grid-cols-[1fr,240px]">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-500" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search horse, breed, health, pairing"
+              className="h-12 w-full rounded-xl border border-white/10 bg-[#071a2f] pl-12 pr-4 text-white outline-none focus:border-[#d4af37]"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="h-12 rounded-xl border border-white/10 bg-[#071a2f] px-4 text-white outline-none focus:border-[#d4af37]"
+          >
+            <option value="">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="retired">Retired</option>
+          </select>
+        </div>
+
         <div className="grid xl:grid-cols-3 md:grid-cols-2 gap-6">
-          {horses.length === 0 && (
+          {filteredHorses.length === 0 && (
             <div className="md:col-span-2 xl:col-span-3 rounded-2xl border border-white/10 bg-[#102a46] p-8 text-gray-400">
-              No horses yet. Add a horse profile before joining race registrations.
+              No horses match the current filters.
             </div>
           )}
 
-          {horses.map((horse) => (
+          {filteredHorses.map((horse) => (
             <div
               key={horse.id}
               className="rounded-2xl border border-white/10 bg-[#102a46] p-6"
@@ -178,6 +231,7 @@ export default function HorseManagement({
               <div className="grid grid-cols-2 gap-3 mt-6">
                 <button
                   onClick={() => {
+                    sessionStorage.setItem('selectedHorseId', horse.id);
                     onSelectHorse(horse);
                     onNavigate('horse-details');
                   }}
@@ -189,6 +243,7 @@ export default function HorseManagement({
 
                 <button
                   onClick={() => {
+                    sessionStorage.setItem('selectedHorseId', horse.id);
                     onSelectHorse(horse);
                     onNavigate('edit-horse');
                   }}

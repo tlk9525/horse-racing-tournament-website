@@ -33,8 +33,14 @@ const server = createServer(async (req, res) => {
   }
 
   try {
-    const db = await readDb();
     const url = new URL(req.url || '/', `http://${req.headers.host}`);
+
+    if (req.method === 'GET' && url.pathname === '/api/health') {
+      send(res, 200, { ok: true });
+      return;
+    }
+
+    const db = await readDb();
     const context = {
       req,
       res,

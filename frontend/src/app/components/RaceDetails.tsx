@@ -10,40 +10,17 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
+import {
   HorseRecord,
   RaceEntryRecord,
   RaceRecord,
+  TournamentRecord,
   getBootstrap,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
-
-const formSamples = [
-  '1/2/1/3/2/1',
-  '3/4/1/2/3/1',
-  '5/1/2/4/1/2',
-  '2/2/3/1/2/1',
-  '6/3/2/5/4/2',
-  '4/5/2/3/6/1',
-  '2/3/1/2/4/1',
-  '4/2/3/1/5/2',
-  '3/1/4/2/2/1',
-  '5/2/1/3/2/3',
-];
-
-const colourSamples = [
-  'Gold / Navy',
-  'Navy / Brown',
-  'White / Brown',
-  'Brown / White',
-  'Gold / White',
-  'Navy / Gold',
-  'Green / White',
-  'Crimson / Gold',
-  'Blue / White',
-  'Brown / Gold',
-];
-
-const gearSamples = ['TT', 'B', 'XB', 'CP', 'CP/TT', 'B/TT'];
+import { statusLabel } from '../utils/domain';
 
 const raceSortValue = (race: RaceRecord) => {
   const parsed = Number(String(race.raceNumber || '').replace(/\D/g, ''));
@@ -77,12 +54,15 @@ const canShowRaceCardData = (race?: RaceRecord) =>
   );
 
 export default function RaceDetails() {
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const { raceId } = useParams();
+  const routerNavigate = useNavigate();
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [entries, setEntries] = useState<RaceEntryRecord[]>([]);
   const [horses, setHorses] = useState<HorseRecord[]>([]);
+  const [maxRaceFieldSize, setMaxRaceFieldSize] = useState(10);
   const [selectedRaceId, setSelectedRaceId] = useState(
-    sessionStorage.getItem('selectedRaceId') || ''
+    raceId || sessionStorage.getItem('selectedRaceId') || ''
   );
   const [entriesExpanded, setEntriesExpanded] = useState(false);
   const [message, setMessage] = useState('');
@@ -98,12 +78,22 @@ export default function RaceDetails() {
         setRaces(sortedRaces);
         setEntries(data.raceEntries || []);
         setHorses(data.horses || []);
+        setMaxRaceFieldSize(data.limits?.maxRaceFieldSize || 10);
         setSelectedRaceId((current) => {
-          if (current && sortedRaces.some((race) => race.id === current)) {
-            return current;
+          const next = raceId || current;
+
+          if (next && sortedRaces.some((race) => race.id === next)) {
+            sessionStorage.setItem('selectedRaceId', next);
+            return next;
           }
 
-          return sortedRaces[0]?.id || '';
+          const fallback = sortedRaces[0]?.id || '';
+
+          if (fallback) {
+            sessionStorage.setItem('selectedRaceId', fallback);
+          }
+
+          return fallback;
         });
       })
       .catch((error) =>
@@ -116,7 +106,7 @@ export default function RaceDetails() {
     const timer = window.setInterval(loadRaceData, 5000);
 
     return () => window.clearInterval(timer);
-  }, []);
+  }, [raceId]);
 
   const selectedRace =
     races.find((race) => race.id === selectedRaceId) || races[0];
@@ -148,8 +138,8 @@ export default function RaceDetails() {
     return {
       id: entry.id,
       no: entry.lane || index + 1,
-      form: formSamples[index % formSamples.length],
-      colour: colourSamples[index % colourSamples.length],
+      form: '-',
+      colour: horse?.color || '-',
       horse: entry.horseName || horse?.name || 'Horse',
       breed: horse?.breed || 'Breed not set',
       age: horse?.age || '-',
@@ -158,10 +148,10 @@ export default function RaceDetails() {
       draw: entry.lane || 'TBD',
       owner: entry.ownerName || 'Owner pending',
       rating,
-      ratingChange: index % 3 === 0 ? '+1' : index % 3 === 1 ? '0' : '-1',
+      ratingChange: '0',
       horseWeightKg: Number(horse?.weightKg || 0).toFixed(1),
-      priority: index < 6 ? '*1' : '2',
-      gear: gearSamples[index % gearSamples.length],
+      priority: '-',
+      gear: '-',
     };
   });
   const visibleRows = entriesExpanded ? rows : rows.slice(0, 4);
@@ -170,6 +160,7 @@ export default function RaceDetails() {
     sessionStorage.setItem('selectedRaceId', raceId);
     setSelectedRaceId(raceId);
     setEntriesExpanded(false);
+    routerNavigate(`/races/${raceId}`);
   };
 
   if (!selectedRace) {
@@ -305,7 +296,7 @@ export default function RaceDetails() {
                 <span>{selectedRace.distance || '-'} {selectedRace.surface || ''}</span>
                 <span>{trackCondition(selectedRace)}</span>
                 <span>{selectedRace.round || selectedRace.raceClass || 'Round pending'}</span>
-                <span>{selectedEntries.length}/10 Horses</span>
+                <span>{selectedEntries.length}/{maxRaceFieldSize} Horses</span>
               </div>
 
               <div className="flex items-center gap-3">

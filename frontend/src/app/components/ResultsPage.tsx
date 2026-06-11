@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Clock, Trophy, TrendingUp } from 'lucide-react';
+import {
+  Award,
+  Clock,
+  Trophy,
+  TrendingUp,
+} from 'lucide-react';
 import {
   RaceEntryRecord,
   RaceRecord,
+  TournamentRecord,
   getBootstrap,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 
 const scoreByPosition: Record<number, number> = {
   1: 10,
@@ -22,7 +28,7 @@ const scoreForPosition = (position?: number | null) =>
 export default function ResultsPage() {
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [entries, setEntries] = useState<RaceEntryRecord[]>([]);
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [selectedTournamentId, setSelectedTournamentId] = useState('');
   const [message, setMessage] = useState('');
 

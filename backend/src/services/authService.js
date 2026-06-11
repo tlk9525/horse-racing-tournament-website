@@ -6,9 +6,12 @@ export const authenticate = async (req, db) => {
   const session = db.sessions.find((item) => item.token === token);
 
   if (!session) return null;
+  if (session.expiresAt && new Date(session.expiresAt).getTime() <= Date.now()) {
+    return null;
+  }
 
   const user = db.users.find((item) => item.id === session.userId);
-  return user ? publicUser(user) : null;
+  return user?.status === 'active' ? publicUser(user) : null;
 };
 
 export const requireRole = async (req, db, roles) => {

@@ -188,6 +188,7 @@ export const handleJockeyRoutes = async ({
 
       if (horse) {
         horse.jockeyConfirmation = 'pending-admin';
+        horse.updatedAt = new Date().toISOString();
       }
 
       createNotification(
@@ -206,8 +207,8 @@ export const handleJockeyRoutes = async ({
       invitation.adminStatus = null;
 
       if (horse) {
-        horse.selectedJockeyUserId = null;
         horse.jockeyConfirmation = 'waiting-owner';
+        horse.updatedAt = new Date().toISOString();
       }
 
       createNotification(

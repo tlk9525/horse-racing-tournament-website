@@ -58,25 +58,6 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             </button>
           </div>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#d4af37] mb-2">250+</div>
-              <div className="text-gray-400 text-sm uppercase tracking-wider">Active Horses</div>
-            </div>
-            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#d4af37] mb-2">180+</div>
-              <div className="text-gray-400 text-sm uppercase tracking-wider">Pro Jockeys</div>
-            </div>
-            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#d4af37] mb-2">45</div>
-              <div className="text-gray-400 text-sm uppercase tracking-wider">Tournaments</div>
-            </div>
-            <div className="bg-[#071a2f]/50 backdrop-blur-sm border border-white/10 rounded p-6">
-              <div className="text-4xl font-bold text-[#d4af37] mb-2">$2.5M</div>
-              <div className="text-gray-400 text-sm uppercase tracking-wider">Prize Pool</div>
-            </div>
-          </div>
         </div>
 
         {/* Scroll Indicator */}
@@ -179,7 +160,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             Join thousands of racing enthusiasts on the most advanced tournament platform.
           </p>
           <button
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => onNavigate('tournaments')}
             className="group px-10 py-5 bg-[#d4af37] text-white rounded-lg hover:bg-[#b8892d] transition-all text-lg font-semibold flex items-center gap-3 mx-auto"
           >
             Get Started Now

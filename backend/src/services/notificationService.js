@@ -1,12 +1,35 @@
 import { randomUUID } from 'node:crypto';
 
-export const createNotification = (db, userId, title, message) => {
+const inferNotificationType = (title = '') => {
+  const normalized = String(title).toLowerCase();
+
+  if (normalized.includes('invite') || normalized.includes('request')) {
+    return 'invitation';
+  }
+
+  if (normalized.includes('registration') || normalized.includes('approved')) {
+    return 'registration';
+  }
+
+  if (normalized.includes('result') || normalized.includes('award')) {
+    return 'result';
+  }
+
+  if (normalized.includes('reject') || normalized.includes('closed')) {
+    return 'warning';
+  }
+
+  return 'general';
+};
+
+export const createNotification = (db, userId, title, message, type) => {
   if (!userId) return;
 
   db.notifications = db.notifications || [];
   db.notifications.unshift({
     id: randomUUID(),
     userId,
+    type: type || inferNotificationType(title),
     title,
     message,
     read: false,
@@ -14,8 +37,8 @@ export const createNotification = (db, userId, title, message) => {
   });
 };
 
-export const notifyAdmins = (db, title, message) => {
+export const notifyAdmins = (db, title, message, type) => {
   db.users
     .filter((user) => user.role === 'admin')
-    .forEach((admin) => createNotification(db, admin.id, title, message));
+    .forEach((admin) => createNotification(db, admin.id, title, message, type));
 };

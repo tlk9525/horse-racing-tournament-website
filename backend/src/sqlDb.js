@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { SESSION_DAYS } from './config/constants.js';
 
 const { Pool } = pg;
 
@@ -14,7 +15,7 @@ const postgresConfig =
       }
     : {
         host: process.env.PGHOST || process.env.POSTGRES_HOST || '127.0.0.1',
-        port: Number(process.env.PGPORT || process.env.POSTGRES_PORT || 5433),
+        port: Number(process.env.PGPORT || process.env.POSTGRES_PORT || 5432),
         database:
           process.env.PGDATABASE ||
           process.env.POSTGRES_DATABASE ||
@@ -54,6 +55,35 @@ const selectAll = (tableName, orderBy) =>
   );
 
 const bool = (value) => Boolean(value);
+const nowIso = () => new Date().toISOString();
+
+const addDaysIso = (dateValue, days) =>
+  new Date(new Date(dateValue || nowIso()).getTime() + days * 24 * 60 * 60 * 1000).toISOString();
+
+const formatRaceTime = (value) => {
+  if (!value) return '';
+  const [hours = '00', minutes = '00'] = String(value).split(':');
+  return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+};
+
+const formatDateOnly = (value) => {
+  if (!value) return '';
+
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  const raw = String(value);
+  return /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : raw;
+};
+
+const rowTimestamps = (row, fallbackCreatedAt = nowIso()) => ({
+  createdAt: row.createdAt || fallbackCreatedAt,
+  updatedAt: row.updatedAt || row.createdAt || fallbackCreatedAt,
+});
 
 export const readDb = async () => {
   const [
@@ -65,6 +95,8 @@ export const readDb = async () => {
     jockeyTournamentRegistrations,
     jockeyInvitations,
     raceEntries,
+    raceRefereeAssignments,
+    refereeReports,
     notifications,
     sessions,
   ] = await Promise.all([
@@ -91,6 +123,14 @@ export const readDb = async () => {
       { column: 'createdAt', direction: 'DESC' },
       { column: 'id' },
     ]),
+    selectAll('raceRefereeAssignments', [
+      { column: 'assignedAt', direction: 'DESC' },
+      { column: 'id' },
+    ]),
+    selectAll('refereeReports', [
+      { column: 'createdAt', direction: 'DESC' },
+      { column: 'id' },
+    ]),
     selectAll('notifications', [
       { column: 'createdAt', direction: 'DESC' },
       { column: 'id' },
@@ -101,11 +141,41 @@ export const readDb = async () => {
     ]),
   ]);
 
+  const racesWithAssignments = races.map((race) => {
+    const assignedReferees = raceRefereeAssignments.filter(
+      (assignment) =>
+        assignment.raceId === race.id && assignment.status !== 'removed'
+    );
+    const refereeIds = assignedReferees.map((assignment) => assignment.refereeUserId);
+
+    return {
+      ...race,
+      date: formatDateOnly(race.raceDate || race.date),
+      time: formatRaceTime(race.raceTime || race.time),
+      refereeUserId: refereeIds[0] || race.refereeUserId || '',
+      refereeUserIds: refereeIds.join(',') || race.refereeUserIds || race.refereeUserId || '',
+      referee:
+        assignedReferees.length > 0
+          ? assignedReferees
+              .map(
+                (assignment) =>
+                  users.find((user) => user.id === assignment.refereeUserId)?.name
+              )
+              .filter(Boolean)
+              .join(', ')
+          : race.referee,
+    };
+  });
+
   return {
     users,
-    tournaments,
+    tournaments: tournaments.map((tournament) => ({
+      ...tournament,
+      startDate: formatDateOnly(tournament.startDate),
+      finalDate: formatDateOnly(tournament.finalDate),
+    })),
     horses,
-    races,
+    races: racesWithAssignments,
     jockeyProfiles,
     jockeyTournamentRegistrations,
     jockeyInvitations,
@@ -117,9 +187,12 @@ export const readDb = async () => {
     })),
     notifications: notifications.map((notification) => ({
       ...notification,
+      type: notification.type || 'general',
       read: bool(notification.isRead),
       isRead: undefined,
     })),
+    raceRefereeAssignments,
+    refereeReports,
     sessions,
   };
 };
@@ -141,10 +214,12 @@ const insertRows = async (client, tableName, columns, rows = []) => {
 const tableDeleteOrder = [
   'notifications',
   'sessions',
+  'refereeReports',
   'raceEntries',
   'jockeyInvitations',
   'jockeyTournamentRegistrations',
   'jockeyProfiles',
+  'raceRefereeAssignments',
   'races',
   'horses',
   'tournaments',
@@ -164,12 +239,10 @@ export const writeDb = async (db) => {
     await insertRows(
       client,
       'users',
-      ['id', 'name', 'email', 'password', 'role', 'status', 'authProvider', 'googleId', 'avatarUrl'],
+      ['id', 'name', 'email', 'password', 'role', 'status', 'createdAt', 'updatedAt'],
       (db.users || []).map((user) => ({
         ...user,
-        authProvider: user.authProvider || 'password',
-        googleId: user.googleId || null,
-        avatarUrl: user.avatarUrl || '',
+        ...rowTimestamps(user),
       }))
     );
 
@@ -185,8 +258,15 @@ export const writeDb = async (db) => {
         'finalDate',
         'location',
         'prizePool',
+        'createdAt',
+        'updatedAt',
       ],
-      db.tournaments || []
+      (db.tournaments || []).map((tournament) => ({
+        ...tournament,
+        startDate: tournament.startDate || null,
+        finalDate: tournament.finalDate || null,
+        ...rowTimestamps(tournament),
+      }))
     );
 
     await insertRows(
@@ -212,10 +292,10 @@ export const writeDb = async (db) => {
         'profileNotes',
         'ownerUserId',
         'status',
-        'selectedJockeyUserId',
         'jockeyConfirmation',
         'veterinaryCertificateUrl',
         'createdAt',
+        'updatedAt',
       ],
       (db.horses || []).map((horse) => ({
         ...horse,
@@ -233,6 +313,7 @@ export const writeDb = async (db) => {
         healthStatus: horse.healthStatus || '',
         profileNotes: horse.profileNotes || '',
         createdAt: horse.createdAt || null,
+        updatedAt: horse.updatedAt || horse.createdAt || null,
       }))
     );
 
@@ -245,8 +326,8 @@ export const writeDb = async (db) => {
         'name',
         'round',
         'raceNumber',
-        'date',
-        'time',
+        'raceDate',
+        'raceTime',
         'venue',
         'distance',
         'surface',
@@ -254,9 +335,6 @@ export const writeDb = async (db) => {
         'handicapMin',
         'handicapMax',
         'totalPrize',
-        'refereeUserId',
-        'refereeUserIds',
-        'referee',
         'status',
         'participants',
         'ownerConfirmed',
@@ -268,10 +346,12 @@ export const writeDb = async (db) => {
         'awardsPublished',
         'createdBy',
         'createdAt',
+        'updatedAt',
       ],
       (db.races || []).map((race) => ({
         ...race,
-        refereeUserIds: race.refereeUserIds || race.refereeUserId || '',
+        raceDate: race.raceDate || race.date || null,
+        raceTime: race.raceTime || race.time || null,
         registrationPeriodMinutes: race.registrationPeriodMinutes || 10,
         registrationOpensAt: race.registrationOpensAt || null,
         registrationClosesAt: race.registrationClosesAt || null,
@@ -280,6 +360,8 @@ export const writeDb = async (db) => {
         handicapMin: race.handicapMin ?? 0,
         handicapMax: race.handicapMax ?? 0,
         raceNumber: race.raceNumber || '',
+        createdAt: race.createdAt || null,
+        updatedAt: race.updatedAt || race.createdAt || null,
       }))
     );
 
@@ -296,14 +378,20 @@ export const writeDb = async (db) => {
         'status',
         'updatedAt',
       ],
-      db.jockeyProfiles || []
+      (db.jockeyProfiles || []).map((profile) => ({
+        ...profile,
+        updatedAt: profile.updatedAt || null,
+      }))
     );
 
     await insertRows(
       client,
       'jockeyTournamentRegistrations',
       ['id', 'tournamentId', 'jockeyUserId', 'status', 'createdAt', 'reviewedAt'],
-      db.jockeyTournamentRegistrations || []
+      (db.jockeyTournamentRegistrations || []).map((registration) => ({
+        ...registration,
+        reviewedAt: registration.reviewedAt || null,
+      }))
     );
 
     await insertRows(
@@ -321,7 +409,44 @@ export const writeDb = async (db) => {
         'createdAt',
         'respondedAt',
       ],
-      db.jockeyInvitations || []
+      (db.jockeyInvitations || []).map((invitation) => ({
+        ...invitation,
+        tournamentId: invitation.tournamentId || null,
+        raceId: invitation.raceId || null,
+        adminStatus: invitation.adminStatus || null,
+        respondedAt: invitation.respondedAt || null,
+      }))
+    );
+
+    const derivedRefereeAssignments = (db.raceRefereeAssignments || []).length
+      ? db.raceRefereeAssignments
+      : (db.races || []).flatMap((race) =>
+          String(race.refereeUserIds || race.refereeUserId || '')
+            .split(',')
+            .map((refereeUserId) => refereeUserId.trim())
+            .filter(Boolean)
+            .map((refereeUserId) => ({
+              id: `rra_${race.id}_${refereeUserId}`,
+              raceId: race.id,
+              refereeUserId,
+              assignedBy: race.createdBy || null,
+              status: 'assigned',
+              assignedAt:
+                race.createdAt ||
+                race.registrationOpensAt ||
+                new Date().toISOString(),
+            }))
+        );
+
+    await insertRows(
+      client,
+      'raceRefereeAssignments',
+      ['id', 'raceId', 'refereeUserId', 'assignedBy', 'status', 'assignedAt'],
+      derivedRefereeAssignments.map((assignment) => ({
+        ...assignment,
+        status: assignment.status || 'assigned',
+        assignedAt: assignment.assignedAt || new Date().toISOString(),
+      }))
     );
 
     await insertRows(
@@ -362,24 +487,56 @@ export const writeDb = async (db) => {
         finishTime: entry.finishTime || '',
         notes: entry.notes || '',
         violationNotes: entry.violationNotes || '',
+        invitationId: entry.invitationId || null,
+        createdAt: entry.createdAt || null,
+      }))
+    );
+
+    await insertRows(
+      client,
+      'refereeReports',
+      [
+        'id',
+        'raceId',
+        'raceEntryId',
+        'refereeUserId',
+        'reportType',
+        'description',
+        'violation',
+        'status',
+        'createdAt',
+        'reviewedAt',
+      ],
+      (db.refereeReports || []).map((report) => ({
+        ...report,
+        raceEntryId: report.raceEntryId || null,
+        reportType: report.reportType || 'incident',
+        violation: report.violation || '',
+        status: report.status || 'submitted',
+        reviewedAt: report.reviewedAt || null,
       }))
     );
 
     await insertRows(
       client,
       'notifications',
-      ['id', 'userId', 'title', 'message', 'isRead', 'createdAt'],
+      ['id', 'userId', 'type', 'title', 'message', 'isRead', 'createdAt'],
       (db.notifications || []).map((notification) => ({
         ...notification,
-        isRead: notification.read ? 1 : 0,
+        type: notification.type || 'general',
+        isRead: Boolean(notification.read),
       }))
     );
 
     await insertRows(
       client,
       'sessions',
-      ['token', 'userId', 'createdAt'],
-      db.sessions || []
+      ['token', 'userId', 'createdAt', 'expiresAt'],
+      (db.sessions || []).map((session) => ({
+        ...session,
+        createdAt: session.createdAt || nowIso(),
+        expiresAt: session.expiresAt || addDaysIso(session.createdAt, SESSION_DAYS),
+      }))
     );
 
     await client.query('COMMIT');

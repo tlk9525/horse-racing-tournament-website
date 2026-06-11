@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   Calendar,
   Flag,
@@ -13,7 +14,7 @@ import {
   RaceRecord,
   getBootstrap,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 
 type TournamentRecord = {
   id: string;
@@ -34,12 +35,14 @@ const raceNumberValue = (raceNumber?: string) =>
   Number(String(raceNumber || '').replace(/\D/g, '')) || 999;
 
 export default function TournamentDetails({ onNavigate }: TournamentDetailsProps) {
+  const { tournamentId } = useParams();
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
   const [horses, setHorses] = useState<HorseRecord[]>([]);
+  const [maxRaceFieldSize, setMaxRaceFieldSize] = useState(10);
   const [selectedTournamentId, setSelectedTournamentId] = useState(
-    sessionStorage.getItem('selectedTournamentId') || ''
+    tournamentId || sessionStorage.getItem('selectedTournamentId') || ''
   );
   const [raceListExpanded, setRaceListExpanded] = useState(false);
   const [error, setError] = useState('');
@@ -51,13 +54,22 @@ export default function TournamentDetails({ onNavigate }: TournamentDetailsProps
         setRaces(data.races || []);
         setRaceEntries(data.raceEntries || []);
         setHorses(data.horses || []);
+        setMaxRaceFieldSize(data.limits?.maxRaceFieldSize || 10);
 
-        setSelectedTournamentId((current) => current || data.tournaments?.[0]?.id || '');
+        setSelectedTournamentId((current) => {
+          const next = tournamentId || current || data.tournaments?.[0]?.id || '';
+
+          if (next) {
+            sessionStorage.setItem('selectedTournamentId', next);
+          }
+
+          return next;
+        });
       })
       .catch((loadError) =>
         setError(loadError instanceof Error ? loadError.message : 'Unable to load tournament')
       );
-  }, []);
+  }, [tournamentId]);
 
   const tournament =
     tournaments.find((item) => item.id === selectedTournamentId) || tournaments[0];
@@ -123,6 +135,7 @@ export default function TournamentDetails({ onNavigate }: TournamentDetailsProps
                   setSelectedTournamentId(event.target.value);
                   setRaceListExpanded(false);
                   sessionStorage.setItem('selectedTournamentId', event.target.value);
+                  onNavigate('tournament-details');
                 }}
                 className="bg-[#12304f] border border-white/10 rounded-xl px-4 py-3 text-white"
               >
@@ -161,7 +174,7 @@ export default function TournamentDetails({ onNavigate }: TournamentDetailsProps
               {
                 icon: Users,
                 label: 'Field',
-                value: `${uniqueHorseIds.size}/10 horses • ${uniqueJockeyIds.size}/10 jockeys`,
+                value: `${uniqueHorseIds.size}/${maxRaceFieldSize} horses • ${uniqueJockeyIds.size}/${maxRaceFieldSize} jockeys`,
               },
             ].map((item) => (
               <div
@@ -188,12 +201,12 @@ export default function TournamentDetails({ onNavigate }: TournamentDetailsProps
               </h2>
 
               <p className="text-gray-400 mt-1">
-                Every completed tournament should contain exactly 10 races. Showing {visibleRaces.length}/{tournamentRaces.length}.
+                Every completed tournament should contain the configured race schedule. Showing {visibleRaces.length}/{tournamentRaces.length}.
               </p>
             </div>
 
             <div className="text-[#d4af37] font-black">
-              {tournamentRaces.length}/10
+              {tournamentRaces.length} races
             </div>
           </div>
 
@@ -231,7 +244,7 @@ export default function TournamentDetails({ onNavigate }: TournamentDetailsProps
                   <div className="grid sm:grid-cols-3 gap-3 mt-5 text-sm">
                     <div className="rounded-lg bg-[#12304f] p-3">
                       <div className="text-gray-400">Entries</div>
-                      <div className="text-white font-bold">{entries.length}/10</div>
+                      <div className="text-white font-bold">{entries.length}/{maxRaceFieldSize}</div>
                     </div>
 
                     <div className="rounded-lg bg-[#12304f] p-3">

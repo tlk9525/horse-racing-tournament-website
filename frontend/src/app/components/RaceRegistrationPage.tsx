@@ -4,10 +4,11 @@ import {
   HorseRecord,
   JockeyProfileRecord,
   RaceRecord,
+  TournamentRecord,
   createRaceEntry,
   getRaceRegistration,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface RaceRegistrationPageProps {
@@ -18,7 +19,7 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
   const fieldClass =
     'w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#d4af37]';
 
-  const [tournament, setTournament] = useState<any>(null);
+  const [tournament, setTournament] = useState<TournamentRecord | null>(null);
   const [horses, setHorses] = useState<HorseRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [jockeys, setJockeys] = useState<JockeyProfileRecord[]>([]);
@@ -76,8 +77,8 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
       notes: form.notes,
     })
       .then(() => {
-        setMessage('Horse race entry submitted. Admin approval required.');
-        setTimeout(() => onNavigate('tournaments'), 900);
+        setMessage('Jockey request sent. Admin approval will start after the jockey accepts.');
+        setTimeout(() => onNavigate('tournaments'), 1200);
       })
       .catch((error) =>
         setMessage(error instanceof Error ? error.message : 'Unable to submit registration')
@@ -106,7 +107,7 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
             </h1>
 
             <p className="text-gray-400 mt-3">
-              Select an owned horse, an open race and a jockey approved for this tournament.
+              Select an owned horse, an open race and a jockey approved for this tournament. The jockey must accept before Admin can approve the race entry.
             </p>
           </div>
 
@@ -199,7 +200,7 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
             className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] text-white font-bold transition-all"
           >
             <Send className="w-5 h-5" />
-            Submit Registration
+            Send Jockey Request
           </button>
         </div>
       </div>

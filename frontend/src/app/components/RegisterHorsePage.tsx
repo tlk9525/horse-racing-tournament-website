@@ -3,8 +3,13 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { currentTournament } from '../data/tournamentWorkflow';
-import { HorseRecord, createHorse, updateHorse } from '../services/api';
+import { useParams } from 'react-router-dom';
+import {
+  HorseRecord,
+  createHorse,
+  getBootstrap,
+  updateHorse,
+} from '../services/api';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface RegisterHorsePageProps {
@@ -18,6 +23,8 @@ export default function RegisterHorsePage({
   horse,
   mode = 'create',
 }: RegisterHorsePageProps) {
+  const { horseId } = useParams();
+  const [loadedHorse, setLoadedHorse] = useState<HorseRecord | null>(null);
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
   const [species, setSpecies] = useState('');
@@ -36,7 +43,8 @@ export default function RegisterHorsePage({
   const [veterinaryCertificateUrl, setVeterinaryCertificateUrl] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isEdit = mode === 'edit' && horse;
+  const activeHorse = horse || loadedHorse;
+  const isEdit = mode === 'edit' && Boolean(activeHorse);
   const fieldClass =
     'w-full h-12 px-4 bg-[#071a2f] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#d4af37]';
   const ratingValue = (value: string, fallback: number) => {
@@ -53,28 +61,51 @@ export default function RegisterHorsePage({
   );
 
   useEffect(() => {
-    if (!horse) return;
+    if (horse || mode !== 'edit' || !horseId) return;
 
-    setName(horse.name || '');
-    setBreed(horse.breed || '');
-    setSpecies(horse.species || '');
-    setAge(horse.age ? String(horse.age) : '');
-    setSex(horse.sex || '');
-    setColor(horse.color || '');
-    setWeightKg(horse.weightKg ? String(horse.weightKg) : '');
-    setHeightCm(horse.heightCm ? String(horse.heightCm) : '');
-    setBaseHandicap(horse.baseHandicap ? String(horse.baseHandicap) : '');
-    setSpeedRating(horse.speedRating ? String(horse.speedRating) : '75');
-    setStaminaRating(horse.staminaRating ? String(horse.staminaRating) : '75');
-    setFormRating(horse.formRating ? String(horse.formRating) : '75');
-    setHealthRating(horse.healthRating ? String(horse.healthRating) : '80');
-    setHealthStatus(horse.healthStatus || '');
-    setProfileNotes(horse.profileNotes || '');
-    setVeterinaryCertificateUrl(horse.veterinaryCertificateUrl || '');
-  }, [horse]);
+    getBootstrap()
+      .then((data) => {
+        const foundHorse = data.horses.find((item) => item.id === horseId) || null;
+        setLoadedHorse(foundHorse);
+
+        if (!foundHorse) {
+          setMessage('Horse not found or not available for this account.');
+        }
+      })
+      .catch((error) =>
+        setMessage(error instanceof Error ? error.message : 'Unable to load horse')
+      );
+  }, [horse, horseId, mode]);
+
+  useEffect(() => {
+    if (!activeHorse) return;
+
+    setName(activeHorse.name || '');
+    setBreed(activeHorse.breed || '');
+    setSpecies(activeHorse.species || '');
+    setAge(activeHorse.age ? String(activeHorse.age) : '');
+    setSex(activeHorse.sex || '');
+    setColor(activeHorse.color || '');
+    setWeightKg(activeHorse.weightKg ? String(activeHorse.weightKg) : '');
+    setHeightCm(activeHorse.heightCm ? String(activeHorse.heightCm) : '');
+    setBaseHandicap(activeHorse.baseHandicap ? String(activeHorse.baseHandicap) : '');
+    setSpeedRating(activeHorse.speedRating ? String(activeHorse.speedRating) : '75');
+    setStaminaRating(activeHorse.staminaRating ? String(activeHorse.staminaRating) : '75');
+    setFormRating(activeHorse.formRating ? String(activeHorse.formRating) : '75');
+    setHealthRating(activeHorse.healthRating ? String(activeHorse.healthRating) : '80');
+    setHealthStatus(activeHorse.healthStatus || '');
+    setProfileNotes(activeHorse.profileNotes || '');
+    setVeterinaryCertificateUrl(activeHorse.veterinaryCertificateUrl || '');
+  }, [activeHorse]);
 
   const submit = () => {
     setMessage('');
+
+    if (mode === 'edit' && !activeHorse) {
+      setMessage('Load a horse before saving changes.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload = {
@@ -97,8 +128,8 @@ export default function RegisterHorsePage({
       veterinaryCertificateUrl,
     };
 
-    const request = isEdit
-      ? updateHorse(horse.id, payload).then(() => null)
+    const request = mode === 'edit' && activeHorse
+      ? updateHorse(activeHorse.id, payload).then(() => null)
       : createHorse(payload).then(({ horseCount, maxHorses }) => ({
           horseCount,
           maxHorses,
@@ -153,7 +184,7 @@ export default function RegisterHorsePage({
               </h1>
 
               <p className="text-gray-400 mt-2">
-                Tournament: {currentTournament.name} • registration window {currentTournament.registrationWindow}
+                Approved horses are eligible for active tournament race schedules.
               </p>
             </div>
 

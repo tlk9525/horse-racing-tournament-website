@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import {
   Menu,
@@ -26,69 +26,14 @@ export default function Navbar({
   const [isMenuOpen, setIsMenuOpen] =
     useState(false);
 
-  const [countdown, setCountdown] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  useEffect(() => {
-
-    const nextRaceDate = new Date();
-
-    nextRaceDate.setDate(
-      nextRaceDate.getDate() + 7
-    );
-
-    const timer = setInterval(() => {
-
-      const now = new Date().getTime();
-
-      const distance =
-        nextRaceDate.getTime() - now;
-
-      const days = Math.floor(
-        distance / (1000 * 60 * 60 * 24)
-      );
-
-      const hours = Math.floor(
-        (distance %
-          (1000 * 60 * 60 * 24)) /
-          (1000 * 60 * 60)
-      );
-
-      const minutes = Math.floor(
-        (distance % (1000 * 60 * 60)) /
-          (1000 * 60)
-      );
-
-      const seconds = Math.floor(
-        (distance % (1000 * 60)) / 1000
-      );
-
-      setCountdown({
-        days,
-        hours,
-        minutes,
-        seconds,
-      });
-
-    }, 1000);
-
-    return () => clearInterval(timer);
-
-  }, []);
-
   const navItems = [
-    { name: 'Dashboard', page: 'dashboard', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Tournaments', page: 'tournaments', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Horses', page: 'horses', roles: ['admin', 'owner'] },
     { name: 'Jockey Profiles', page: 'jockey-profiles', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Jockey Portal', page: 'jockeys', roles: ['jockey'] },
     { name: 'Live Race', page: 'live-race', roles: ['admin', 'referee', 'spectator'] },
     { name: 'Rankings', page: 'rankings', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
-    { name: 'Results', page: 'results', roles: ['admin', 'referee', 'spectator'] },
+    { name: 'Results', page: 'results', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
     { name: 'Admin', page: 'admin', roles: ['admin'] },
   ];
 
@@ -163,64 +108,6 @@ export default function Navbar({
                 LIVE
               </span>
 
-            </div>
-
-            {/* COUNTDOWN */}
-            <div className="flex items-center gap-4 px-4 py-2 bg-[#12304f] rounded-lg border border-white/10">
-
-              <span className="text-[#d8d2c4] text-xs uppercase tracking-wider">
-                Next Race
-              </span>
-
-              <div className="flex gap-2">
-
-                {[
-                  {
-                    value: countdown.days,
-                    label: 'D',
-                  },
-                  {
-                    value: countdown.hours,
-                    label: 'H',
-                  },
-                  {
-                    value: countdown.minutes,
-                    label: 'M',
-                  },
-                  {
-                    value: countdown.seconds,
-                    label: 'S',
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2"
-                  >
-
-                    <div className="flex flex-col items-center">
-
-                      <span className="text-white font-bold text-sm">
-                        {item.value
-                          .toString()
-                          .padStart(2, '0')}
-                      </span>
-
-                      <span className="text-[#d8d2c4] text-xs">
-                        {item.label}
-                      </span>
-
-                    </div>
-
-                    {index !== 3 && (
-                      <span className="text-[#d8d2c4]">
-                        :
-                      </span>
-                    )}
-
-                  </div>
-                ))}
-
-              </div>
             </div>
 
             {currentUser ? (

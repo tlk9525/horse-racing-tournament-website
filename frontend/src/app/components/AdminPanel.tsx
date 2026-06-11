@@ -8,24 +8,24 @@ import {
   XCircle,
   Settings,
   BarChart3,
+  ChevronDown,
+  ChevronUp,
   FileText,
   Eye,
   Pencil,
   Plus,
 } from 'lucide-react';
 import {
-  currentTournament,
-  raceSchedule,
-  statusLabel,
-} from '../data/tournamentWorkflow';
-import {
   ApprovalItem,
+  RaceRecord,
+  TournamentRecord,
   adminRaceAction,
   createTournament,
   decideApproval,
   getApprovals,
   getBootstrap,
 } from '../services/api';
+import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface AdminPanelProps {
@@ -38,15 +38,17 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   const [approvalMessage, setApprovalMessage] = useState('');
   const [isLoadingApprovals, setIsLoadingApprovals] = useState(true);
   const [totalUsers, setTotalUsers] = useState(0);
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
+  const [races, setRaces] = useState<RaceRecord[]>([]);
   const [showCreateTournament, setShowCreateTournament] = useState(false);
   const [tournamentMessage, setTournamentMessage] = useState('');
+  const [scheduleExpanded, setScheduleExpanded] = useState(false);
   const [tournamentForm, setTournamentForm] = useState({
     name: '',
     registrationWindow: '',
     startDate: '',
     finalDate: '',
-    location: currentTournament.location,
+    location: '',
     prizePool: '',
   });
 
@@ -69,7 +71,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
     loadApprovals();
     getBootstrap()
       .then((data) => {
-        setRaces(data.races.length > 0 ? data.races : [...raceSchedule]);
+        setRaces(data.races || []);
         setTotalUsers(data.users.length);
         setTournaments(data.tournaments || []);
       })
@@ -94,10 +96,18 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
       });
   };
 
+  const activeTournament =
+    tournaments.find((tournament) => tournament.status !== 'completed') ||
+    tournaments[0];
+  const primaryRace = races[0];
+  const confirmationTotal = Number(primaryRace?.participants || 0) * 2;
+  const confirmationReady =
+    Number(primaryRace?.ownerConfirmed || 0) + Number(primaryRace?.jockeyConfirmed || 0);
+
   const systemStats = [
     {
       label: 'Total Users',
-      value: totalUsers ? String(totalUsers) : '9',
+      value: String(totalUsers),
       change: 'Accounts',
       icon: Users,
     },
@@ -105,7 +115,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
     {
       label: 'Active Tournaments',
       value: String(tournaments.length || 0),
-      change: currentTournament.phase,
+      change: activeTournament ? statusLabel(activeTournament.status) : 'None',
       icon: Calendar,
     },
 
@@ -118,27 +128,26 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
     {
       label: 'Race Confirmations',
-      value: `${raceSchedule[0].ownerConfirmed + raceSchedule[0].jockeyConfirmed}/${raceSchedule[0].participants * 2}`,
+      value: `${confirmationReady}/${confirmationTotal}`,
       change: 'Owner + Jockey',
       icon: BarChart3,
     },
   ];
 
-  const [races, setRaces] = useState([
-    ...raceSchedule,
-  ]);
+  const visibleRaces = scheduleExpanded ? races : races.slice(0, 4);
 
   const [showViewModal, setShowViewModal] =
-    useState<any>(null);
+    useState<RaceRecord | null>(null);
 
   const [editRace, setEditRace] =
-    useState<any>(null);
+    useState<RaceRecord | null>(null);
 
   const tournamentNameById = (tournamentId?: string | null) =>
     tournaments.find((tournament) => tournament.id === tournamentId)?.name ||
     'No tournament selected';
 
   const updateRace = () => {
+    if (!editRace) return;
 
     setRaces((prev) =>
       prev.map((race) =>
@@ -160,7 +169,11 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
         setRaces((current) =>
           current.map((race) => (race.id === result.race.id ? result.race : race))
         );
-        setApprovalMessage(`Race status updated to ${statusLabel(result.race.status)}.`);
+        setApprovalMessage(
+          action === 'confirm-results'
+            ? 'Official results approved and published to Owner, Jockey, Referee and Spectator pages.'
+            : `Race status updated to ${statusLabel(result.race.status)}.`
+        );
       })
       .catch((error) =>
         setApprovalMessage(
@@ -186,7 +199,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
           registrationWindow: '',
           startDate: '',
           finalDate: '',
-          location: currentTournament.location,
+          location: '',
           prizePool: '',
         });
         setTimeout(() => {
@@ -357,25 +370,47 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
             <div className="bg-[#12304f] border border-white/10 rounded-3xl p-8">
 
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-8">
 
-                <h2 className="text-3xl font-black text-white">
-                  Race Schedule
-                </h2>
+                <div>
+                  <h2 className="text-3xl font-black text-white">
+                    Race Schedule
+                  </h2>
 
-                <button
-                  onClick={() => tournaments.length > 0 && onNavigate('create-race')}
-                  disabled={tournaments.length === 0}
-                  className="flex items-center gap-2 px-5 py-3 bg-[#d4af37] disabled:bg-white/10 disabled:text-gray-500 rounded-xl hover:bg-[#b8892d] transition-all text-white font-bold"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create Race
-                </button>
+                  <p className="text-gray-400 mt-2">
+                    Showing {visibleRaces.length}/{races.length} races
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {races.length > 4 && (
+                    <button
+                      onClick={() => setScheduleExpanded((current) => !current)}
+                      className="flex items-center gap-2 px-5 py-3 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37] font-bold hover:bg-[#d4af37]/20 transition-all"
+                    >
+                      {scheduleExpanded ? 'Show Less' : 'View All'}
+                      {scheduleExpanded ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => tournaments.length > 0 && onNavigate('create-race')}
+                    disabled={tournaments.length === 0}
+                    className="flex items-center gap-2 px-5 py-3 bg-[#d4af37] disabled:bg-white/10 disabled:text-gray-500 rounded-xl hover:bg-[#b8892d] transition-all text-white font-bold"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create Race
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-5">
 
-                {races.map((race) => (
+                {visibleRaces.map((race) => (
 
                   <div
                     key={race.id}
@@ -559,7 +594,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                   {
                     icon: Shield,
-                    label: 'Role Permissions',
+                    label: 'User Roles',
                   },
 
                   {

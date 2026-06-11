@@ -1,24 +1,28 @@
 // App.tsx
 
 import { useEffect, useState } from 'react';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 
 import Navbar from './app/components/Navbar';
 import Footer from './app/components/Footer';
 
 import LandingPage from './app/components/LandingPage';
-import Dashboard from './app/components/Dashboard';
 import RaceDetails from './app/components/RaceDetails';
 
 import TournamentPage from './app/components/TournamentPage';
 import TournamentDetails from './app/components/TournamentDetails';
-import RaceRegistrationPage from './app/components/RaceRegistrationPage';
 
 import HorseManagement from './app/components/HorseManagement';
 import HorseDetails from './app/components/HorseDetails';
 import RegisterHorsePage from './app/components/RegisterHorsePage';
 
 import JockeyPage from './app/components/JockeyPage';
-import JockeyProfile from './app/components/JockeyProfile';
 import JockeyDirectoryPage from './app/components/JockeyDirectoryPage';
 
 import LiveRace from './app/components/LiveRace';
@@ -28,7 +32,6 @@ import AdminPanel from './app/components/AdminPanel';
 import CreateRacePage from './app/components/CreateRacePage';
 
 import LoginPage from './app/components/LoginPage';
-import RegisterPage from './app/components/RegisterPage';
 import { AuthUser, HorseRecord, clearToken, getMe, logout } from './app/services/api';
 
 const roleHome: Record<string, string> = {
@@ -40,45 +43,123 @@ const roleHome: Record<string, string> = {
 };
 
 const protectedPages: Record<string, string[]> = {
+  tournaments: ['admin', 'owner', 'jockey', 'referee', 'spectator'],
+  'tournament-details': ['admin', 'owner', 'jockey', 'referee', 'spectator'],
+  'race-details': ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   admin: ['admin'],
   'create-race': ['admin'],
-  'race-registration': ['owner'],
   horses: ['admin', 'owner'],
   'register-horse': ['owner'],
   'edit-horse': ['owner'],
   'horse-details': ['admin', 'owner'],
   'jockey-profiles': ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   jockeys: ['jockey'],
-  'jockey-profile': ['jockey', 'admin'],
   'live-race': ['admin', 'referee', 'spectator'],
   results: ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   rankings: ['admin', 'owner', 'jockey', 'referee', 'spectator'],
 };
 
-export default function App() {
+const pageFromPath = (pathname: string) => {
+  const path = pathname.replace(/\/+$/, '') || '/';
 
-  const [currentPage, setCurrentPage] =
-    useState('login');
+  if (path === '/') return 'home';
+  if (path === '/login') return 'login';
+  if (path === '/register') return 'register';
+  if (path === '/tournaments') return 'tournaments';
+  if (path.startsWith('/tournaments/')) return 'tournament-details';
+  if (path === '/races' || path.startsWith('/races/')) return 'race-details';
+  if (path === '/horses') return 'horses';
+  if (path === '/horses/new') return 'register-horse';
+  if (/^\/horses\/[^/]+\/edit$/.test(path)) return 'edit-horse';
+  if (/^\/horses\/[^/]+$/.test(path)) return 'horse-details';
+  if (path === '/jockey-portal') return 'jockeys';
+  if (path === '/jockeys/me') return 'jockeys';
+  if (path === '/jockeys') return 'jockey-profiles';
+  if (path === '/live-race' || path.startsWith('/live-race/')) return 'live-race';
+  if (path === '/results') return 'results';
+  if (path === '/rankings') return 'rankings';
+  if (path === '/admin') return 'admin';
+  if (path === '/admin/races/new') return 'create-race';
+
+  return 'tournaments';
+};
+
+export default function App() {
+  const location = useLocation();
+  const routerNavigate = useNavigate();
+  const currentPage = pageFromPath(location.pathname);
 
   const [currentUser, setCurrentUser] =
     useState<AuthUser | null>(null);
   const [selectedHorse, setSelectedHorse] =
     useState<HorseRecord | null>(null);
+  const [authChecked, setAuthChecked] =
+    useState(false);
+
+  const pathForPage = (page: string) => {
+    const selectedTournamentId =
+      sessionStorage.getItem('selectedTournamentId') || '';
+    const selectedRaceId =
+      sessionStorage.getItem('selectedRaceId') || '';
+    const selectedHorseId =
+      selectedHorse?.id || sessionStorage.getItem('selectedHorseId') || '';
+
+    const paths: Record<string, string> = {
+      home: '/',
+      tournaments: '/tournaments',
+      'tournament-details': selectedTournamentId
+        ? `/tournaments/${selectedTournamentId}`
+        : '/tournaments',
+      'race-details': selectedRaceId
+        ? `/races/${selectedRaceId}`
+        : '/races',
+      horses: '/horses',
+      'register-horse': '/horses/new',
+      'horse-details': selectedHorseId
+        ? `/horses/${selectedHorseId}`
+        : '/horses',
+      'edit-horse': selectedHorseId
+        ? `/horses/${selectedHorseId}/edit`
+        : '/horses',
+      'jockey-profiles': '/jockeys',
+      jockeys: '/jockey-portal',
+      'live-race': selectedRaceId
+        ? `/live-race/${selectedRaceId}`
+        : '/live-race',
+      results: '/results',
+      rankings: '/rankings',
+      admin: '/admin',
+      'create-race': '/admin/races/new',
+      login: '/login',
+      register: '/register',
+    };
+
+    return paths[page] || '/tournaments';
+  };
 
   useEffect(() => {
     getMe()
       .then(({ user }) => {
         setCurrentUser(user);
-        setCurrentPage(roleHome[user.role] || 'dashboard');
+        if (['login', 'register'].includes(currentPage)) {
+          routerNavigate(pathForPage(roleHome[user.role] || 'tournaments'), {
+            replace: true,
+          });
+        }
       })
-      .catch(() => clearToken());
+      .catch(() => {
+        clearToken();
+      })
+      .finally(() => setAuthChecked(true));
   }, []);
 
-  const navigate = (page: string) => {
-    const allowedRoles = protectedPages[page];
+  useEffect(() => {
+    if (!authChecked) return;
+
+    const allowedRoles = protectedPages[currentPage];
 
     if (allowedRoles && !currentUser) {
-      setCurrentPage('login');
+      routerNavigate('/login', { replace: true });
       return;
     }
 
@@ -87,171 +168,37 @@ export default function App() {
       currentUser &&
       !allowedRoles.includes(currentUser.role)
     ) {
-      setCurrentPage(roleHome[currentUser.role] || 'dashboard');
+          routerNavigate(pathForPage(roleHome[currentUser.role] || 'tournaments'), {
+        replace: true,
+      });
+    }
+  }, [authChecked, currentPage, currentUser, location.pathname]);
+
+  const navigate = (page: string) => {
+    const allowedRoles = protectedPages[page];
+
+    if (allowedRoles && !currentUser) {
+      routerNavigate('/login');
       return;
     }
 
-    setCurrentPage(page);
+    if (
+      allowedRoles &&
+      currentUser &&
+      !allowedRoles.includes(currentUser.role)
+    ) {
+      routerNavigate(pathForPage(roleHome[currentUser.role] || 'tournaments'));
+      return;
+    }
+
+    routerNavigate(pathForPage(page));
   };
 
   const handleLogout = async () => {
     await logout().catch(() => undefined);
     clearToken();
     setCurrentUser(null);
-    setCurrentPage('login');
-  };
-
-  const renderPage = () => {
-
-    switch (currentPage) {
-
-      case 'home':
-        return (
-          <LandingPage
-            onNavigate={navigate}
-          />
-        );
-
-      case 'dashboard':
-        return (
-          <Dashboard
-            onNavigate={navigate}
-          />
-        );
-
-      case 'tournaments':
-        return (
-          <TournamentPage
-            currentUser={currentUser}
-            onNavigate={navigate}
-          />
-        );
-
-      case 'race-registration':
-        return (
-          <RaceRegistrationPage
-            onNavigate={navigate}
-          />
-        );
-
-      case 'tournament-details':
-        return (
-          <TournamentDetails
-            onNavigate={navigate}
-          />
-        );
-
-      case 'race-details':
-        return (
-          <RaceDetails />
-        );
-
-      case 'horses':
-        return (
-          <HorseManagement
-            onNavigate={navigate}
-            onSelectHorse={setSelectedHorse}
-          />
-        );
-
-      case 'horse-details':
-        return (
-          <HorseDetails
-            horse={selectedHorse}
-            onNavigate={navigate}
-          />
-        );
-
-      case 'register-horse':
-        return (
-          <RegisterHorsePage
-            onNavigate={navigate}
-          />
-        );
-
-      case 'edit-horse':
-        return (
-          <RegisterHorsePage
-            horse={selectedHorse}
-            mode="edit"
-            onNavigate={navigate}
-          />
-        );
-
-      case 'jockeys':
-        return (
-          <JockeyPage
-            currentUser={currentUser}
-            onNavigate={navigate}
-          />
-        );
-
-      case 'jockey-profiles':
-        return (
-          <JockeyDirectoryPage />
-        );
-
-      case 'jockey-profile':
-        return (
-          <JockeyProfile
-            onNavigate={navigate}
-          />
-        );
-
-      case 'live-race':
-        return (
-          <LiveRace />
-        );
-
-      case 'results':
-        return (
-          <ResultsPage />
-        );
-
-      case 'rankings':
-        return (
-          <RankingsPage />
-        );
-
-      case 'admin':
-        return (
-          <AdminPanel
-            onNavigate={navigate}
-          />
-        );
-
-      case 'create-race':
-        return (
-          <CreateRacePage
-            onNavigate={navigate}
-          />
-        );
-
-      case 'login':
-        return (
-          <LoginPage
-            onLogin={(user) => {
-              setCurrentUser(user);
-              setCurrentPage(roleHome[user.role] || 'dashboard');
-            }}
-            onNavigate={navigate}
-          />
-        );
-
-      case 'register':
-        return (
-          <RegisterPage
-            onNavigate={navigate}
-          />
-        );
-
-      default:
-        return (
-          <Dashboard
-            onNavigate={navigate}
-          />
-        );
-    }
+    routerNavigate('/login');
   };
 
   return (
@@ -268,7 +215,134 @@ export default function App() {
       {/* PAGE CONTENT */}
       <main className="pt-16 min-h-screen">
 
-        {renderPage()}
+        {!authChecked && protectedPages[currentPage] ? (
+          <div className="min-h-screen bg-[#071a2f] pt-24 px-4 text-gray-300">
+            <div className="max-w-4xl mx-auto rounded-xl border border-white/10 bg-[#0b223d] p-8">
+              Loading secure race data...
+            </div>
+          </div>
+        ) : (
+          <Routes>
+            <Route
+              path="/"
+              element={<LandingPage onNavigate={navigate} />}
+            />
+            <Route
+              path="/tournaments"
+              element={
+                <TournamentPage
+                  currentUser={currentUser}
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route
+              path="/tournaments/:tournamentId"
+              element={<TournamentDetails onNavigate={navigate} />}
+            />
+            <Route path="/races" element={<RaceDetails />} />
+            <Route path="/races/:raceId" element={<RaceDetails />} />
+            <Route
+              path="/horses"
+              element={
+                <HorseManagement
+                  onNavigate={navigate}
+                  onSelectHorse={setSelectedHorse}
+                />
+              }
+            />
+            <Route
+              path="/horses/new"
+              element={<RegisterHorsePage onNavigate={navigate} />}
+            />
+            <Route
+              path="/horses/:horseId"
+              element={
+                <HorseDetails
+                  horse={selectedHorse}
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route
+              path="/horses/:horseId/edit"
+              element={
+                <RegisterHorsePage
+                  horse={selectedHorse}
+                  mode="edit"
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route
+              path="/jockey-portal"
+              element={
+                <JockeyPage
+                  currentUser={currentUser}
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route path="/jockeys" element={<JockeyDirectoryPage />} />
+            <Route path="/jockeys/me" element={<Navigate to="/jockey-portal" replace />} />
+            <Route path="/live-race" element={<LiveRace />} />
+            <Route path="/live-race/:raceId" element={<LiveRace />} />
+            <Route path="/results" element={<ResultsPage />} />
+            <Route path="/rankings" element={<RankingsPage />} />
+            <Route
+              path="/admin"
+              element={<AdminPanel onNavigate={navigate} />}
+            />
+            <Route
+              path="/admin/races/new"
+              element={<CreateRacePage onNavigate={navigate} />}
+            />
+            <Route
+              path="/login"
+              element={
+                <LoginPage
+                  onLogin={(user) => {
+                    setCurrentUser(user);
+                    routerNavigate(
+                      pathForPage(roleHome[user.role] || 'tournaments'),
+                      { replace: true }
+                    );
+                  }}
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <LoginPage
+                  initialMode="register"
+                  onLogin={(user) => {
+                    setCurrentUser(user);
+                    routerNavigate(
+                      pathForPage(roleHome[user.role] || 'tournaments'),
+                      { replace: true }
+                    );
+                  }}
+                  onNavigate={navigate}
+                />
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to={
+                    currentUser
+                      ? pathForPage(roleHome[currentUser.role] || 'tournaments')
+                      : '/login'
+                  }
+                  replace
+                />
+              }
+            />
+          </Routes>
+        )}
 
       </main>
 

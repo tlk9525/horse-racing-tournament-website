@@ -10,8 +10,14 @@ import {
   ShieldCheck,
   Trophy,
 } from 'lucide-react';
-import { HorseRecord } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  HorseRecord,
+  RaceEntryRecord,
+  getBootstrap,
+} from '../services/api';
+import { statusLabel } from '../utils/domain';
 
 interface HorseDetailsProps {
   horse: HorseRecord | null;
@@ -35,7 +41,37 @@ const overall = (horse: HorseRecord) =>
   );
 
 export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
-  if (!horse) {
+  const { horseId } = useParams();
+  const [loadedHorse, setLoadedHorse] = useState<HorseRecord | null>(null);
+  const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
+  const [message, setMessage] = useState('');
+  const activeHorse = horse || loadedHorse;
+
+  useEffect(() => {
+    const activeHorseId = horse?.id || horseId;
+
+    if (!activeHorseId) return;
+
+    getBootstrap()
+      .then((data) => {
+        if (!horse) {
+          setLoadedHorse(
+            data.horses.find((item) => item.id === activeHorseId) || null
+          );
+        }
+
+        setRaceEntries(
+          (data.raceEntries || [])
+            .filter((entry) => entry.horseId === activeHorseId)
+            .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+        );
+      })
+      .catch((error) =>
+        setMessage(error instanceof Error ? error.message : 'Unable to load horse')
+      );
+  }, [horse, horseId]);
+
+  if (!activeHorse) {
     return (
       <div className="min-h-screen bg-[#071a2f] pt-24 pb-12">
         <div className="max-w-4xl mx-auto px-4">
@@ -48,7 +84,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
           </button>
 
           <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8 text-gray-300">
-            Select a horse from the Horses page to view its details.
+            {message || 'Select a horse from the Horses page to view its details.'}
           </div>
         </div>
       </div>
@@ -56,21 +92,21 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
   }
 
   const profileCards = [
-    ['Breed', horse.breed, Trophy],
-    ['Species', horse.species || 'Not set', Activity],
-    ['Sex', horse.sex || 'Not set', ShieldCheck],
-    ['Color', horse.color || 'Not set', FileText],
-    ['Age', `${horse.age} years`, Activity],
-    ['Weight', value(horse.weightKg, 'kg'), Scale],
-    ['Height', value(horse.heightCm, 'cm'), Ruler],
-    ['Base Handicap', value(horse.baseHandicap), Trophy],
-    ['Speed Rating', value(horse.speedRating), Gauge],
-    ['Stamina Rating', value(horse.staminaRating), Activity],
-    ['Form Rating', value(horse.formRating), Trophy],
-    ['Health Rating', value(horse.healthRating), HeartPulse],
-    ['Overall Rating', overall(horse), Gauge],
-    ['Health Status', horse.healthStatus || 'Not set', HeartPulse],
-    ['Jockey Pairing', statusLabel(horse.jockeyConfirmation), ShieldCheck],
+    ['Breed', activeHorse.breed, Trophy],
+    ['Species', activeHorse.species || 'Not set', Activity],
+    ['Sex', activeHorse.sex || 'Not set', ShieldCheck],
+    ['Color', activeHorse.color || 'Not set', FileText],
+    ['Age', `${activeHorse.age} years`, Activity],
+    ['Weight', value(activeHorse.weightKg, 'kg'), Scale],
+    ['Height', value(activeHorse.heightCm, 'cm'), Ruler],
+    ['Base Handicap', value(activeHorse.baseHandicap), Trophy],
+    ['Speed Rating', value(activeHorse.speedRating), Gauge],
+    ['Stamina Rating', value(activeHorse.staminaRating), Activity],
+    ['Form Rating', value(activeHorse.formRating), Trophy],
+    ['Health Rating', value(activeHorse.healthRating), HeartPulse],
+    ['Overall Rating', overall(activeHorse), Gauge],
+    ['Health Status', activeHorse.healthStatus || 'Not set', HeartPulse],
+    ['Jockey Pairing', statusLabel(activeHorse.jockeyConfirmation), ShieldCheck],
   ];
 
   return (
@@ -86,7 +122,10 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
           </button>
 
           <button
-            onClick={() => onNavigate('edit-horse')}
+            onClick={() => {
+              sessionStorage.setItem('selectedHorseId', activeHorse.id);
+              onNavigate('edit-horse');
+            }}
             className="flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-5 py-3 text-[#d4af37] font-bold hover:bg-[#d4af37]/20"
           >
             <Pencil className="w-4 h-4" />
@@ -98,7 +137,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
           <div className="relative min-h-[340px]">
             <img
               src="https://images.unsplash.com/photo-1507514604110-ba3347c457f6?w=1600"
-              alt={horse.name}
+              alt={activeHorse.name}
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b223d] via-[#0b223d]/50 to-[#071a2f]/20" />
@@ -106,28 +145,28 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
             <div className="relative z-10 p-8 lg:p-10 flex flex-col justify-end min-h-[340px]">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <span className="px-4 py-2 bg-[#d4af37] rounded-lg text-white font-bold text-sm">
-                  {statusLabel(horse.status)}
+                  {statusLabel(activeHorse.status)}
                 </span>
 
                 <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
-                  Handicap {horse.baseHandicap || 0}
+                  Handicap {activeHorse.baseHandicap || 0}
                 </span>
 
                 <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
-                  Rating {overall(horse)}
+                  Rating {overall(activeHorse)}
                 </span>
 
                 <span className="px-4 py-2 bg-[#071a2f]/50 border border-white/10 rounded-lg text-white font-semibold text-sm">
-                  {horse.healthStatus || 'Health not set'}
+                  {activeHorse.healthStatus || 'Health not set'}
                 </span>
               </div>
 
               <h1 className="text-5xl font-black text-white mb-3">
-                {horse.name}
+                {activeHorse.name}
               </h1>
 
               <p className="text-gray-300 text-lg">
-                {horse.breed} • {horse.species || 'Species not set'} • {horse.age} years old
+                {activeHorse.breed} • {activeHorse.species || 'Species not set'} • {activeHorse.age} years old
               </p>
             </div>
           </div>
@@ -165,8 +204,55 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
               </h2>
 
               <p className="text-gray-300 leading-8">
-                {horse.profileNotes || 'No profile notes have been added yet.'}
+                {activeHorse.profileNotes || 'No profile notes have been added yet.'}
               </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-[#0b223d] p-8">
+              <h2 className="text-3xl font-bold text-white mb-5">
+                Race History
+              </h2>
+
+              <div className="space-y-4">
+                {raceEntries.length === 0 && (
+                  <div className="rounded-xl border border-white/10 bg-[#12304f] p-5 text-gray-400">
+                    No race entries have been recorded for this horse yet.
+                  </div>
+                )}
+
+                {raceEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="rounded-xl border border-white/10 bg-[#12304f] p-5"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <div className="text-white text-lg font-bold">
+                          {entry.raceName || 'Race'}
+                        </div>
+
+                        <div className="mt-1 text-sm text-gray-400">
+                          Jockey: {entry.jockeyName || 'Pending'} • Gate {entry.lane || 'TBD'} • {statusLabel(entry.status)}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-lg border border-white/10 bg-[#071a2f]/40 px-3 py-2 text-sm text-gray-300">
+                          Position {entry.position || 'Pending'}
+                        </span>
+
+                        <span className="rounded-lg border border-white/10 bg-[#071a2f]/40 px-3 py-2 text-sm text-gray-300">
+                          Time {entry.finishTime || 'Pending'}
+                        </span>
+
+                        <span className="rounded-lg border border-white/10 bg-[#071a2f]/40 px-3 py-2 text-sm text-gray-300">
+                          Result {statusLabel(entry.resultStatus || 'draft')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -183,7 +269,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
                   </div>
 
                   <div className="text-white font-semibold break-words">
-                    {horse.veterinaryCertificateUrl || 'Not uploaded'}
+                    {activeHorse.veterinaryCertificateUrl || 'Not uploaded'}
                   </div>
                 </div>
 
@@ -193,7 +279,7 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
                   </div>
 
                   <div className="text-white font-semibold">
-                    {horse.ownerUserId}
+                    {activeHorse.ownerUserId}
                   </div>
                 </div>
               </div>
@@ -207,22 +293,22 @@ export default function HorseDetails({ horse, onNavigate }: HorseDetailsProps) {
               <div className="space-y-4 text-sm">
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-400">Admin status</span>
-                  <span className="text-white font-bold">{statusLabel(horse.status)}</span>
+                  <span className="text-white font-bold">{statusLabel(activeHorse.status)}</span>
                 </div>
 
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-400">Health</span>
-                  <span className="text-white font-bold">{horse.healthStatus || 'Not set'}</span>
+                  <span className="text-white font-bold">{activeHorse.healthStatus || 'Not set'}</span>
                 </div>
 
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-400">Handicap</span>
-                  <span className="text-white font-bold">{horse.baseHandicap || 0}</span>
+                  <span className="text-white font-bold">{activeHorse.baseHandicap || 0}</span>
                 </div>
 
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-400">Overall rating</span>
-                  <span className="text-white font-bold">{overall(horse)}</span>
+                  <span className="text-white font-bold">{overall(activeHorse)}</span>
                 </div>
               </div>
             </div>

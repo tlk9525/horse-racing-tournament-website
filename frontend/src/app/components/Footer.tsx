@@ -1,160 +1,17 @@
-import { Trophy, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#071a2f] border-t border-white/10 pt-16 pb-8">
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#d4af37] to-[#7a4a24] rounded-md flex items-center justify-center">
-                <Trophy className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <div className="text-white font-bold text-lg tracking-tight">HORSE RACING</div>
-                <div className="text-[#d8d2c4] text-xs tracking-widest">TOURNAMENT SYSTEM</div>
-              </div>
-            </div>
-            <p className="text-gray-400 text-sm mb-4">
-              The premier platform for professional horse racing tournament management and live race tracking.
-            </p>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/5 rounded flex items-center justify-center hover:bg-[#d4af37] transition-colors"
-              >
-                <Facebook className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/5 rounded flex items-center justify-center hover:bg-[#d4af37] transition-colors"
-              >
-                <Twitter className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/5 rounded flex items-center justify-center hover:bg-[#d4af37] transition-colors"
-              >
-                <Instagram className="w-5 h-5 text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/5 rounded flex items-center justify-center hover:bg-[#d4af37] transition-colors"
-              >
-                <Youtube className="w-5 h-5 text-white" />
-              </a>
-            </div>
+    <footer className="border-t border-white/10 bg-[#071a2f] py-6">
+      <div className="mx-auto flex max-w-[1920px] flex-col items-center justify-between gap-3 px-4 text-sm text-gray-400 sm:flex-row sm:px-6 lg:px-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#d4af37]">
+            <Trophy className="h-5 w-5 text-[#071a2f]" />
           </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-white font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  About Us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Tournaments
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Horses
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Jockeys
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Live Races
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Results
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="text-white font-bold mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                  Contact Us
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="text-white font-bold mb-4">Contact</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-gray-400 text-sm">
-                <MapPin className="w-5 h-5 text-[#d4af37] mt-0.5" />
-                <span>123 Racing Boulevard, Churchill Downs, KY 40205</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <Phone className="w-5 h-5 text-[#d4af37]" />
-                <span>+1 (555) 123-4567</span>
-              </li>
-              <li className="flex items-center gap-3 text-gray-400 text-sm">
-                <Mail className="w-5 h-5 text-[#d4af37]" />
-                <span>info@horseracingtournament.com</span>
-              </li>
-            </ul>
-          </div>
+          <span className="font-semibold text-white">Horse Racing Tournament System</span>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-400 text-sm">
-              &copy; 2026 Horse Racing Tournament System. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                Legal
-              </a>
-              <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                Cookies
-              </a>
-              <a href="#" className="text-gray-400 hover:text-[#d4af37] transition-colors text-sm">
-                Accessibility
-              </a>
-            </div>
-          </div>
-        </div>
+        <span>PostgreSQL backed race, horse, jockey and referee management.</span>
       </div>
     </footer>
   );

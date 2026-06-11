@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Bell, CalendarClock, ShieldCheck } from 'lucide-react';
-import { currentTournament } from '../data/tournamentWorkflow';
 import {
   RaceBuilderReferee,
   RaceRecord,
+  TournamentRecord,
   createRace,
   getRaceBuilder,
 } from '../services/api';
@@ -17,7 +17,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
   const fieldClass =
     'w-full bg-[#071a2f] border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-gray-500 outline-none focus:border-[#d4af37]/70 focus:ring-2 focus:ring-[#d4af37]/20';
 
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
   const [referees, setReferees] = useState<RaceBuilderReferee[]>([]);
   const [message, setMessage] = useState('');
@@ -30,7 +30,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
     round: 'Qualifier',
     raceDate: '',
     startTime: '',
-    venue: currentTournament.location,
+    venue: '',
     distance: '1400',
     surfaceType: 'Turf',
     raceClass: 'Open',
@@ -82,6 +82,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
           ...current,
           tournamentId: firstTournament?.id || '',
           raceNumber: current.raceNumber || nextRaceNumber,
+          venue: current.venue || firstTournament?.location || '',
           refereeUserId: data.referees[0]?.id || '',
         }));
       })
@@ -506,7 +507,7 @@ export default function CreateRacePage({ onNavigate }: CreateRacePageProps) {
                 </div>
 
                 <p className="text-gray-400 mb-5">
-                  Owners and Jockeys can register only while the race is Registration Open.
+                  Owner horse registration is tournament-wide; jockey approvals and race publication prepare the full race schedule.
                 </p>
 
                 <div className="space-y-3 text-sm text-gray-300 mb-6">

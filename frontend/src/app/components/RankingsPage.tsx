@@ -12,7 +12,7 @@ import {
   RaceRecord,
   getBootstrap,
 } from '../services/api';
-import { statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 
 type Tab = 'horses' | 'jockeys' | 'owners';
 

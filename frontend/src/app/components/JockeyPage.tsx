@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
+  ChevronDown,
+  ChevronUp,
   CheckCircle,
   Flag,
   Gauge,
@@ -19,7 +21,7 @@ import {
   getJockeyPortal,
   saveJockeyProfile,
 } from '../services/api';
-import { currentTournament, statusLabel } from '../data/tournamentWorkflow';
+import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
 
 interface JockeyPageProps {
@@ -41,6 +43,7 @@ export default function JockeyPage({
   const [competitionLevel, setCompetitionLevel] = useState('');
   const [weight, setWeight] = useState('');
   const [message, setMessage] = useState('');
+  const [assignedExpanded, setAssignedExpanded] = useState(false);
 
   const loadPortal = () => {
     getJockeyPortal()
@@ -50,6 +53,7 @@ export default function JockeyPage({
         setRaces(data.races);
         setRaceEntries(data.raceEntries);
         setInvitations(data.invitations);
+        setAssignedExpanded(false);
         setBio(data.profile?.bio || '');
         setCertificate(data.profile?.certificate || '');
         setCompetitionLevel(data.profile?.competitionLevel || '');
@@ -100,6 +104,10 @@ export default function JockeyPage({
   const raceById = (raceId: string) =>
     races.find((race) => race.id === raceId);
 
+  const visibleAssignedEntries = assignedExpanded
+    ? raceEntries
+    : raceEntries.slice(0, 3);
+
   const canViewLine = (race?: RaceRecord) =>
     Boolean(
       race &&
@@ -138,7 +146,7 @@ export default function JockeyPage({
         </h1>
 
         <p className="text-gray-400 mb-8">
-          Publish your jockey profile, certificate and competition level so Horse Owners can send riding requests for {currentTournament.name}.
+          Publish your jockey profile, certificate and competition level so Horse Owners can send riding requests for active tournament races.
         </p>
 
         <NotificationsPanel />
@@ -241,6 +249,12 @@ export default function JockeyPage({
                     Race: {races.find((race) => race.id === invitation.raceId)?.name || 'Race'} • Status: {statusLabel(invitation.status)}
                   </div>
 
+                  {invitation.status === 'pending' && (
+                    <div className="text-blue-300 text-sm mt-2 font-semibold">
+                      Owner request: accept to send this race entry to Admin approval.
+                    </div>
+                  )}
+
                   {invitation.status === 'accepted' && (
                     <div className="text-yellow-400 text-sm mt-2 font-semibold">
                       Admin approval:{' '}
@@ -283,7 +297,7 @@ export default function JockeyPage({
                   </div>
                 )}
 
-                {raceEntries.map((entry) => {
+                {visibleAssignedEntries.map((entry) => {
                   const race = raceById(entry.raceId);
                   const lineVisible = canViewLine(race);
 
@@ -366,6 +380,20 @@ export default function JockeyPage({
                   );
                 })}
               </div>
+
+              {raceEntries.length > 3 && (
+                <button
+                  onClick={() => setAssignedExpanded((current) => !current)}
+                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-4 py-3 text-[#d4af37] font-bold hover:bg-[#d4af37]/20 transition-all"
+                >
+                  {assignedExpanded ? 'Show Less' : `View All ${raceEntries.length}`}
+                  {assignedExpanded ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

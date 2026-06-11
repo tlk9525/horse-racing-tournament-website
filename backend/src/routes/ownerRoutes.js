@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { MAX_OWNER_HORSES } from '../config/constants.js';
 import { requireRole } from '../services/authService.js';
 import {
   activeTournament,
@@ -15,8 +16,6 @@ import {
   horseOverallRating,
   numeric,
 } from '../services/handicapService.js';
-
-const MAX_OWNER_HORSES = 5;
 
 export const handleOwnerRoutes = async ({
   req,
@@ -45,6 +44,9 @@ export const handleOwnerRoutes = async ({
       invitations: (db.jockeyInvitations || []).filter(
         (invitation) => invitation.ownerUserId === user.id
       ),
+      limits: {
+        maxOwnerHorses: MAX_OWNER_HORSES,
+      },
     });
     return true;
   }
@@ -133,6 +135,7 @@ export const handleOwnerRoutes = async ({
       return true;
     }
 
+    const createdAt = new Date().toISOString();
     const horse = {
       id: randomUUID(),
       name,
@@ -155,10 +158,10 @@ export const handleOwnerRoutes = async ({
       profileNotes: profileNotes || '',
       ownerUserId: user.id,
       status: 'pending',
-      selectedJockeyUserId: null,
       jockeyConfirmation: 'waiting-owner',
       veterinaryCertificateUrl: veterinaryCertificateUrl || '',
-      createdAt: new Date().toISOString(),
+      createdAt,
+      updatedAt: createdAt,
     };
 
     db.horses.unshift(horse);
@@ -253,6 +256,7 @@ export const handleOwnerRoutes = async ({
     horse.healthStatus = healthStatus || '';
     horse.profileNotes = profileNotes || '';
     horse.veterinaryCertificateUrl = veterinaryCertificateUrl || '';
+    horse.updatedAt = new Date().toISOString();
 
     createNotification(
       db,
@@ -336,8 +340,8 @@ export const handleOwnerRoutes = async ({
     };
     db.jockeyInvitations.unshift(invitation);
 
-    horse.selectedJockeyUserId = jockeyUserId;
     horse.jockeyConfirmation = 'pending';
+    horse.updatedAt = new Date().toISOString();
 
     createNotification(
       db,
@@ -395,72 +399,84 @@ export const handleOwnerRoutes = async ({
     }
 
     db.raceEntries = db.raceEntries || [];
+    db.jockeyInvitations = db.jockeyInvitations || [];
 
-    const duplicate = db.raceEntries.some(
+    const duplicateEntry = db.raceEntries.some(
       (entry) =>
         entry.raceId === race.id &&
         entry.horseId === horse.id &&
         entry.status !== 'rejected'
     );
+    const duplicateInvitation = db.jockeyInvitations.some(
+      (invitation) =>
+        invitation.raceId === race.id &&
+        invitation.horseId === horse.id &&
+        !['rejected', 'cancelled'].includes(invitation.status) &&
+        invitation.adminStatus !== 'rejected'
+    );
 
-    if (duplicate) {
-      send(res, 409, { message: 'This horse already has a race entry for this race' });
+    if (duplicateEntry || duplicateInvitation) {
+      send(res, 409, {
+        message: 'This horse already has a pending or approved registration for this race',
+      });
       return true;
     }
 
-    const jockeyAlreadyAssigned = db.raceEntries.some(
+    const jockeyAlreadyAssignedToEntry = db.raceEntries.some(
       (entry) =>
         entry.raceId === race.id &&
         entry.jockeyUserId === jockeyUserId &&
         entry.status !== 'rejected'
     );
+    const jockeyAlreadyInvited = db.jockeyInvitations.some(
+      (invitation) =>
+        invitation.raceId === race.id &&
+        invitation.jockeyUserId === jockeyUserId &&
+        !['rejected', 'cancelled'].includes(invitation.status) &&
+        invitation.adminStatus !== 'rejected'
+    );
 
-    if (jockeyAlreadyAssigned) {
+    if (jockeyAlreadyAssignedToEntry || jockeyAlreadyInvited) {
       send(res, 409, {
-        message: 'A jockey cannot be assigned to multiple horses in the same race',
+        message: 'This jockey already has a pending or approved assignment in the same race',
       });
       return true;
     }
 
-    const entry = {
+    const invitation = {
       id: randomUUID(),
-      raceId: race.id,
       horseId: horse.id,
+      ownerUserId: user.id,
       jockeyUserId,
-      invitationId: null,
-      status: 'pending-approval',
-      lane: null,
-      handicap: 0,
-      ratingSnapshot: 0,
-      ownerConfirmed: true,
-      jockeyConfirmed: true,
-      preRaceStatus: 'pending',
-      disqualified: false,
-      resultStatus: 'draft',
+      tournamentId,
+      raceId: race.id,
+      status: 'pending',
+      adminStatus: null,
       notes: notes || '',
-      violationNotes: '',
-      finishTime: '',
-      position: null,
       createdAt: new Date().toISOString(),
+      respondedAt: null,
     };
 
-    db.raceEntries.unshift(entry);
-
-    notifyAdmins(
-      db,
-      'Horse race entry pending approval',
-      `${user.name} registered ${horse.name} with ${jockeyName(db, jockeyUserId)} for ${race.name}.`
-    );
+    db.jockeyInvitations.unshift(invitation);
+    horse.jockeyConfirmation = 'pending-jockey';
+    horse.updatedAt = new Date().toISOString();
 
     createNotification(
       db,
       jockeyUserId,
-      'Race entry submitted',
-      `${horse.name} was registered for ${race.name} with you as jockey.`
+      'Race participation request',
+      `${user.name} invited you to ride ${horse.name} in ${race.name}. Accept the request before Admin can approve the race entry.`
+    );
+
+    createNotification(
+      db,
+      user.id,
+      'Jockey request sent',
+      `${horse.name} is waiting for ${jockeyName(db, jockeyUserId)} to accept ${race.name}. Admin approval starts after the jockey accepts.`
     );
 
     await writeDb(db);
-    send(res, 201, { entry });
+    send(res, 201, { invitation });
     return true;
   }
 

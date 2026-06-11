@@ -4,13 +4,16 @@
 
 DROP TABLE IF EXISTS "notifications";
 DROP TABLE IF EXISTS "sessions";
+DROP TABLE IF EXISTS "refereeReports";
 DROP TABLE IF EXISTS "raceEntries";
 DROP TABLE IF EXISTS "jockeyInvitations";
 DROP TABLE IF EXISTS "jockeyTournamentRegistrations";
 DROP TABLE IF EXISTS "jockeyProfiles";
+DROP TABLE IF EXISTS "raceRefereeAssignments";
 DROP TABLE IF EXISTS "races";
 DROP TABLE IF EXISTS "horses";
 DROP TABLE IF EXISTS "tournaments";
+
 DROP TABLE IF EXISTS "users";
 
 CREATE TABLE "users" (
@@ -20,9 +23,8 @@ CREATE TABLE "users" (
   "password" VARCHAR(255) NOT NULL,
   "role" VARCHAR(32) NOT NULL CHECK ("role" IN ('admin', 'owner', 'jockey', 'referee', 'spectator')),
   "status" VARCHAR(32) NOT NULL DEFAULT 'active' CHECK ("status" IN ('pending', 'active', 'approved', 'rejected', 'suspended', 'locked')),
-  "authProvider" VARCHAR(32) NOT NULL DEFAULT 'password',
-  "googleId" VARCHAR(255),
-  "avatarUrl" TEXT
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE "tournaments" (
@@ -30,10 +32,12 @@ CREATE TABLE "tournaments" (
   "name" VARCHAR(255) NOT NULL,
   "status" VARCHAR(64) NOT NULL,
   "registrationWindow" VARCHAR(128),
-  "startDate" VARCHAR(64),
-  "finalDate" VARCHAR(64),
+  "startDate" DATE,
+  "finalDate" DATE,
   "location" VARCHAR(255),
-  "prizePool" NUMERIC(14, 2) NOT NULL DEFAULT 0
+  "prizePool" NUMERIC(14, 2) NOT NULL DEFAULT 0,
+  "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE "horses" (
@@ -56,10 +60,12 @@ CREATE TABLE "horses" (
   "profileNotes" TEXT,
   "ownerUserId" VARCHAR(64) NOT NULL,
   "status" VARCHAR(32) NOT NULL DEFAULT 'pending' CHECK ("status" IN ('draft', 'pending', 'approved', 'rejected', 'retired')),
-  "selectedJockeyUserId" VARCHAR(64),
   "jockeyConfirmation" VARCHAR(64) NOT NULL DEFAULT 'waiting-owner',
   "veterinaryCertificateUrl" TEXT,
-  "createdAt" VARCHAR(64)
+  "createdAt" TIMESTAMPTZ,
+  "updatedAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_horses_owner"
+    FOREIGN KEY ("ownerUserId") REFERENCES "users" ("id")
 );
 
 CREATE INDEX "idx_horses_owner" ON "horses" ("ownerUserId");
@@ -67,12 +73,12 @@ CREATE INDEX "idx_horses_status" ON "horses" ("status");
 
 CREATE TABLE "races" (
   "id" VARCHAR(64) PRIMARY KEY,
-  "tournamentId" VARCHAR(64),
+  "tournamentId" VARCHAR(64) ,
   "raceNumber" VARCHAR(64),
   "name" VARCHAR(255) NOT NULL,
   "round" VARCHAR(64),
-  "date" VARCHAR(64) NOT NULL,
-  "time" VARCHAR(32) NOT NULL,
+  "raceDate" DATE NOT NULL,
+  "raceTime" TIME NOT NULL,
   "venue" VARCHAR(255) NOT NULL,
   "distance" VARCHAR(64),
   "surface" VARCHAR(64),
@@ -80,23 +86,51 @@ CREATE TABLE "races" (
   "handicapMin" NUMERIC(6, 2) NOT NULL DEFAULT 0,
   "handicapMax" NUMERIC(6, 2) NOT NULL DEFAULT 0,
   "totalPrize" NUMERIC(14, 2) NOT NULL DEFAULT 0,
-  "refereeUserId" VARCHAR(64),
-  "refereeUserIds" TEXT,
-  "referee" VARCHAR(255),
   "status" VARCHAR(64) NOT NULL DEFAULT 'draft',
   "participants" INTEGER NOT NULL DEFAULT 0,
   "ownerConfirmed" INTEGER NOT NULL DEFAULT 0,
   "jockeyConfirmed" INTEGER NOT NULL DEFAULT 0,
   "registrationPeriodMinutes" INTEGER NOT NULL DEFAULT 10,
-  "registrationOpensAt" VARCHAR(64),
-  "registrationClosesAt" VARCHAR(64),
+  "registrationOpensAt" TIMESTAMPTZ,
+  "registrationClosesAt" TIMESTAMPTZ,
   "resultStatus" VARCHAR(32) NOT NULL DEFAULT 'draft',
   "awardsPublished" BOOLEAN NOT NULL DEFAULT FALSE,
   "createdBy" VARCHAR(64),
-  "createdAt" VARCHAR(64)
+  "createdAt" TIMESTAMPTZ,
+  "updatedAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_races_tournament"
+    FOREIGN KEY ("tournamentId") REFERENCES "tournaments" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_races_created_by"
+    FOREIGN KEY ("createdBy") REFERENCES "users" ("id")
+    ON DELETE SET NULL
 );
 
 CREATE INDEX "idx_races_tournament" ON "races" ("tournamentId", "status");
+
+CREATE TABLE "raceRefereeAssignments" (
+  "id" VARCHAR(64) PRIMARY KEY,
+  "raceId" VARCHAR(64) NOT NULL,
+  "refereeUserId" VARCHAR(64) NOT NULL,
+  "assignedBy" VARCHAR(64),
+  "status" VARCHAR(32) NOT NULL DEFAULT 'assigned' CHECK ("status" IN ('assigned', 'confirmed', 'declined', 'removed')),
+  "assignedAt" TIMESTAMPTZ NOT NULL,
+  CONSTRAINT "uq_race_referee_assignment" UNIQUE ("raceId", "refereeUserId"),
+  CONSTRAINT "fk_race_referee_assignments_race"
+    FOREIGN KEY ("raceId") REFERENCES "races" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_race_referee_assignments_referee"
+    FOREIGN KEY ("refereeUserId") REFERENCES "users" ("id"),
+  CONSTRAINT "fk_race_referee_assignments_assigned_by"
+    FOREIGN KEY ("assignedBy") REFERENCES "users" ("id")
+    ON DELETE SET NULL
+);
+
+CREATE INDEX "idx_race_referee_assignments_race"
+  ON "raceRefereeAssignments" ("raceId", "status");
+
+CREATE INDEX "idx_race_referee_assignments_referee"
+  ON "raceRefereeAssignments" ("refereeUserId", "status");
 
 CREATE TABLE "jockeyProfiles" (
   "id" VARCHAR(64) PRIMARY KEY,
@@ -106,7 +140,10 @@ CREATE TABLE "jockeyProfiles" (
   "competitionLevel" VARCHAR(128),
   "weight" NUMERIC(6, 2) NOT NULL DEFAULT 0,
   "status" VARCHAR(32) NOT NULL DEFAULT 'draft' CHECK ("status" IN ('draft', 'pending', 'published', 'rejected', 'archived')),
-  "updatedAt" VARCHAR(64)
+  "updatedAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_jockey_profiles_user"
+    FOREIGN KEY ("userId") REFERENCES "users" ("id")
+    ON DELETE CASCADE
 );
 
 CREATE TABLE "jockeyTournamentRegistrations" (
@@ -114,9 +151,15 @@ CREATE TABLE "jockeyTournamentRegistrations" (
   "tournamentId" VARCHAR(64) NOT NULL,
   "jockeyUserId" VARCHAR(64) NOT NULL,
   "status" VARCHAR(32) NOT NULL DEFAULT 'pending' CHECK ("status" IN ('pending', 'approved', 'rejected')),
-  "createdAt" VARCHAR(64) NOT NULL,
-  "reviewedAt" VARCHAR(64),
-  CONSTRAINT "uq_jockey_tournament_registration" UNIQUE ("tournamentId", "jockeyUserId")
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "reviewedAt" TIMESTAMPTZ,
+  CONSTRAINT "uq_jockey_tournament_registration" UNIQUE ("tournamentId", "jockeyUserId"),
+  CONSTRAINT "fk_jockey_tournament_registrations_tournament"
+    FOREIGN KEY ("tournamentId") REFERENCES "tournaments" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_jockey_tournament_registrations_jockey"
+    FOREIGN KEY ("jockeyUserId") REFERENCES "users" ("id")
+    ON DELETE CASCADE
 );
 
 CREATE INDEX "idx_jockey_tournament_registrations_tournament"
@@ -131,8 +174,23 @@ CREATE TABLE "jockeyInvitations" (
   "raceId" VARCHAR(64),
   "status" VARCHAR(32) NOT NULL DEFAULT 'pending' CHECK ("status" IN ('pending', 'accepted', 'rejected', 'cancelled')),
   "adminStatus" VARCHAR(32),
-  "createdAt" VARCHAR(64) NOT NULL,
-  "respondedAt" VARCHAR(64)
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "respondedAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_jockey_invitations_horse"
+    FOREIGN KEY ("horseId") REFERENCES "horses" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_jockey_invitations_owner"
+    FOREIGN KEY ("ownerUserId") REFERENCES "users" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_jockey_invitations_jockey"
+    FOREIGN KEY ("jockeyUserId") REFERENCES "users" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_jockey_invitations_tournament"
+    FOREIGN KEY ("tournamentId") REFERENCES "tournaments" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_jockey_invitations_race"
+    FOREIGN KEY ("raceId") REFERENCES "races" ("id")
+    ON DELETE CASCADE
 );
 
 CREATE INDEX "idx_jockey_invitations_jockey"
@@ -157,25 +215,76 @@ CREATE TABLE "raceEntries" (
   "finishTime" VARCHAR(64),
   "notes" TEXT,
   "violationNotes" TEXT,
-  "createdAt" VARCHAR(64)
+  "createdAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_race_entries_race"
+    FOREIGN KEY ("raceId") REFERENCES "races" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_race_entries_horse"
+    FOREIGN KEY ("horseId") REFERENCES "horses" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_race_entries_jockey"
+    FOREIGN KEY ("jockeyUserId") REFERENCES "users" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_race_entries_invitation"
+    FOREIGN KEY ("invitationId") REFERENCES "jockeyInvitations" ("id")
+    ON DELETE SET NULL
 );
 
 CREATE INDEX "idx_race_entries_race" ON "raceEntries" ("raceId");
 
+CREATE TABLE "refereeReports" (
+  "id" VARCHAR(64) PRIMARY KEY,
+  "raceId" VARCHAR(64) NOT NULL,
+  "raceEntryId" VARCHAR(64),
+  "refereeUserId" VARCHAR(64) NOT NULL,
+  "reportType" VARCHAR(64) NOT NULL DEFAULT 'incident',
+  "description" TEXT NOT NULL,
+  "violation" TEXT,
+  "status" VARCHAR(32) NOT NULL DEFAULT 'submitted' CHECK ("status" IN ('draft', 'submitted', 'reviewed', 'dismissed')),
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "reviewedAt" TIMESTAMPTZ,
+  CONSTRAINT "fk_referee_reports_race"
+    FOREIGN KEY ("raceId") REFERENCES "races" ("id")
+    ON DELETE CASCADE,
+  CONSTRAINT "fk_referee_reports_entry"
+    FOREIGN KEY ("raceEntryId") REFERENCES "raceEntries" ("id")
+    ON DELETE SET NULL,
+  CONSTRAINT "fk_referee_reports_referee"
+    FOREIGN KEY ("refereeUserId") REFERENCES "users" ("id")
+    ON DELETE CASCADE
+);
+
+CREATE INDEX "idx_referee_reports_race"
+  ON "refereeReports" ("raceId", "status");
+
+CREATE INDEX "idx_referee_reports_referee"
+  ON "refereeReports" ("refereeUserId", "status");
+
 CREATE TABLE "notifications" (
   "id" VARCHAR(64) PRIMARY KEY,
   "userId" VARCHAR(64) NOT NULL,
+  "type" VARCHAR(50) NOT NULL DEFAULT 'general',
   "title" VARCHAR(255) NOT NULL,
   "message" TEXT NOT NULL,
   "isRead" BOOLEAN NOT NULL DEFAULT FALSE,
-  "createdAt" VARCHAR(64) NOT NULL
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  CONSTRAINT "fk_notifications_user"
+    FOREIGN KEY ("userId") REFERENCES "users" ("id")
+    ON DELETE CASCADE
 );
 
 CREATE INDEX "idx_notifications_user"
   ON "notifications" ("userId", "isRead", "createdAt");
 
+CREATE INDEX "idx_notifications_type"
+  ON "notifications" ("type", "createdAt");
+
 CREATE TABLE "sessions" (
   "token" VARCHAR(128) PRIMARY KEY,
   "userId" VARCHAR(64) NOT NULL,
-  "createdAt" VARCHAR(64) NOT NULL
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "expiresAt" TIMESTAMPTZ NOT NULL,
+  CONSTRAINT "fk_sessions_user"
+    FOREIGN KEY ("userId") REFERENCES "users" ("id")
+    ON DELETE CASCADE
 );
