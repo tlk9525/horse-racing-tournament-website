@@ -1,54 +1,46 @@
+import { Hono } from 'hono';
 import { authenticate } from '../services/authService.js';
 
-// Xử lý các route thông báo: GET /notifications (lấy danh sách) và POST /:id/read (đánh dấu đã đọc)
-export const handleNotificationRoutes = async ({
-  req,
-  res,
-  url,
-  db,
-  send,
-  writeDb,
-}) => {
-  if (req.method === 'GET' && url.pathname === '/api/notifications') {
-    const user = await authenticate(req, db);
+export const createNotificationRoutes = (getDb, writeDb) => {
+  const app = new Hono();
 
-    if (!user) {
-      send(res, 401, { message: 'Not authenticated' });
-      return true;
-    }
+  // Middleware xác thực cho tất cả notification routes
+  app.use('*', async (c, next) => {
+    const db = await getDb();
+    const user = await authenticate(c.req.raw, db);
+    if (!user) return c.json({ message: 'Not authenticated' }, 401);
+    c.set('user', user);
+    c.set('db', db);
+    await next();
+  });
 
-    send(res, 200, {
+  // Lấy danh sách thông báo của người dùng hiện tại
+  app.get('/', (c) => {
+    const user = c.get('user');
+    const db = c.get('db');
+    return c.json({
       notifications: (db.notifications || []).filter(
-        (notification) => notification.userId === user.id
+        (n) => n.userId === user.id
       ),
     });
-    return true;
-  }
+  });
 
-  const notificationMatch = url.pathname.match(/^\/api\/notifications\/([^/]+)\/read$/);
-
-  if (req.method === 'POST' && notificationMatch) {
-    const user = await authenticate(req, db);
-
-    if (!user) {
-      send(res, 401, { message: 'Not authenticated' });
-      return true;
-    }
+  // Đánh dấu một thông báo cụ thể là đã đọc
+  app.post('/:id/read', async (c) => {
+    const user = c.get('user');
+    const db = c.get('db');
+    const id = c.req.param('id');
 
     const notification = (db.notifications || []).find(
-      (item) => item.id === notificationMatch[1] && item.userId === user.id
+      (item) => item.id === id && item.userId === user.id
     );
 
-    if (!notification) {
-      send(res, 404, { message: 'Notification not found' });
-      return true;
-    }
+    if (!notification) return c.json({ message: 'Notification not found' }, 404);
 
     notification.read = true;
     await writeDb(db);
-    send(res, 200, { notification });
-    return true;
-  }
+    return c.json({ notification });
+  });
 
-  return false;
+  return app;
 };

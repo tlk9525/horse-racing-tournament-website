@@ -1,14 +1,11 @@
+import { Hono } from 'hono';
 import {
   MAX_OWNER_HORSES,
-  MAX_RACE_FIELD_SIZE,
   PUBLIC_RACE_STATUSES,
   USER_ROLES,
+  FRONTEND_URL,
 } from '../config/constants.js';
-import { FRONTEND_URL } from '../config/constants.js';
-import {
-  authenticate,
-  publicUser,
-} from '../services/authService.js';
+import { authenticate, publicUser } from '../services/authService.js';
 import {
   publicJockeyProfiles,
   publicRaceEntries,
@@ -21,44 +18,36 @@ const publicRaceStatuses = new Set(PUBLIC_RACE_STATUSES);
 // Kiểm tra xem một cuộc đua có trạng thái công khai hay không
 const isPublicRace = (race) => publicRaceStatuses.has(race?.status);
 
-// Lấy danh sách cuộc đua mà người dùng được phép xem (admin thấy tất cả, referee thấy race của mình)
+// Lấy danh sách cuộc đua mà người dùng được phép xem
 const visibleRaces = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.races;
-
   if (user?.role === USER_ROLES.REFEREE) {
     return db.races.filter(
       (race) => isPublicRace(race) || raceRefereeIds(db, race).includes(user.id)
     );
   }
-
   return db.races;
 };
 
-// Lấy danh sách race entries mà người dùng được phép xem theo vai trò (admin, owner, jockey, referee)
+// Lấy danh sách race entries mà người dùng được phép xem theo vai trò
 const visibleRaceEntries = (db, user) => {
   const publicEntries = publicRaceEntries(db);
-
   if (user?.role === USER_ROLES.ADMIN) return publicEntries;
-
   return publicEntries.filter((entry) => {
     const race = db.races.find((item) => item.id === entry.raceId);
     const horse = db.horses.find((item) => item.id === entry.horseId);
-
     if (isPublicRace(race)) return true;
     if (user?.role === USER_ROLES.OWNER) return horse?.ownerUserId === user.id;
     if (user?.role === USER_ROLES.JOCKEY) return entry.jockeyUserId === user.id;
     if (user?.role === USER_ROLES.REFEREE) return raceRefereeIds(db, race).includes(user.id);
-
     return false;
   });
 };
 
-// Lấy danh sách ngựa mà người dùng được phép xem (ngựa xuất hiện trong entries hoặc thuộc sở hữu)
+// Lấy danh sách ngựa mà người dùng được phép xem
 const visibleHorses = (db, user, entries) => {
   if (user?.role === USER_ROLES.ADMIN) return db.horses;
-
   const visibleHorseIds = new Set(entries.map((entry) => entry.horseId));
-
   return db.horses.filter(
     (horse) =>
       visibleHorseIds.has(horse.id) ||
@@ -66,101 +55,67 @@ const visibleHorses = (db, user, entries) => {
   );
 };
 
-// Lấy danh sách user được phép xem (admin thấy tất cả, user thường chỉ thấy chính mình)
+// Lấy danh sách user được phép xem theo vai trò
 const visibleUsers = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.users.map(publicUser);
   if (user) return [publicUser(user)];
-
   return [];
 };
 
-// Lấy danh sách đăng ký jockey mà người dùng được xem (admin/owner/jockey theo quyền)
+// Lấy danh sách đăng ký jockey mà người dùng được xem
 const visibleJockeyRegistrations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.jockeyTournamentRegistrations || [];
-
-  if (user?.role === USER_ROLES.OWNER) {
-    return (db.jockeyTournamentRegistrations || []).filter(
-      (registration) => registration.status === 'approved'
-    );
-  }
-
-  if (user?.role === USER_ROLES.JOCKEY) {
-    return (db.jockeyTournamentRegistrations || []).filter(
-      (registration) => registration.jockeyUserId === user.id
-    );
-  }
-
+  if (user?.role === USER_ROLES.OWNER)
+    return (db.jockeyTournamentRegistrations || []).filter((r) => r.status === 'approved');
+  if (user?.role === USER_ROLES.JOCKEY)
+    return (db.jockeyTournamentRegistrations || []).filter((r) => r.jockeyUserId === user.id);
   return [];
 };
 
-// Lấy danh sách lời mời jockey mà người dùng được xem (admin thấy tất cả, owner/jockey thấy của mình)
+// Lấy danh sách lời mời jockey mà người dùng được xem
 const visibleJockeyInvitations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.jockeyInvitations || [];
-
-  if (user?.role === USER_ROLES.OWNER) {
-    return (db.jockeyInvitations || []).filter(
-      (invitation) => invitation.ownerUserId === user.id
-    );
-  }
-
-  if (user?.role === USER_ROLES.JOCKEY) {
-    return (db.jockeyInvitations || []).filter(
-      (invitation) => invitation.jockeyUserId === user.id
-    );
-  }
-
+  if (user?.role === USER_ROLES.OWNER)
+    return (db.jockeyInvitations || []).filter((i) => i.ownerUserId === user.id);
+  if (user?.role === USER_ROLES.JOCKEY)
+    return (db.jockeyInvitations || []).filter((i) => i.jockeyUserId === user.id);
   return [];
 };
 
-// Lấy danh sách đăng ký ngựa vào giải mà người dùng được phép xem theo vai trò
+// Lấy danh sách đăng ký ngựa vào giải mà người dùng được phép xem
 const visibleHorseTournamentRegistrations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.horseTournamentRegistrations || [];
-
-  if (user?.role === USER_ROLES.OWNER) {
-    return (db.horseTournamentRegistrations || []).filter(
-      (registration) => registration.ownerUserId === user.id
-    );
-  }
-
-  if (user?.role === USER_ROLES.JOCKEY) {
-    return (db.horseTournamentRegistrations || []).filter(
-      (registration) => registration.jockeyUserId === user.id
-    );
-  }
-
+  if (user?.role === USER_ROLES.OWNER)
+    return (db.horseTournamentRegistrations || []).filter((r) => r.ownerUserId === user.id);
+  if (user?.role === USER_ROLES.JOCKEY)
+    return (db.horseTournamentRegistrations || []).filter((r) => r.jockeyUserId === user.id);
   return [];
 };
 
-// Xử lý các route công khai: redirect trang gốc, health check, SSE stream, và dữ liệu bootstrap khởi động
-export const handlePublicRoutes = async ({ req, res, url, db, send }) => {
-  if (req.method === 'GET' && url.pathname === '/') {
-    res.writeHead(302, {
-      Location: FRONTEND_URL,
-      'Access-Control-Allow-Origin': '*',
-    });
-    res.end();
-    return true;
-  }
+export const createPublicRoutes = (getDb) => {
+  const app = new Hono();
 
-  if (req.method === 'GET' && url.pathname === '/api/health') {
-    send(res, 200, { ok: true });
-    return true;
-  }
+  // Redirect trang gốc về frontend
+  app.get('/', (c) => {
+    return c.redirect(FRONTEND_URL, 302);
+  });
 
-  const liveRaceEventsMatch = url.pathname.match(
-    /^\/api\/live\/races\/([^/]+)\/events$/
-  );
+  // Health check endpoint
+  app.get('/health', (c) => c.json({ ok: true }));
 
-  if (req.method === 'GET' && liveRaceEventsMatch) {
-    streamRaceUpdates(req, res, liveRaceEventsMatch[1]);
-    return true;
-  }
+  // SSE stream theo dõi đua trực tiếp
+  app.get('/live/races/:raceId/events', (c) => {
+    const raceId = c.req.param('raceId');
+    return streamRaceUpdates(c.req.raw, raceId);
+  });
 
-  if (req.method === 'GET' && url.pathname === '/api/bootstrap') {
-    const user = await authenticate(req, db);
+  // Tải toàn bộ dữ liệu khởi động cho frontend
+  app.get('/bootstrap', async (c) => {
+    const db = await getDb();
+    const user = await authenticate(c.req.raw, db);
     const raceEntries = visibleRaceEntries(db, user);
 
-    send(res, 200, {
+    return c.json({
       tournaments: db.tournaments,
       horses: visibleHorses(db, user, raceEntries),
       races: visibleRaces(db, user),
@@ -171,17 +126,14 @@ export const handlePublicRoutes = async ({ req, res, url, db, send }) => {
       raceEntries,
       users: visibleUsers(db, user),
       notifications: user
-        ? (db.notifications || []).filter(
-            (notification) => notification.userId === user.id
-          )
+        ? (db.notifications || []).filter((n) => n.userId === user.id)
         : [],
       limits: {
         maxOwnerHorses: MAX_OWNER_HORSES,
-        maxRaceFieldSize: MAX_RACE_FIELD_SIZE,
+        maxRaceFieldSize: 10,
       },
     });
-    return true;
-  }
+  });
 
-  return false;
+  return app;
 };
