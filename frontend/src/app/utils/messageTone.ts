@@ -34,6 +34,7 @@ const negativeWords = [
 
 const validationWords = ['required'];
 
+// Xác định điệu cảm của một thông điệp: 'error' nếu có từ âm, 'success' nếu tích cực, 'info' cho tổng quát
 export const messageTone = (text: string) => {
   const normalized = text.toLowerCase();
 
@@ -52,6 +53,7 @@ export const messageTone = (text: string) => {
   return 'info';
 };
 
+// Trả về CSS class tương ứng với điệu cảm thông điệp (xanh lá/đỏ/vàng)
 export const messageToneClasses = (text: string) => {
   const tone = messageTone(text);
 

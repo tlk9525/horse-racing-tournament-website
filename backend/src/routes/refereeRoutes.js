@@ -8,6 +8,7 @@ import {
 import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
 import { notifyAdmins } from '../services/notificationService.js';
 
+// Xử lý các route trọng tài: bắt đầu cuộc đua, ghi kết quả, đánh dấu sẵn sàng/vắng mặt, nộp kết quả
 export const handleRefereeRoutes = async ({
   req,
   res,

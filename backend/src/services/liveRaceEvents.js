@@ -3,8 +3,10 @@ import { EventEmitter } from 'node:events';
 const liveRaceEvents = new EventEmitter();
 liveRaceEvents.setMaxListeners(100);
 
+// Tạo tên sự kiện SSE theo dạng 'race:{raceId}' để nhận diện cuộc đua cụ thể
 const eventName = (raceId) => `race:${raceId}`;
 
+// Phát sóng cập nhật của một cuộc đua tới tất cả client đang lắng nghe qua EventEmitter
 export const broadcastRaceUpdate = (raceId) => {
   if (!raceId) return;
 
@@ -14,6 +16,7 @@ export const broadcastRaceUpdate = (raceId) => {
   });
 };
 
+// Thiết lập kết nối Server-Sent Events (SSE) để trân sống cập nhật của cuộc đua đến client
 export const streamRaceUpdates = (req, res, raceId) => {
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',

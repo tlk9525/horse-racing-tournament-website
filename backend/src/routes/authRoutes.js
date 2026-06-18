@@ -13,6 +13,7 @@ import {
   notifyAdmins,
 } from '../services/notificationService.js';
 
+// Tạo một phiên đăng nhập mới với token ngẫu nhiên và lưu vào database
 const createSession = (db, userId) => {
   const token = randomUUID();
   const createdAt = new Date();
@@ -28,6 +29,7 @@ const createSession = (db, userId) => {
   return token;
 };
 
+// Xử lý các route xác thực: GET /me, POST /login, POST /register, POST /logout
 export const handleAuthRoutes = async ({
   req,
   res,

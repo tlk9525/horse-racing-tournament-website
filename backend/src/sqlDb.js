@@ -31,6 +31,7 @@ const postgresConfig =
 
 let pool;
 
+// Trả về connection pool PostgreSQL (tạo mới nếu chưa tồn tại) để tái sử dụng kết nối hiệu quả
 const getPool = () => {
   if (!pool) {
     pool = new Pool(postgresConfig);
@@ -39,14 +40,18 @@ const getPool = () => {
   return pool;
 };
 
+// Bao gọc một tên cột hoặc bảng bằng dấu ngoặc kép để an toàn trong câu truy vấn SQL
 const identifier = (name) => `"${String(name).replace(/"/g, '""')}"`;
+// Tạo chuỗi danh sách các cột đã được bao gọc bằng dấu ngoặc kép, nối bằng dấu phẩy
 const columnList = (columns) => columns.map(identifier).join(', ');
 
+// Thực thi câu truy vấn SQL và trả về mảng các hàng kết quả
 const query = async (text, values = []) => {
   const result = await getPool().query(text, values);
   return result.rows;
 };
 
+// Lấy toàn bộ dữ liệu của một bảng và sắp xếp theo cột chỉ định
 const selectAll = (tableName, orderBy) =>
   query(
     `SELECT * FROM ${identifier(tableName)} ORDER BY ${orderBy
@@ -54,18 +59,23 @@ const selectAll = (tableName, orderBy) =>
       .join(', ')}`
   );
 
+// Chuyển giá trị sang Boolean
 const bool = (value) => Boolean(value);
+// Trả về thời gian hiện tại dưới dạng chuỗi ISO 8601
 const nowIso = () => new Date().toISOString();
 
+// Cộng thêm số ngày vào một ngày cụ thể và trả về chuỗi ISO 8601
 const addDaysIso = (dateValue, days) =>
   new Date(new Date(dateValue || nowIso()).getTime() + days * 24 * 60 * 60 * 1000).toISOString();
 
+// Định dạng thời gian race sang HH:MM, đảm bảo luôn có 2 chữ số
 const formatRaceTime = (value) => {
   if (!value) return '';
   const [hours = '00', minutes = '00'] = String(value).split(':');
   return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
 };
 
+// Định dạng giá trị ngày sang chuỗi YYYY-MM-DD, hỗ trợ cả đối tượng Date lẫn chuỗi
 const formatDateOnly = (value) => {
   if (!value) return '';
 
@@ -80,11 +90,13 @@ const formatDateOnly = (value) => {
   return /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : raw;
 };
 
+// Trả về object có createdAt và updatedAt, dùng fallback nếu giá trị không tồn tại
 const rowTimestamps = (row, fallbackCreatedAt = nowIso()) => ({
   createdAt: row.createdAt || fallbackCreatedAt,
   updatedAt: row.updatedAt || row.createdAt || fallbackCreatedAt,
 });
 
+// Đọc toàn bộ database từ PostgreSQL và trả về object chứa tất cả dữ liệu đã được format
 export const readDb = async () => {
   const [
     users,
@@ -203,6 +215,7 @@ export const readDb = async () => {
   };
 };
 
+// Chèn nhiều hàng dữ liệu vào một bảng trong transaction đang chạy
 const insertRows = async (client, tableName, columns, rows = []) => {
   if (!rows.length) return;
 
@@ -233,6 +246,7 @@ const tableDeleteOrder = [
   'users',
 ];
 
+// Ghi toàn bộ dữ liệu vào PostgreSQL: xóa toàn bộ và chèn mới theo đúng thứ tự phụ thuộc
 export const writeDb = async (db) => {
   const client = await getPool().connect();
 

@@ -26,6 +26,7 @@ const routeHandlers = [
   handleNotificationRoutes,
 ];
 
+// Khởi tạo HTTP server, xử lý CORS preflight, đọc database và điều phối route đến handler phù hợp
 const server = createServer(async (req, res) => {
   if (req.method === 'OPTIONS') {
     send(res, 204, {});
@@ -64,6 +65,7 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// Bắt đầu lắng nghe kết nối tại host và port đã cấu hình
 server.listen(API_PORT, API_HOST, () => {
   console.log(`API server running at http://${API_HOST}:${API_PORT}`);
 });

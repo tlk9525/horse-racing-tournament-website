@@ -12,6 +12,7 @@ import {
   notifyAdmins,
 } from '../services/notificationService.js';
 
+// Xử lý các route của jockey: đăng ký giải, xem portal, lưu hồ sơ, và phản hồi lời mời tham dự cuộc đua
 export const handleJockeyRoutes = async ({
   req,
   res,

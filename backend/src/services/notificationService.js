@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+// Tự động suy đoán loại thông báo (invitation, registration, result, warning, general) dựa trên tiêu đề
 const inferNotificationType = (title = '') => {
   const normalized = String(title).toLowerCase();
 
@@ -22,6 +23,7 @@ const inferNotificationType = (title = '') => {
   return 'general';
 };
 
+// Tạo và thêm một thông báo mới vào đầu danh sách thông báo của người dùng trong database
 export const createNotification = (db, userId, title, message, type) => {
   if (!userId) return;
 
@@ -37,6 +39,7 @@ export const createNotification = (db, userId, title, message, type) => {
   });
 };
 
+// Gửi thông báo đến tất cả tài khoản có role 'admin' trong hệ thống
 export const notifyAdmins = (db, title, message, type) => {
   db.users
     .filter((user) => user.role === 'admin')

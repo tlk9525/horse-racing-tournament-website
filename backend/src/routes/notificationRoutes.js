@@ -1,5 +1,6 @@
 import { authenticate } from '../services/authService.js';
 
+// Xử lý các route thông báo: GET /notifications (lấy danh sách) và POST /:id/read (đánh dấu đã đọc)
 export const handleNotificationRoutes = async ({
   req,
   res,

@@ -1,5 +1,7 @@
+// Trả về thông tin user công khai, loại bỏ trường password để tránh lộ thông tin nhạy cảm
 export const publicUser = ({ password, ...user }) => user;
 
+// Xác thực người dùng từ token Bearer trong header Authorization, trả về thông tin user nếu hợp lệ
 export const authenticate = async (req, db) => {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
@@ -14,6 +16,7 @@ export const authenticate = async (req, db) => {
   return user?.status === 'active' ? publicUser(user) : null;
 };
 
+// Kiểm tra xác thực và phân quyền, trả về user nếu có role hợp lệ, null nếu không được phép
 export const requireRole = async (req, db, roles) => {
   const user = await authenticate(req, db);
 

@@ -1,29 +1,37 @@
 import { ACTIVE_TOURNAMENT_STATUSES, USER_ROLES } from '../config/constants.js';
 
+// Lấy tên chủ ngựa (owner) từ userId, trả về 'Unknown Owner' nếu không tìm thấy
 export const ownerName = (db, userId) =>
   db.users.find((user) => user.id === userId)?.name || 'Unknown Owner';
 
+// Lấy tên jockey (nửịm) từ userId, trả về 'Unknown Jockey' nếu không tìm thấy
 export const jockeyName = (db, userId) =>
   db.users.find((user) => user.id === userId)?.name || 'Unknown Jockey';
 
+// Lấy tên ngựa từ horseId, trả về 'Unknown Horse' nếu không tìm thấy
 export const horseName = (db, horseId) =>
   db.horses.find((horse) => horse.id === horseId)?.name || 'Unknown Horse';
 
+// Lấy tên cuộc đua từ raceId, trả về 'Unassigned race' nếu không tìm thấy
 export const raceName = (db, raceId) =>
   db.races.find((race) => race.id === raceId)?.name || 'Unassigned race';
 
+// Lấy tên giải đấu từ tournamentId, trả về 'Tournament' nếu không tìm thấy
 export const tournamentName = (db, tournamentId) =>
   db.tournaments.find((tournament) => tournament.id === tournamentId)?.name ||
   'Tournament';
 
+// Tìm giải đấu đang diễn ra (có trạng thái active), trả về null nếu không có
 export const activeTournament = (db) =>
   db.tournaments.find((tournament) =>
     ACTIVE_TOURNAMENT_STATUSES.includes(tournament.status)
   ) || null;
 
+// Lấy danh sách tất cả các cuộc đua thuộc một giải đấu cụ thể
 export const tournamentRaces = (db, tournamentId) =>
   (db.races || []).filter((race) => race.tournamentId === tournamentId);
 
+// Lấy danh sách đăng ký ngựa vào giải (loại bỏ các mục bị từ chối hoặc hủy bỏ)
 export const activeHorseTournamentRegistrations = (db, tournamentId) =>
   (db.horseTournamentRegistrations || []).filter(
     (registration) =>
@@ -31,6 +39,7 @@ export const activeHorseTournamentRegistrations = (db, tournamentId) =>
       !['rejected', 'cancelled'].includes(registration.status)
   );
 
+// Tìm cuộc đua đang mở đăng ký (registration-open) mặc định của giải đấu
 export const defaultRaceForTournament = (db, tournamentId) =>
   db.races.find(
     (race) =>
@@ -38,14 +47,17 @@ export const defaultRaceForTournament = (db, tournamentId) =>
       race.status === 'registration-open'
   ) || null;
 
+// Tìm một race entry theo ID cụ thể
 export const findEntry = (db, entryId) =>
   (db.raceEntries || []).find((entry) => entry.id === entryId);
 
+// Lấy danh sách entry đã được phê duyệt (status = 'approved') cho một cuộc đua
 export const approvedRaceEntries = (db, raceId) =>
   (db.raceEntries || []).filter(
     (entry) => entry.raceId === raceId && entry.status === 'approved'
   );
 
+// Trả về danh sách tất cả race entries kèm thông tin tên ngựa, jockey, owner và cuộc đua
 export const publicRaceEntries = (db) =>
   (db.raceEntries || []).map((entry) => ({
     ...entry,
@@ -58,6 +70,7 @@ export const publicRaceEntries = (db) =>
     raceName: raceName(db, entry.raceId),
   }));
 
+// Lấy danh sách hồ sơ jockey công khai (chỉ lấy profile đã publish và user có trạng thái active)
 export const publicJockeyProfiles = (db) =>
   (db.jockeyProfiles || [])
     .map((profile) => {
@@ -76,6 +89,7 @@ export const publicJockeyProfiles = (db) =>
         profile.userStatus === 'active'
     );
 
+// Lấy danh sách jockey công khai đã được phê duyệt tham gia một giải đấu cụ thể
 export const publicTournamentJockeyProfiles = (db, tournamentId) => {
   const approvedJockeyIds = new Set(
     (db.jockeyTournamentRegistrations || [])
@@ -92,6 +106,7 @@ export const publicTournamentJockeyProfiles = (db, tournamentId) => {
   );
 };
 
+// Lấy danh sách ID của các trọng tài được phân công cho một cuộc đua (kết hợp nhiều nguồn)
 export const raceRefereeIds = (db, race) => {
   const assignmentIds = (db?.raceRefereeAssignments || [])
     .filter(
@@ -111,10 +126,12 @@ export const raceRefereeIds = (db, race) => {
   );
 };
 
+// Kiểm tra xem người dùng có quyền điều hành cuộc đua không (admin hoặc trọng tài của race)
 export const canRefereeRace = (race, user, db) =>
   user?.role === USER_ROLES.ADMIN ||
   raceRefereeIds(db, race).includes(user?.id);
 
+// Tạo danh sách các mục cần phê duyệt: ngựa chờ, tài khoản chờ, đăng ký jockey, và đăng ký race
 export const formatApprovals = (db) => [
   ...db.horses
     .filter((horse) => horse.status === 'pending')

@@ -199,19 +199,24 @@ export interface HorseTournamentRegistration {
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:4000/api';
 const TOKEN_KEY = 'horse-racing-token';
 
+// Lấy token đăng nhập đang được lưu trong localStorage
 export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
 
+// Tạo URL kết nối Server-Sent Events (SSE) để theo dõi cập nhật trực tiếp của một cuộc đua
 export const getLiveRaceEventsUrl = (raceId: string) =>
   `${API_URL}/live/races/${encodeURIComponent(raceId)}/events`;
 
+// Lưu token đăng nhập vào localStorage để dùng cho các yêu cầu sau
 export const storeToken = (token: string) => {
   localStorage.setItem(TOKEN_KEY, token);
 };
 
+// Xóa token khỏi localStorage khi đăng xuất
 export const clearToken = () => {
   localStorage.removeItem(TOKEN_KEY);
 };
 
+// Hàm gửi HTTP request chung, tự động gắn token xác thực và báo lỗi nếu response không thành công
 const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
   const token = getStoredToken();
   const response = await fetch(`${API_URL}${path}`, {
@@ -232,6 +237,7 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   return data;
 };
 
+// Đăng nhập bằng email và password, trả về token và thông tin user
 export const login = async (email: string, password: string) => {
   return request<{ token: string; user: AuthUser }>('/login', {
     method: 'POST',
@@ -239,6 +245,7 @@ export const login = async (email: string, password: string) => {
   });
 };
 
+// Đăng ký tài khoản mới, trả về thông tin user và trạng thái có cần phê duyệt hay không
 export const register = async (
   name: string,
   email: string,
@@ -255,12 +262,15 @@ export const register = async (
   });
 };
 
+// Đăng xuất khỏi hệ thống, hủy phiên làm việc trên server
 export const logout = async () => {
   return request<{ ok: boolean }>('/logout', { method: 'POST' });
 };
 
+// Lấy thông tin user đang đăng nhập từ server
 export const getMe = async () => request<{ user: AuthUser }>('/me');
 
+// Lấy toàn bộ dữ liệu khởi động: giải đấu, ngựa, cuộc đua, jockey, thông báo...
 export const getBootstrap = async () =>
   request<{
     tournaments: TournamentRecord[];
@@ -276,9 +286,11 @@ export const getBootstrap = async () =>
     limits: SystemLimits;
   }>('/bootstrap');
 
+// Lấy danh sách các mục đang chờ phê duyệt (admin)
 export const getApprovals = async () =>
   request<{ approvals: ApprovalItem[] }>('/admin/approvals');
 
+// Phê duyệt hoặc từ chối một yêu cầu cụ thể (ngựa, tài khoản, đăng ký jockey, race entry)
 export const decideApproval = async (
   entityType: ApprovalItem['entityType'],
   id: string,
@@ -292,6 +304,7 @@ export const decideApproval = async (
     }
   );
 
+// Tạo giải đấu mới (admin)
 export const createTournament = async (tournament: {
   name: string;
   registrationWindow: string;
@@ -308,14 +321,17 @@ export const createTournament = async (tournament: {
     }
   );
 
+// Lấy danh sách thông báo của người dùng hiện tại
 export const getNotifications = async () =>
   request<{ notifications: NotificationItem[] }>('/notifications');
 
+// Đánh dấu một thông báo cụ thể là đã đọc
 export const markNotificationRead = async (id: string) =>
   request<{ notification: NotificationItem }>(`/notifications/${id}/read`, {
     method: 'POST',
   });
 
+// Jockey đăng ký tham gia một giải đấu (cần admin phê duyệt)
 export const joinTournamentAsJockey = async (tournamentId: string) =>
   request<{
     registration: JockeyTournamentRegistration;
@@ -325,6 +341,7 @@ export const joinTournamentAsJockey = async (tournamentId: string) =>
     body: JSON.stringify({ tournamentId }),
   });
 
+// Lấy dữ liệu portal của owner: danh sách ngựa, race entries, jockeys, lời mời
 export const getOwnerPortal = async () =>
   request<{
     horses: HorseRecord[];
@@ -334,6 +351,7 @@ export const getOwnerPortal = async () =>
     limits: Pick<SystemLimits, 'maxOwnerHorses'>;
   }>('/owner/portal');
 
+// Lấy dữ liệu trang đăng ký race cho owner, bao gồm thông tin giải, ngựa, race...
 export const getRaceRegistration = async (tournamentId: string) =>
   request<{
     tournament: TournamentRecord;
@@ -344,6 +362,7 @@ export const getRaceRegistration = async (tournamentId: string) =>
     raceEntries: RaceEntryRecord[];
   }>(`/owner/race-registration?tournamentId=${encodeURIComponent(tournamentId)}`);
 
+// Tạo một race entry mới (owner đăng ký ngựa vào cuộc đua)
 export const createRaceEntry = async (entry: {
   tournamentId: string;
   horseId: string;
@@ -355,6 +374,7 @@ export const createRaceEntry = async (entry: {
     body: JSON.stringify(entry),
   });
 
+// Tạo hồ sơ ngựa mới (owner)
 export const createHorse = async (horse: {
   name: string;
   breed: string;
@@ -382,6 +402,7 @@ export const createHorse = async (horse: {
     }
   );
 
+// Cập nhật thông tin ngựa đã tồn tại (owner)
 export const updateHorse = async (
   horseId: string,
   horse: {
@@ -409,6 +430,7 @@ export const updateHorse = async (
     body: JSON.stringify(horse),
   });
 
+// Gửi lời mời jockey để cưỡi ngựa trong một cuộc đua cụ thể
 export const sendJockeyRequest = async (
   horseId: string,
   jockeyUserId: string,
@@ -419,6 +441,7 @@ export const sendJockeyRequest = async (
     body: JSON.stringify({ horseId, jockeyUserId, raceId }),
   });
 
+// Lấy dữ liệu portal của jockey: hồ sơ, ngựa, giải, cuộc đua, lời mời
 export const getJockeyPortal = async () =>
   request<{
     profile: JockeyProfileRecord | null;
@@ -429,6 +452,7 @@ export const getJockeyPortal = async () =>
     invitations: JockeyInvitation[];
   }>('/jockey/portal');
 
+// Lưu hoặc cập nhật hồ sơ jockey (bio, chứng chỉ, cấp độ, cân nặng)
 export const saveJockeyProfile = async (profile: {
   bio: string;
   certificate: string;
@@ -440,6 +464,7 @@ export const saveJockeyProfile = async (profile: {
     body: JSON.stringify(profile),
   });
 
+// Jockey chấp nhận hoặc từ chối lời mời tham gia cuộc đua
 export const decideJockeyInvitation = async (
   id: string,
   decision: 'accepted' | 'rejected'
@@ -449,6 +474,7 @@ export const decideJockeyInvitation = async (
     body: JSON.stringify({ decision }),
   });
 
+// Lấy dữ liệu trang tạo cuộc đua (admin): giải, các cuộc đua hiện có, danh sách trọng tài
 export const getRaceBuilder = async () =>
   request<{
     tournaments: TournamentRecord[];
@@ -456,6 +482,7 @@ export const getRaceBuilder = async () =>
     referees: RaceBuilderReferee[];
   }>('/admin/race-builder');
 
+// Tạo một cuộc đua mới trong giải đấu (admin)
 export const createRace = async (race: {
   raceNumber?: string;
   name: string;
@@ -485,6 +512,7 @@ export const createRace = async (race: {
     }
   );
 
+// Thực hiện hành động quản lý cuộc đua: đóng đăng ký, publish, xác nhận/từ chối kết quả, hoàn thành
 export const adminRaceAction = async (
   raceId: string,
   action: 'close-registration' | 'publish' | 'confirm-results' | 'reject-results' | 'complete'
@@ -494,16 +522,19 @@ export const adminRaceAction = async (
     { method: 'POST' }
   );
 
+// Bắt đầu một cuộc đua (trọng tài/admin)
 export const startRace = async (raceId: string) =>
   request<{ race: RaceRecord }>(`/referee/races/${raceId}/start`, {
     method: 'POST',
   });
 
+// Nộp kết quả cuộc đua để admin xác nhận
 export const submitRaceResults = async (raceId: string) =>
   request<{ race: RaceRecord }>(`/referee/races/${raceId}/submit-results`, {
     method: 'POST',
   });
 
+// Đánh dấu một thí sinh là sẵn sàng thi đấu hoặc vắng mặt
 export const markRaceEntryReadiness = async (
   entryId: string,
   readiness: 'ready' | 'absent'
@@ -513,6 +544,7 @@ export const markRaceEntryReadiness = async (
     { method: 'POST' }
   );
 
+// Ghi kết quả cho một thí sinh: vị trí, thời gian vào đích, ghi chú và vi phạm
 export const recordRaceResult = async (
   entryId: string,
   result: {

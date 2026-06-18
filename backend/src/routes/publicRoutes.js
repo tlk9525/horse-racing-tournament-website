@@ -18,8 +18,10 @@ import { streamRaceUpdates } from '../services/liveRaceEvents.js';
 
 const publicRaceStatuses = new Set(PUBLIC_RACE_STATUSES);
 
+// Kiểm tra xem một cuộc đua có trạng thái công khai hay không
 const isPublicRace = (race) => publicRaceStatuses.has(race?.status);
 
+// Lấy danh sách cuộc đua mà người dùng được phép xem (admin thấy tất cả, referee thấy race của mình)
 const visibleRaces = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.races;
 
@@ -32,6 +34,7 @@ const visibleRaces = (db, user) => {
   return db.races;
 };
 
+// Lấy danh sách race entries mà người dùng được phép xem theo vai trò (admin, owner, jockey, referee)
 const visibleRaceEntries = (db, user) => {
   const publicEntries = publicRaceEntries(db);
 
@@ -50,6 +53,7 @@ const visibleRaceEntries = (db, user) => {
   });
 };
 
+// Lấy danh sách ngựa mà người dùng được phép xem (ngựa xuất hiện trong entries hoặc thuộc sở hữu)
 const visibleHorses = (db, user, entries) => {
   if (user?.role === USER_ROLES.ADMIN) return db.horses;
 
@@ -62,6 +66,7 @@ const visibleHorses = (db, user, entries) => {
   );
 };
 
+// Lấy danh sách user được phép xem (admin thấy tất cả, user thường chỉ thấy chính mình)
 const visibleUsers = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.users.map(publicUser);
   if (user) return [publicUser(user)];
@@ -69,6 +74,7 @@ const visibleUsers = (db, user) => {
   return [];
 };
 
+// Lấy danh sách đăng ký jockey mà người dùng được xem (admin/owner/jockey theo quyền)
 const visibleJockeyRegistrations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.jockeyTournamentRegistrations || [];
 
@@ -87,6 +93,7 @@ const visibleJockeyRegistrations = (db, user) => {
   return [];
 };
 
+// Lấy danh sách lời mời jockey mà người dùng được xem (admin thấy tất cả, owner/jockey thấy của mình)
 const visibleJockeyInvitations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.jockeyInvitations || [];
 
@@ -105,6 +112,7 @@ const visibleJockeyInvitations = (db, user) => {
   return [];
 };
 
+// Lấy danh sách đăng ký ngựa vào giải mà người dùng được phép xem theo vai trò
 const visibleHorseTournamentRegistrations = (db, user) => {
   if (user?.role === USER_ROLES.ADMIN) return db.horseTournamentRegistrations || [];
 
@@ -123,6 +131,7 @@ const visibleHorseTournamentRegistrations = (db, user) => {
   return [];
 };
 
+// Xử lý các route công khai: redirect trang gốc, health check, SSE stream, và dữ liệu bootstrap khởi động
 export const handlePublicRoutes = async ({ req, res, url, db, send }) => {
   if (req.method === 'GET' && url.pathname === '/') {
     res.writeHead(302, {
