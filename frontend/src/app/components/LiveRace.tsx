@@ -72,12 +72,12 @@ export default function LiveRace() {
   );
 
   const canOperate =
-    currentUser?.role === 'admin' ||
-    (currentUser?.role === 'referee' &&
+    currentUser?.role === 'referee' &&
       selectedRace &&
       String(selectedRace.refereeUserIds || selectedRace.refereeUserId || '')
         .split(',')
-        .includes(currentUser.id));
+        .map((id) => id.trim())
+        .includes(currentUser.id);
   const showRefereeControl = currentUser?.role === 'referee';
 
   const loadRaceOps = () => {
@@ -228,7 +228,7 @@ export default function LiveRace() {
 
     submitRaceResults(selectedRace.id)
       .then(() => {
-        setMessage('Results submitted to Admin for confirmation.');
+        setMessage('Official results published successfully.');
         loadRaceOps();
       })
       .catch((error) =>
@@ -473,8 +473,8 @@ export default function LiveRace() {
                   </div>
 
                   <div className="flex justify-between gap-3">
-                    <span>Result review</span>
-                    <span className="text-white font-bold">Admin confirms</span>
+                    <span>Result publishing</span>
+                    <span className="text-white font-bold">Referee publishes</span>
                   </div>
                 </div>
 
@@ -503,12 +503,12 @@ export default function LiveRace() {
                   disabled={!canOperate || selectedRace.status !== 'in-progress'}
                   className="w-full mt-3 flex items-center justify-center gap-2 py-4 bg-white/10 hover:bg-white/15 disabled:text-gray-500 rounded-xl text-white font-bold transition-all"
                 >
-                  Submit Results
+                  Confirm & Publish Results
                 </button>
 
                 <div className="mt-5 rounded-xl bg-[#071a2f] border border-white/10 p-4 text-gray-400">
                   <Timer className="inline-block w-4 h-4 mr-2 text-[#d4af37]" />
-                  Admin confirms results after referee submits outcome.
+                  Publishing makes the recorded results official immediately.
                 </div>
               </div>
             </div>

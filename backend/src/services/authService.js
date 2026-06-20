@@ -3,7 +3,10 @@ export const publicUser = ({ password, ...user }) => user;
 
 // Xác thực người dùng từ token Bearer trong header Authorization, trả về thông tin user nếu hợp lệ
 export const authenticate = async (req, db) => {
-  const header = req.headers.authorization || '';
+  const header =
+    (typeof req.headers?.get === 'function'
+      ? req.headers.get('authorization')
+      : req.headers?.authorization) || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   const session = db.sessions.find((item) => item.token === token);
 

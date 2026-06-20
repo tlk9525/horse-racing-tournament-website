@@ -1,9 +1,10 @@
--- Horse Racing Tournament Website - PostgreSQL schema
+status-- Horse Racing Tournament Website - PostgreSQL schema
 -- Run:
 --   npm run db:init
 
 DROP TABLE IF EXISTS "notifications";
 DROP TABLE IF EXISTS "sessions";
+DROP TABLE IF EXISTS "raceActionLogs";
 DROP TABLE IF EXISTS "refereeReports";
 DROP TABLE IF EXISTS "raceEntries";
 DROP TABLE IF EXISTS "horseTournamentRegistrations";
@@ -132,6 +133,24 @@ CREATE INDEX "idx_race_referee_assignments_race"
 
 CREATE INDEX "idx_race_referee_assignments_referee"
   ON "raceRefereeAssignments" ("refereeUserId", "status");
+
+CREATE TABLE "raceActionLogs" (
+  "id" VARCHAR(64) PRIMARY KEY,
+  "raceId" VARCHAR(64) NOT NULL,
+  "userId" VARCHAR(64),
+  "action" VARCHAR(64) NOT NULL,
+  "fromStatus" VARCHAR(64),
+  "toStatus" VARCHAR(64),
+  "details" TEXT,
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  CONSTRAINT "fk_race_action_logs_race"
+    FOREIGN KEY ("raceId") REFERENCES "races" ("id") ON DELETE CASCADE,
+  CONSTRAINT "fk_race_action_logs_user"
+    FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE SET NULL
+);
+
+CREATE INDEX "idx_race_action_logs_race"
+  ON "raceActionLogs" ("raceId", "createdAt");
 
 CREATE TABLE "jockeyProfiles" (
   "id" VARCHAR(64) PRIMARY KEY,

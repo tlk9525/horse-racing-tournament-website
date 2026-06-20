@@ -9,6 +9,7 @@
     "db:init": "node scripts/run-postgres-file.mjs database/postgres/schema.sql && node scripts/run-postgres-file.mjs database/postgres/seed.sql",
     "db:schema": "node scripts/run-postgres-file.mjs database/postgres/schema.sql",
     "db:seed": "node scripts/run-postgres-file.mjs database/postgres/seed.sql",
+    "db:migrate:race-actions": "node scripts/run-postgres-file.mjs database/postgres/migrations/002_race_action_logs.sql",
     "build": "vite build --config frontend/vite.config.ts",
     "dev": "vite --config frontend/vite.config.ts --host 127.0.0.1",
     "preview": "vite preview --config frontend/vite.config.ts --host 127.0.0.1"

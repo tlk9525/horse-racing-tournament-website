@@ -163,7 +163,7 @@ export default function ResultsPage() {
             </h1>
 
             <p className="text-gray-400">
-              Results are loaded from PostgreSQL after Referee records outcomes and Admin confirms them.
+              Official results are published directly after the assigned Referee confirms the outcome.
             </p>
           </div>
 

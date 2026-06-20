@@ -134,10 +134,10 @@ Horse Racing Tournament Website/
 
 | Vai trò | Quyền hạn |
 |---------|-----------|
-| **Admin** | Tạo giải đấu, tạo cuộc đua, phê duyệt tài khoản/ngựa/jockey, xác nhận kết quả |
+| **Admin** | Tạo giải đấu/race, phê duyệt đăng ký, đóng đăng ký và publish race |
 | **Owner** | Đăng ký ngựa, mời jockey, đăng ký tham gia giải đấu |
 | **Jockey** | Tạo hồ sơ, đăng ký giải, chấp nhận/từ chối lời mời cưỡi ngựa |
-| **Referee** | Điều hành cuộc đua, ghi kết quả, đánh dấu sẵn sàng/vắng mặt |
+| **Referee** | Điều hành cuộc đua, đánh dấu sẵn sàng/vắng mặt, xác nhận và publish kết quả chính thức |
 | **Spectator** | Xem thông tin công khai về giải đấu và kết quả |
 
 ---
@@ -265,7 +265,8 @@ node scripts/run-postgres-file.mjs database/postgres/migrations/001_upgrade_exis
 | `POST` | `/api/admin/approvals/:type/:id` | Phê duyệt / từ chối |
 | `POST` | `/api/admin/tournaments` | Tạo giải đấu |
 | `POST` | `/api/admin/races` | Tạo cuộc đua |
-| `POST` | `/api/admin/races/:id/:action` | Điều hành cuộc đua |
+| `PATCH` | `/api/admin/races/:id` | Sửa lịch race chưa publish |
+| `POST` | `/api/admin/races/:id/:action` | Đóng đăng ký hoặc publish race |
 
 ### Owner
 | Method | Endpoint | Mô tả |
@@ -288,9 +289,9 @@ node scripts/run-postgres-file.mjs database/postgres/migrations/001_upgrade_exis
 | Method | Endpoint | Mô tả |
 |--------|----------|-------|
 | `POST` | `/api/referee/races/:id/start` | Bắt đầu cuộc đua |
-| `POST` | `/api/referee/races/:id/submit-results` | Nộp kết quả |
-| `POST` | `/api/referee/race-entries/:id/ready` | Đánh dấu sẵn sàng |
-| `POST` | `/api/referee/race-entries/:id/absent` | Đánh dấu vắng mặt |
+| `POST` | `/api/referee/races/:id/submit-results` | Xác nhận và publish kết quả chính thức |
+| `POST` | `/api/referee/race-entries/:id/readiness/ready` | Đánh dấu sẵn sàng |
+| `POST` | `/api/referee/race-entries/:id/readiness/absent` | Đánh dấu vắng mặt |
 | `POST` | `/api/referee/race-entries/:id/result` | Ghi kết quả thí sinh |
 
 ### Thông báo

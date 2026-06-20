@@ -109,6 +109,7 @@ export const readDb = async () => {
     horseTournamentRegistrations,
     raceEntries,
     raceRefereeAssignments,
+    raceActionLogs,
     refereeReports,
     notifications,
     sessions,
@@ -142,6 +143,10 @@ export const readDb = async () => {
     ]),
     selectAll('raceRefereeAssignments', [
       { column: 'assignedAt', direction: 'DESC' },
+      { column: 'id' },
+    ]),
+    selectAll('raceActionLogs', [
+      { column: 'createdAt', direction: 'DESC' },
       { column: 'id' },
     ]),
     selectAll('refereeReports', [
@@ -210,6 +215,7 @@ export const readDb = async () => {
       isRead: undefined,
     })),
     raceRefereeAssignments,
+    raceActionLogs,
     refereeReports,
     sessions,
   };
@@ -233,6 +239,7 @@ const insertRows = async (client, tableName, columns, rows = []) => {
 const tableDeleteOrder = [
   'notifications',
   'sessions',
+  'raceActionLogs',
   'refereeReports',
   'raceEntries',
   'horseTournamentRegistrations',
@@ -535,6 +542,20 @@ export const writeDb = async (db) => {
         violationNotes: entry.violationNotes || '',
         invitationId: entry.invitationId || null,
         createdAt: entry.createdAt || null,
+      }))
+    );
+
+    await insertRows(
+      client,
+      'raceActionLogs',
+      ['id', 'raceId', 'userId', 'action', 'fromStatus', 'toStatus', 'details', 'createdAt'],
+      (db.raceActionLogs || []).map((log) => ({
+        ...log,
+        userId: log.userId || null,
+        fromStatus: log.fromStatus || null,
+        toStatus: log.toStatus || null,
+        details: log.details || '',
+        createdAt: log.createdAt || nowIso(),
       }))
     );
 

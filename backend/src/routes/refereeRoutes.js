@@ -7,15 +7,16 @@ import {
   publicRaceEntries,
 } from '../services/domainService.js';
 import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
-import { notifyAdmins } from '../services/notificationService.js';
+import { createNotification } from '../services/notificationService.js';
+import { recordRaceAction } from '../services/raceAuditService.js';
 
 export const createRefereeRoutes = (getDb, writeDb) => {
   const app = new Hono();
 
-  // Middleware xác thực — chỉ cho phép referee hoặc admin
+  // Chỉ trọng tài được phân công mới có quyền điều hành và công bố kết quả.
   app.use('*', async (c, next) => {
     const db = await getDb();
-    const user = await requireRole(c.req.raw, db, ['admin', 'referee']);
+    const user = await requireRole(c.req.raw, db, ['referee']);
     if (!user) return c.json({ message: 'Referee access required' }, 403);
     c.set('user', user);
     c.set('db', db);
@@ -60,10 +61,23 @@ export const createRefereeRoutes = (getDb, writeDb) => {
         return c.json({ message: 'Check every participant as Ready or Absent before starting the race' }, 400);
       }
 
+      const fromStatus = race.status;
       race.status = 'in-progress';
       race.updatedAt = new Date().toISOString();
       raceEntries.forEach((entry) => { if (entry.preRaceStatus === 'absent') entry.disqualified = true; });
-      notifyAdmins(db, 'Race started', `${race.name} has been started by ${user.name}.`);
+      db.users
+        .filter((item) => item.role === 'admin')
+        .forEach((admin) =>
+          createNotification(db, admin.id, 'Race started', `${race.name} has been started by ${user.name}.`)
+        );
+      recordRaceAction(db, {
+        raceId: race.id,
+        userId: user.id,
+        action: 'start-race',
+        fromStatus,
+        toStatus: race.status,
+        details: `Started by assigned referee ${user.name}`,
+      });
     }
 
     if (action === 'submit-results') {
@@ -90,9 +104,42 @@ export const createRefereeRoutes = (getDb, writeDb) => {
         return c.json({ message: 'Each competing participant must have a unique finishing position' }, 400);
       }
 
-      race.resultStatus = 'submitted';
+      const fromStatus = race.status;
+      race.status = 'finished';
+      race.resultStatus = 'official';
+      race.awardsPublished = true;
       race.updatedAt = new Date().toISOString();
-      notifyAdmins(db, 'Race results submitted', `${race.name} results are ready for Admin confirmation.`);
+      raceEntries.forEach((entry) => {
+        entry.resultStatus = entry.preRaceStatus === 'absent' || entry.disqualified
+          ? 'disqualified'
+          : 'official';
+      });
+
+      const recipientIds = new Set();
+      raceEntries.forEach((entry) => {
+        const horse = db.horses.find((item) => item.id === entry.horseId);
+        if (horse?.ownerUserId) recipientIds.add(horse.ownerUserId);
+        if (entry.jockeyUserId) recipientIds.add(entry.jockeyUserId);
+      });
+      db.users
+        .filter((item) => ['admin', 'spectator'].includes(item.role))
+        .forEach((item) => recipientIds.add(item.id));
+      recipientIds.forEach((userId) =>
+        createNotification(
+          db,
+          userId,
+          'Official results published',
+          `${race.name} results were confirmed and published by referee ${user.name}.`
+        )
+      );
+      recordRaceAction(db, {
+        raceId: race.id,
+        userId: user.id,
+        action: 'publish-results',
+        fromStatus,
+        toStatus: race.status,
+        details: `${competingEntries.length} official results published by ${user.name}`,
+      });
     }
 
     await writeDb(db);
@@ -101,7 +148,7 @@ export const createRefereeRoutes = (getDb, writeDb) => {
   });
 
   // Đánh dấu một thí sinh là sẵn sàng thi đấu hoặc vắng mặt
-  app.post('/race-entries/:entryId/:readiness', async (c) => {
+  app.post('/race-entries/:entryId/readiness/:readiness', async (c) => {
     const user = c.get('user');
     const db = c.get('db');
     const entryId = c.req.param('entryId');
@@ -116,6 +163,12 @@ export const createRefereeRoutes = (getDb, writeDb) => {
 
     if (!entry || !race || !canRefereeRace(race, user, db)) {
       return c.json({ message: 'Race entry not found' }, 404);
+    }
+    if (entry.status !== 'approved') {
+      return c.json({ message: 'Only approved race entries can be checked' }, 400);
+    }
+    if (race.status !== 'published') {
+      return c.json({ message: 'Readiness can only be changed before a published race starts' }, 400);
     }
 
     entry.preRaceStatus = readiness === 'ready' ? 'ready' : 'absent';
@@ -140,6 +193,12 @@ export const createRefereeRoutes = (getDb, writeDb) => {
 
     if (!entry || !race || !canRefereeRace(race, user, db)) {
       return c.json({ message: 'Race entry not found' }, 404);
+    }
+    if (entry.status !== 'approved') {
+      return c.json({ message: 'Only approved race entries can receive results' }, 400);
+    }
+    if (race.status !== 'in-progress') {
+      return c.json({ message: 'Results can only be recorded while the race is in progress' }, 400);
     }
     if (entry.preRaceStatus === 'absent' || entry.disqualified) {
       return c.json({ message: 'Absent participants cannot compete' }, 400);

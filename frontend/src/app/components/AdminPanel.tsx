@@ -24,6 +24,7 @@ import {
   decideApproval,
   getApprovals,
   getBootstrap,
+  updateRace as persistRace,
 } from '../services/api';
 import { statusLabel } from '../utils/domain';
 import { messageToneClasses } from '../utils/messageTone';
@@ -188,31 +189,35 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
       return;
     }
 
-    setRaces((prev) =>
-      prev.map((race) =>
-        race.id === editRace.id
-          ? { ...editRace, date: raceDate }
-          : race
-      )
-    );
-
-    setEditRace(null);
+    persistRace(editRace.id, {
+      name: editRace.name,
+      date: raceDate,
+      time: editRace.time,
+    })
+      .then(({ race }) => {
+        setRaces((current) =>
+          current.map((item) => (item.id === race.id ? race : item))
+        );
+        setEditRace(null);
+        setApprovalMessage('Race schedule saved.');
+      })
+      .catch((error) =>
+        setApprovalMessage(
+          error instanceof Error ? error.message : 'Unable to save race'
+        )
+      );
   };
 
   const handleRaceAction = (
     raceId: string,
-    action: 'close-registration' | 'publish' | 'confirm-results' | 'reject-results' | 'complete'
+    action: 'close-registration' | 'publish'
   ) => {
     adminRaceAction(raceId, action)
       .then((result) => {
         setRaces((current) =>
           current.map((race) => (race.id === result.race.id ? result.race : race))
         );
-        setApprovalMessage(
-          action === 'confirm-results'
-            ? 'Official results approved and published to Owner, Jockey, Referee and Spectator pages.'
-            : `Race status updated to ${statusLabel(result.race.status)}.`
-        );
+        setApprovalMessage(`Race status updated to ${statusLabel(result.race.status)}.`);
       })
       .catch((error) =>
         setApprovalMessage(
@@ -556,39 +561,6 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                           </button>
                         )}
 
-                        {race.status === 'in-progress' && race.resultStatus === 'submitted' && (
-                          <button
-                            onClick={() =>
-                              handleRaceAction(race.id, 'confirm-results')
-                            }
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600/10 text-blue-400 rounded-xl hover:bg-blue-600/20 transition-all border border-blue-600/30"
-                          >
-                            Confirm Results
-                          </button>
-                        )}
-
-                        {race.status === 'in-progress' && race.resultStatus === 'submitted' && (
-                          <button
-                            onClick={() =>
-                              handleRaceAction(race.id, 'reject-results')
-                            }
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-400 rounded-xl hover:bg-red-600/20 transition-all border border-red-600/30"
-                          >
-                            Reject Results
-                          </button>
-                        )}
-
-                        {race.status === 'finished' && (
-                          <button
-                            onClick={() =>
-                              handleRaceAction(race.id, 'complete')
-                            }
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 text-purple-300 rounded-xl hover:bg-purple-600/20 transition-all border border-purple-600/30"
-                          >
-                            Complete Awards
-                          </button>
-                        )}
-
                         <button
                           onClick={() =>
                             setEditRace({
@@ -596,6 +568,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                               date: formatDateInput(race.date || ''),
                             })
                           }
+                          disabled={!['registration-open', 'registration-closed'].includes(race.status)}
                           className="flex items-center gap-2 px-4 py-2 bg-[#d4af37]/10 text-[#d4af37] rounded-xl hover:bg-[#d4af37] hover:text-white transition-all border border-[#d4af37]/30"
                         >
                           <Pencil className="w-4 h-4" />
@@ -660,7 +633,7 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
                   {
                     icon: FileText,
-                    label: 'Publish Results',
+                    label: 'Monitor Published Results',
                   },
 
                   {

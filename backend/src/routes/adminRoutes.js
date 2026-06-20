@@ -17,6 +17,7 @@ import {
 } from '../services/domainService.js';
 import { computeRaceHandicap } from '../services/handicapService.js';
 import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
+import { recordRaceAction } from '../services/raceAuditService.js';
 import {
   createNotification,
   notifyAdmins,
@@ -233,12 +234,46 @@ export const createAdminRoutes = (getDb, writeDb) => {
     }, 201);
   });
 
-  // Thực hiện hành động quản lý cuộc đua: đóng đăng ký, publish, xác nhận/từ chối kết quả, hoàn thành
+  // Chỉnh sửa lịch race và lưu xuống PostgreSQL trước khi race được publish.
+  app.patch('/races/:raceId', async (c) => {
+    const db = c.get('db');
+    const race = db.races.find((item) => item.id === c.req.param('raceId'));
+    if (!race) return c.json({ message: 'Race not found' }, 404);
+    if (!['registration-open', 'registration-closed'].includes(race.status)) {
+      return c.json({ message: 'Only unpublished races can be edited' }, 400);
+    }
+
+    const { name, date, time } = await c.req.json();
+    if (!String(name || '').trim() || !date || !time) {
+      return c.json({ message: 'Race name, date and time are required' }, 400);
+    }
+
+    race.name = String(name).trim();
+    race.date = date;
+    race.raceDate = date;
+    race.time = time;
+    race.raceTime = time;
+    race.updatedAt = new Date().toISOString();
+    recordRaceAction(db, {
+      raceId: race.id,
+      userId: c.get('user').id,
+      action: 'edit-race',
+      fromStatus: race.status,
+      toStatus: race.status,
+      details: `Updated schedule to ${date} ${time}`,
+    });
+
+    await writeDb(db);
+    broadcastRaceUpdate(race.id);
+    return c.json({ race });
+  });
+
+  // Admin chỉ chuẩn bị và publish race; kết quả thuộc trách nhiệm của trọng tài.
   app.post('/races/:raceId/:action', async (c) => {
     const db = c.get('db');
     const raceId = c.req.param('raceId');
     const action = c.req.param('action');
-    const validActions = ['close-registration', 'publish', 'confirm-results', 'reject-results', 'complete'];
+    const validActions = ['close-registration', 'publish'];
 
     if (!validActions.includes(action)) return c.json({ message: 'Invalid action' }, 400);
 
@@ -248,8 +283,15 @@ export const createAdminRoutes = (getDb, writeDb) => {
     const entries = (db.raceEntries || []).filter(
       (entry) => entry.raceId === race.id && entry.status === 'approved'
     );
+    const fromStatus = race.status;
 
     if (action === 'close-registration') {
+      if (race.status !== 'registration-open') {
+        return c.json({ message: 'Only an open registration can be closed' }, 400);
+      }
+      if (entries.length === 0) {
+        return c.json({ message: 'A race must have at least one approved participant' }, 400);
+      }
       if (entries.length > MAX_RACE_FIELD_SIZE) {
         return c.json(
           { message: `A race can have at most ${MAX_RACE_FIELD_SIZE} horses and ${MAX_RACE_FIELD_SIZE} jockeys on the track.` },
@@ -289,6 +331,9 @@ export const createAdminRoutes = (getDb, writeDb) => {
       if (!['registration-closed', 'published'].includes(race.status)) {
         return c.json({ message: 'Close registration before publishing the race' }, 400);
       }
+      if (entries.length === 0) {
+        return c.json({ message: 'A race must have at least one approved participant before publishing' }, 400);
+      }
       race.status = 'published';
       race.updatedAt = new Date().toISOString();
       entries.forEach((entry) => {
@@ -299,43 +344,14 @@ export const createAdminRoutes = (getDb, writeDb) => {
       });
     }
 
-    if (action === 'confirm-results') {
-      if (race.resultStatus !== 'submitted') {
-        return c.json({ message: 'Referee must submit results before Admin confirmation' }, 400);
-      }
-      race.status = 'finished';
-      race.resultStatus = 'approved';
-      race.updatedAt = new Date().toISOString();
-      entries.forEach((entry) => { entry.resultStatus = 'official'; });
-
-      const recipientIds = new Set();
-      entries.forEach((entry) => {
-        const horse = db.horses.find((item) => item.id === entry.horseId);
-        if (horse?.ownerUserId) recipientIds.add(horse.ownerUserId);
-        if (entry.jockeyUserId) recipientIds.add(entry.jockeyUserId);
-      });
-      raceRefereeIds(db, race).forEach((id) => recipientIds.add(id));
-      db.users.filter((item) => item.role === 'spectator').forEach((s) => recipientIds.add(s.id));
-      recipientIds.forEach((id) =>
-        createNotification(db, id, 'Official results published',
-          `${race.name} official results have been approved by Admin and published for viewing.`)
-      );
-    }
-
-    if (action === 'reject-results') {
-      race.resultStatus = 'rejected';
-      race.updatedAt = new Date().toISOString();
-      entries.forEach((entry) => { entry.resultStatus = 'draft'; });
-    }
-
-    if (action === 'complete') {
-      if (race.status !== 'finished') {
-        return c.json({ message: 'Confirm results before completing awards' }, 400);
-      }
-      race.status = 'completed';
-      race.awardsPublished = true;
-      race.updatedAt = new Date().toISOString();
-    }
+    recordRaceAction(db, {
+      raceId: race.id,
+      userId: c.get('user').id,
+      action,
+      fromStatus,
+      toStatus: race.status,
+      details: `${entries.length} approved participants`,
+    });
 
     await writeDb(db);
     broadcastRaceUpdate(race.id);

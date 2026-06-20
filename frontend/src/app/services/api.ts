@@ -512,23 +512,33 @@ export const createRace = async (race: {
     }
   );
 
-// Thực hiện hành động quản lý cuộc đua: đóng đăng ký, publish, xác nhận/từ chối kết quả, hoàn thành
+// Lưu thay đổi lịch race (admin)
+export const updateRace = async (
+  raceId: string,
+  race: Pick<RaceRecord, 'name' | 'date' | 'time'>
+) =>
+  request<{ race: RaceRecord }>(`/admin/races/${raceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(race),
+  });
+
+// Admin chỉ đóng đăng ký và publish race
 export const adminRaceAction = async (
   raceId: string,
-  action: 'close-registration' | 'publish' | 'confirm-results' | 'reject-results' | 'complete'
+  action: 'close-registration' | 'publish'
 ) =>
   request<{ race: RaceRecord; entries: RaceEntryRecord[]; notifications: NotificationItem[] }>(
     `/admin/races/${raceId}/${action}`,
     { method: 'POST' }
   );
 
-// Bắt đầu một cuộc đua (trọng tài/admin)
+// Bắt đầu một cuộc đua (trọng tài được phân công)
 export const startRace = async (raceId: string) =>
   request<{ race: RaceRecord }>(`/referee/races/${raceId}/start`, {
     method: 'POST',
   });
 
-// Nộp kết quả cuộc đua để admin xác nhận
+// Trọng tài xác nhận và công bố kết quả chính thức
 export const submitRaceResults = async (raceId: string) =>
   request<{ race: RaceRecord }>(`/referee/races/${raceId}/submit-results`, {
     method: 'POST',
@@ -540,7 +550,7 @@ export const markRaceEntryReadiness = async (
   readiness: 'ready' | 'absent'
 ) =>
   request<{ entry: RaceEntryRecord; entries: RaceEntryRecord[] }>(
-    `/referee/race-entries/${entryId}/${readiness}`,
+    `/referee/race-entries/${entryId}/readiness/${readiness}`,
     { method: 'POST' }
   );
 
