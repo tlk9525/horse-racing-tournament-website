@@ -206,6 +206,16 @@ export interface ActivePairing extends HorseTournamentRegistration {
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:4000/api';
 const TOKEN_KEY = 'horse-racing-token';
 
+class ApiRequestError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+  }
+}
+
 // Lấy token đăng nhập đang được lưu trong localStorage
 export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
 
@@ -238,7 +248,7 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
+    throw new ApiRequestError(data.message || 'Request failed', response.status);
   }
 
   return data;
@@ -562,11 +572,29 @@ export const submitRaceResults = async (raceId: string) =>
 export const markRaceEntryReadiness = async (
   entryId: string,
   readiness: 'ready' | 'absent'
-) =>
-  request<{ entry: RaceEntryRecord; entries: RaceEntryRecord[] }>(
-    `/referee/race-entries/${encodeURIComponent(entryId)}/readiness/${readiness}`,
-    { method: 'POST' }
-  );
+) => {
+  const encodedEntryId = encodeURIComponent(entryId);
+  const options = { method: 'POST' };
+
+  try {
+    return await request<{ entry: RaceEntryRecord; entries: RaceEntryRecord[] }>(
+      `/referee/race-entries/${encodedEntryId}/readiness/${readiness}`,
+      options
+    );
+  } catch (error) {
+    const isLegacyRenderRoute =
+      error instanceof ApiRequestError &&
+      error.status === 404 &&
+      error.message.toLowerCase() === 'not found';
+
+    if (!isLegacyRenderRoute) throw error;
+
+    return request<{ entry: RaceEntryRecord; entries: RaceEntryRecord[] }>(
+      `/referee/race-entries/${encodedEntryId}/${readiness}`,
+      options
+    );
+  }
+};
 
 // Ghi kết quả cho một thí sinh: vị trí, thời gian vào đích, ghi chú và vi phạm
 export const recordRaceResult = async (
