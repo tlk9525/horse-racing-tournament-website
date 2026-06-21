@@ -189,11 +189,11 @@ export const createRefereeRoutes = (getDb, writeDb) => {
   });
 
   // Đánh dấu một thí sinh là sẵn sàng thi đấu hoặc vắng mặt
-  app.post('/race-entries/:entryId/readiness/:readiness', async (c) => {
+  app.post('/race-entries/:entryId/readiness/:status', async (c) => {
     const user = c.get('user');
     const db = c.get('db');
     const entryId = c.req.param('entryId');
-    const readiness = c.req.param('readiness');
+    const readiness = c.req.param('status');
 
     if (!['ready', 'absent'].includes(readiness)) {
       return c.json({ message: 'Invalid readiness status' }, 400);
@@ -202,8 +202,14 @@ export const createRefereeRoutes = (getDb, writeDb) => {
     const entry = findEntry(db, entryId);
     const race = db.races.find((item) => item.id === entry?.raceId);
 
-    if (!entry || !race || !canRefereeRace(race, user, db)) {
-      return c.json({ message: 'Race entry not found' }, 404);
+    if (!entry) {
+      return c.json({ message: 'Entry not found' }, 404);
+    }
+    if (!race) {
+      return c.json({ message: 'Race not found' }, 404);
+    }
+    if (!canRefereeRace(race, user, db)) {
+      return c.json({ message: 'Not authorized as referee' }, 403);
     }
     if (entry.status !== 'approved') {
       return c.json({ message: 'Only approved race entries can be checked' }, 400);
@@ -232,8 +238,14 @@ export const createRefereeRoutes = (getDb, writeDb) => {
     const entry = findEntry(db, entryId);
     const race = db.races.find((item) => item.id === entry?.raceId);
 
-    if (!entry || !race || !canRefereeRace(race, user, db)) {
-      return c.json({ message: 'Race entry not found' }, 404);
+    if (!entry) {
+      return c.json({ message: 'Entry not found' }, 404);
+    }
+    if (!race) {
+      return c.json({ message: 'Race not found' }, 404);
+    }
+    if (!canRefereeRace(race, user, db)) {
+      return c.json({ message: 'Not authorized as referee' }, 403);
     }
     if (entry.status !== 'approved') {
       return c.json({ message: 'Only approved race entries can receive results' }, 400);
