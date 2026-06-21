@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ActivePairing,
   Award,
   Edit3,
   Eye,
@@ -35,6 +36,7 @@ export default function HorseManagement({
 }: HorseManagementProps) {
   const [horses, setHorses] = useState<HorseRecord[]>([]);
   const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
+  const [activePairings, setActivePairings] = useState<ActivePairing[]>([]);
   const [maxHorses, setMaxHorses] = useState(5);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -45,6 +47,7 @@ export default function HorseManagement({
       .then((data) => {
         setHorses(data.horses);
         setRaceEntries(data.raceEntries);
+        setActivePairings(data.activePairings || []);
         setMaxHorses(data.limits?.maxOwnerHorses || 5);
       })
       .catch((error) =>
@@ -60,6 +63,9 @@ export default function HorseManagement({
 
   const horseEntryCount = (horseId: string) =>
     raceEntries.filter((entry) => entry.horseId === horseId).length;
+
+  const activePairingForHorse = (horseId: string) =>
+    activePairings.find((pairing) => pairing.horseId === horseId);
 
   const filteredHorses = horses.filter((horse) => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -158,7 +164,10 @@ export default function HorseManagement({
             </div>
           )}
 
-          {filteredHorses.map((horse) => (
+          {filteredHorses.map((horse) => {
+            const activePairing = activePairingForHorse(horse.id);
+
+            return (
             <div
               key={horse.id}
               className="rounded-2xl border border-white/10 bg-[#102a46] p-6"
@@ -219,7 +228,9 @@ export default function HorseManagement({
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Jockey Pairing</span>
                   <span className="text-white font-semibold">
-                    {statusLabel(horse.jockeyConfirmation)}
+                    {activePairing
+                      ? `${activePairing.jockeyName} • ${activePairing.tournamentName}`
+                      : 'No active pairing'}
                   </span>
                 </div>
               </div>
@@ -250,7 +261,8 @@ export default function HorseManagement({
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

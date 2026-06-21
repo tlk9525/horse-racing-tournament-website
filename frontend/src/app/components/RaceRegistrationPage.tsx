@@ -31,6 +31,16 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
   });
 
   const tournamentId = sessionStorage.getItem('selectedTournamentId') || '';
+  const registrationOpen = races.some((race) => {
+    const now = Date.now();
+    const opensAt = race.registrationOpensAt
+      ? new Date(race.registrationOpensAt).getTime()
+      : Number.NEGATIVE_INFINITY;
+    const closesAt = race.registrationClosesAt
+      ? new Date(race.registrationClosesAt).getTime()
+      : Number.POSITIVE_INFINITY;
+    return race.status === 'registration-open' && now >= opensAt && now < closesAt;
+  });
 
   const loadRegistrationData = () => {
     if (!tournamentId) {
@@ -64,6 +74,10 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
 
     if (!form.horseId || !form.jockeyUserId) {
       setMessage('Horse and jockey are required.');
+      return;
+    }
+    if (!registrationOpen) {
+      setMessage('No race is currently inside its registration window.');
       return;
     }
 
@@ -203,7 +217,8 @@ export default function RaceRegistrationPage({ onNavigate }: RaceRegistrationPag
 
           <button
             onClick={submitRegistration}
-            className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] text-white font-bold transition-all"
+            disabled={!registrationOpen || !form.horseId || !form.jockeyUserId}
+            className="mt-8 flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-[#d4af37] hover:bg-[#b8892d] disabled:bg-white/10 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold transition-all"
           >
             <Send className="w-5 h-5" />
             Register Pair for Tournament

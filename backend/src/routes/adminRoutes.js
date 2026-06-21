@@ -3,12 +3,14 @@ import { randomUUID } from 'node:crypto';
 import {
   ACTIVE_TOURNAMENT_STATUSES,
   MAX_RACE_FIELD_SIZE,
+  MAX_TOURNAMENT_RACES,
 } from '../config/constants.js';
 import { requireRole } from '../services/authService.js';
 import {
   approvedRaceEntries,
   formatApprovals,
   jockeyName,
+  isRaceRegistrationOpen,
   publicRaceEntries,
   raceRefereeIds,
   raceName,
@@ -74,7 +76,9 @@ const addPairToRace = (db, race, pair, createdAt) => {
 
 const addPairToTournamentRaces = (db, invitation, registration, createdAt) => {
   const pair = registrationPair(registration, invitation);
-  const races = tournamentRaces(db, invitation.tournamentId);
+  const races = tournamentRaces(db, invitation.tournamentId).filter((race) =>
+    isRaceRegistrationOpen(race)
+  );
   const errors = races.map((race) => validatePairForRace(db, race, pair)).filter(Boolean);
   if (errors.length) return { error: errors[0], races: [] };
   const touchedRaces = races.filter((race) => addPairToRace(db, race, pair, createdAt));
@@ -119,7 +123,14 @@ export const createAdminRoutes = (getDb, writeDb) => {
     const referees = db.users
       .filter((item) => item.role === 'referee' && item.status === 'active')
       .map((item) => ({ id: item.id, name: item.name }));
-    return c.json({ tournaments: db.tournaments, races: db.races || [], referees });
+    return c.json({
+      tournaments: db.tournaments.filter((item) =>
+        ACTIVE_TOURNAMENT_STATUSES.includes(item.status)
+      ),
+      races: db.races || [],
+      referees,
+      maxRacesPerTournament: MAX_TOURNAMENT_RACES,
+    });
   });
 
   // Tạo giải đấu mới
@@ -155,11 +166,15 @@ export const createAdminRoutes = (getDb, writeDb) => {
     const {
       tournamentId, raceNumber, name, round, date, time, venue, distance, surface,
       raceClass, handicapMin, handicapMax, totalPrize, refereeUserId, refereeUserIds,
-      registrationPeriodMinutes, registrationOpenTime, registrationCloseTime,
+      registrationOpenTime, registrationCloseTime,
     } = await c.req.json();
 
-    if (!name || !date || !time || !venue || !distance || !refereeUserId) {
-      return c.json({ message: 'Race name, date, time, venue, distance and referee are required' }, 400);
+    if (
+      !name || !date || !time || !venue || !distance || !surface || !raceClass ||
+      handicapMin === undefined || handicapMax === undefined || !refereeUserId ||
+      !registrationOpenTime || !registrationCloseTime
+    ) {
+      return c.json({ message: 'Race name, schedule, registration window, venue, distance and referee are required' }, 400);
     }
 
     const selectedRefereeIds = Array.from(
@@ -183,21 +198,73 @@ export const createAdminRoutes = (getDb, writeDb) => {
     if (!tournament) {
       return c.json({ message: 'Selected tournament must exist and be open before creating races' }, 400);
     }
+    const existingTournamentRaces = tournamentRaces(db, tournament.id);
+    if (existingTournamentRaces.length >= MAX_TOURNAMENT_RACES) {
+      return c.json(
+        { message: `${tournament.name} already has the maximum ${MAX_TOURNAMENT_RACES} races` },
+        409
+      );
+    }
 
     const now = new Date();
-    const minutes = Math.max(1, Number(registrationPeriodMinutes) || 10);
-    const registrationOpensAt = registrationOpenTime || now.toISOString();
-    const registrationClosesAt =
-      registrationCloseTime || new Date(now.getTime() + minutes * 60 * 1000).toISOString();
+    const registrationOpensAt = new Date(registrationOpenTime);
+    const registrationClosesAt = new Date(registrationCloseTime);
+    const raceStartsAt = new Date(`${date}T${time}`);
+
+    if (
+      !Number.isFinite(registrationOpensAt.getTime()) ||
+      !Number.isFinite(registrationClosesAt.getTime()) ||
+      !Number.isFinite(raceStartsAt.getTime())
+    ) {
+      return c.json({ message: 'Registration and race schedule must use valid date/time values' }, 400);
+    }
+    if (registrationOpensAt >= registrationClosesAt) {
+      return c.json({ message: 'Registration close time must be after open time' }, 400);
+    }
+    if (registrationClosesAt <= now) {
+      return c.json({ message: 'Registration close time must be in the future' }, 400);
+    }
+    if (registrationClosesAt > raceStartsAt) {
+      return c.json({ message: 'Registration must close before the race starts' }, 400);
+    }
+    const distanceMeters = Number(distance);
+    const minHandicap = Number(handicapMin);
+    const maxHandicap = Number(handicapMax);
+    if (!Number.isFinite(distanceMeters) || distanceMeters < 400 || distanceMeters > 10000) {
+      return c.json({ message: 'Race distance must be between 400m and 10,000m' }, 400);
+    }
+    if (
+      !Number.isFinite(minHandicap) ||
+      !Number.isFinite(maxHandicap) ||
+      minHandicap < 0 ||
+      maxHandicap < minHandicap
+    ) {
+      return c.json({ message: 'Handicap range is invalid' }, 400);
+    }
+
+    const duplicateRaceNumber = db.races.some(
+      (item) => item.tournamentId === tournament.id &&
+        String(item.raceNumber || '').toLowerCase() === String(raceNumber || '').toLowerCase()
+    );
+    if (raceNumber && duplicateRaceNumber) {
+      return c.json({ message: `${raceNumber} already exists in this tournament` }, 409);
+    }
+
+    const minutes = Math.max(
+      1,
+      Math.ceil((registrationClosesAt.getTime() - registrationOpensAt.getTime()) / 60000)
+    );
 
     const race = {
       id: randomUUID(), tournamentId: tournament.id, raceNumber: raceNumber || '',
       name, round: round || 'Qualifier', date, time, venue,
-      distance: `${distance}m`, surface: surface || 'Turf', raceClass: raceClass || '',
-      handicapMin: Number(handicapMin) || 0, handicapMax: Number(handicapMax) || 0,
+      distance: `${distanceMeters}m`, surface, raceClass,
+      handicapMin: minHandicap, handicapMax: maxHandicap,
       totalPrize: Number(totalPrize) || 0, status: 'registration-open',
       participants: 0, ownerConfirmed: 0, jockeyConfirmed: 0,
-      registrationPeriodMinutes: minutes, registrationOpensAt, registrationClosesAt,
+      registrationPeriodMinutes: minutes,
+      registrationOpensAt: registrationOpensAt.toISOString(),
+      registrationClosesAt: registrationClosesAt.toISOString(),
       resultStatus: 'draft', awardsPublished: false,
       createdBy: user.id, createdAt: now.toISOString(), updatedAt: now.toISOString(),
     };
@@ -268,6 +335,49 @@ export const createAdminRoutes = (getDb, writeDb) => {
     return c.json({ race });
   });
 
+  // Chỉ cho phép xóa race chưa publish/chưa bắt đầu để không phá lịch sử kết quả.
+  app.delete('/races/:raceId', async (c) => {
+    const db = c.get('db');
+    const user = c.get('user');
+    const raceId = c.req.param('raceId');
+    const race = db.races.find((item) => item.id === raceId);
+    if (!race) return c.json({ message: 'Race not found' }, 404);
+    if (!['registration-open', 'registration-closed'].includes(race.status)) {
+      return c.json({ message: 'Only races that have not been published can be deleted' }, 400);
+    }
+
+    const refereeIds = raceRefereeIds(db, race);
+    const entryIds = new Set(
+      (db.raceEntries || []).filter((entry) => entry.raceId === raceId).map((entry) => entry.id)
+    );
+
+    db.races = db.races.filter((item) => item.id !== raceId);
+    db.raceEntries = (db.raceEntries || []).filter((entry) => entry.raceId !== raceId);
+    db.raceRefereeAssignments = (db.raceRefereeAssignments || []).filter(
+      (assignment) => assignment.raceId !== raceId
+    );
+    db.refereeReports = (db.refereeReports || []).filter(
+      (report) => report.raceId !== raceId && !entryIds.has(report.raceEntryId)
+    );
+    db.raceActionLogs = (db.raceActionLogs || []).filter((log) => log.raceId !== raceId);
+    db.jockeyInvitations = (db.jockeyInvitations || []).filter(
+      (invitation) => invitation.raceId !== raceId
+    );
+
+    refereeIds.forEach((refereeId) =>
+      createNotification(
+        db,
+        refereeId,
+        'Race deleted',
+        `${race.name} was deleted by ${user.name}.`
+      )
+    );
+
+    await writeDb(db);
+    broadcastRaceUpdate(raceId);
+    return c.json({ ok: true, raceId });
+  });
+
   // Admin chỉ chuẩn bị và publish race; kết quả thuộc trách nhiệm của trọng tài.
   app.post('/races/:raceId/:action', async (c) => {
     const db = c.get('db');
@@ -291,6 +401,12 @@ export const createAdminRoutes = (getDb, writeDb) => {
       }
       if (entries.length === 0) {
         return c.json({ message: 'A race must have at least one approved participant' }, 400);
+      }
+      if (
+        race.registrationClosesAt &&
+        Date.now() < new Date(race.registrationClosesAt).getTime()
+      ) {
+        return c.json({ message: 'Registration cannot close before its configured close time' }, 400);
       }
       if (entries.length > MAX_RACE_FIELD_SIZE) {
         return c.json(

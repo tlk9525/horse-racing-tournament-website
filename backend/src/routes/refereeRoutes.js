@@ -10,6 +10,14 @@ import { broadcastRaceUpdate } from '../services/liveRaceEvents.js';
 import { createNotification } from '../services/notificationService.js';
 import { recordRaceAction } from '../services/raceAuditService.js';
 
+const finishTimeMs = (value) => {
+  const match = String(value || '').trim().match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?$/);
+  if (!match) return Number.NaN;
+  const [, minutes, seconds, fraction = '0'] = match;
+  if (Number(seconds) >= 60) return Number.NaN;
+  return Number(minutes) * 60000 + Number(seconds) * 1000 + Number(fraction.padEnd(3, '0'));
+};
+
 export const createRefereeRoutes = (getDb, writeDb) => {
   const app = new Hono();
 
@@ -43,6 +51,10 @@ export const createRefereeRoutes = (getDb, writeDb) => {
       if (race.status !== 'published') {
         return c.json({ message: 'Race must be published before it can start' }, 400);
       }
+      const scheduledStart = new Date(`${race.date}T${race.time}`).getTime();
+      if (Number.isFinite(scheduledStart) && Date.now() < scheduledStart) {
+        return c.json({ message: 'Race cannot start before its scheduled date and time' }, 400);
+      }
 
       const raceEntries = (db.raceEntries || []).filter(
         (entry) => entry.raceId === race.id && entry.status === 'approved'
@@ -65,6 +77,11 @@ export const createRefereeRoutes = (getDb, writeDb) => {
       race.status = 'in-progress';
       race.updatedAt = new Date().toISOString();
       raceEntries.forEach((entry) => { if (entry.preRaceStatus === 'absent') entry.disqualified = true; });
+      const tournament = db.tournaments.find((item) => item.id === race.tournamentId);
+      if (tournament && tournament.status !== 'completed') {
+        tournament.status = 'active';
+        tournament.updatedAt = new Date().toISOString();
+      }
       db.users
         .filter((item) => item.role === 'admin')
         .forEach((admin) =>
@@ -78,6 +95,7 @@ export const createRefereeRoutes = (getDb, writeDb) => {
         toStatus: race.status,
         details: `Started by assigned referee ${user.name}`,
       });
+
     }
 
     if (action === 'submit-results') {
@@ -96,12 +114,22 @@ export const createRefereeRoutes = (getDb, writeDb) => {
       );
       const positions = competingEntries.map((entry) => Number(entry.position)).filter(Number.isInteger);
       const uniquePositions = new Set(positions);
+      const orderedResults = [...competingEntries].sort(
+        (a, b) => Number(a.position) - Number(b.position)
+      );
+      const finishTimes = orderedResults.map((entry) => finishTimeMs(entry.finishTime));
 
       if (entriesMissingResult.length > 0) {
         return c.json({ message: 'Record a finishing position and finish time for every competing participant before submitting results' }, 400);
       }
       if (uniquePositions.size !== positions.length) {
         return c.json({ message: 'Each competing participant must have a unique finishing position' }, 400);
+      }
+      if (finishTimes.some((time) => !Number.isFinite(time))) {
+        return c.json({ message: 'Finish time must use MM:SS or MM:SS.mmm format' }, 400);
+      }
+      if (finishTimes.some((time, index) => index > 0 && time <= finishTimes[index - 1])) {
+        return c.json({ message: 'Finish times must increase in finishing-position order' }, 400);
       }
 
       const fromStatus = race.status;
@@ -140,6 +168,19 @@ export const createRefereeRoutes = (getDb, writeDb) => {
         toStatus: race.status,
         details: `${competingEntries.length} official results published by ${user.name}`,
       });
+
+      const tournament = db.tournaments.find((item) => item.id === race.tournamentId);
+      const racesInTournament = (db.races || []).filter(
+        (item) => item.tournamentId === race.tournamentId
+      );
+      if (
+        tournament &&
+        racesInTournament.length > 0 &&
+        racesInTournament.every((item) => ['finished', 'completed'].includes(item.status))
+      ) {
+        tournament.status = 'completed';
+        tournament.updatedAt = new Date().toISOString();
+      }
     }
 
     await writeDb(db);
@@ -222,8 +263,8 @@ export const createRefereeRoutes = (getDb, writeDb) => {
     if (duplicatePosition) {
       return c.json({ message: `Position ${numericPosition} is already recorded for another participant` }, 400);
     }
-    if (!finishTime) {
-      return c.json({ message: 'Finish time is required before recording a result' }, 400);
+    if (!Number.isFinite(finishTimeMs(finishTime))) {
+      return c.json({ message: 'Finish time must use MM:SS or MM:SS.mmm format' }, 400);
     }
 
     entry.position = numericPosition;

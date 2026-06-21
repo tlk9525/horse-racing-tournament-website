@@ -31,6 +31,22 @@ export const activeTournament = (db) =>
 export const tournamentRaces = (db, tournamentId) =>
   (db.races || []).filter((race) => race.tournamentId === tournamentId);
 
+export const isRaceRegistrationOpen = (race, at = Date.now()) => {
+  if (race?.status !== 'registration-open') return false;
+
+  const opensAt = race.registrationOpensAt
+    ? new Date(race.registrationOpensAt).getTime()
+    : Number.NEGATIVE_INFINITY;
+  const closesAt = race.registrationClosesAt
+    ? new Date(race.registrationClosesAt).getTime()
+    : Number.POSITIVE_INFINITY;
+
+  return Number.isFinite(at) && at >= opensAt && at < closesAt;
+};
+
+export const activeRace = (race) =>
+  race && !['finished', 'completed', 'cancelled'].includes(race.status);
+
 // Lấy danh sách đăng ký ngựa vào giải (loại bỏ các mục bị từ chối hoặc hủy bỏ)
 export const activeHorseTournamentRegistrations = (db, tournamentId) =>
   (db.horseTournamentRegistrations || []).filter(

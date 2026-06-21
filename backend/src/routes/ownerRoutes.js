@@ -7,9 +7,11 @@ import {
 import { requireRole } from '../services/authService.js';
 import {
   activeHorseTournamentRegistrations,
+  activeRace,
   activeTournament,
   defaultRaceForTournament,
   jockeyName,
+  isRaceRegistrationOpen,
   publicRaceEntries,
   publicTournamentJockeyProfiles,
   tournamentRaces,
@@ -40,15 +42,65 @@ export const createOwnerRoutes = (getDb, writeDb) => {
   app.get('/portal', (c) => {
     const user = c.get('user');
     const db = c.get('db');
+    const activeTournamentIds = new Set(
+      db.tournaments
+        .filter((tournament) => tournament.status !== 'completed')
+        .map((tournament) => tournament.id)
+    );
+    const activeRaceIds = new Set(
+      db.races.filter(activeRace).map((race) => race.id)
+    );
+    const ownerHorseIds = new Set(
+      db.horses.filter((horse) => horse.ownerUserId === user.id).map((horse) => horse.id)
+    );
+    const registeredActivePairings = (db.horseTournamentRegistrations || []).filter(
+      (registration) =>
+        registration.ownerUserId === user.id &&
+        registration.status === 'approved' &&
+        activeTournamentIds.has(registration.tournamentId)
+    );
+    const activePairingMap = new Map(
+      registeredActivePairings.map((pairing) => [
+        `${pairing.horseId}:${pairing.jockeyUserId}:${pairing.tournamentId}`,
+        pairing,
+      ])
+    );
+    publicRaceEntries(db)
+      .filter((entry) => ownerHorseIds.has(entry.horseId) && activeRaceIds.has(entry.raceId))
+      .forEach((entry) => {
+        const race = db.races.find((item) => item.id === entry.raceId);
+        const key = `${entry.horseId}:${entry.jockeyUserId}:${race?.tournamentId || ''}`;
+        if (!activePairingMap.has(key)) {
+          activePairingMap.set(key, {
+            id: `race-entry:${entry.id}`,
+            tournamentId: race?.tournamentId || '',
+            horseId: entry.horseId,
+            ownerUserId: user.id,
+            jockeyUserId: entry.jockeyUserId,
+            status: 'approved',
+            createdAt: entry.createdAt || race?.createdAt || new Date().toISOString(),
+          });
+        }
+      });
+    const activePairings = Array.from(activePairingMap.values());
+
     return c.json({
       horses: db.horses.filter((horse) => horse.ownerUserId === user.id),
-      raceEntries: publicRaceEntries(db).filter((entry) => {
-        const horse = db.horses.find((item) => item.id === entry.horseId);
-        return horse?.ownerUserId === user.id;
-      }),
+      raceEntries: publicRaceEntries(db).filter(
+        (entry) => ownerHorseIds.has(entry.horseId) && activeRaceIds.has(entry.raceId)
+      ),
+      activePairings: activePairings.map((pairing) => ({
+        ...pairing,
+        horseName: db.horses.find((horse) => horse.id === pairing.horseId)?.name || 'Horse',
+        jockeyName: jockeyName(db, pairing.jockeyUserId),
+        tournamentName: db.tournaments.find((item) => item.id === pairing.tournamentId)?.name || 'Tournament',
+      })),
       jockeyProfiles: [],
-      invitations: (db.jockeyInvitations || []).filter(
-        (invitation) => invitation.ownerUserId === user.id
+      invitations: (db.jockeyInvitations || []).filter((invitation) =>
+        invitation.ownerUserId === user.id &&
+        (invitation.tournamentId
+          ? activeTournamentIds.has(invitation.tournamentId)
+          : activeRaceIds.has(invitation.raceId))
       ),
       limits: { maxOwnerHorses: MAX_OWNER_HORSES },
     });
@@ -200,6 +252,9 @@ export const createOwnerRoutes = (getDb, writeDb) => {
       (tournament ? defaultRaceForTournament(db, tournament.id) : null);
 
     if (!race) return c.json({ message: 'Race registration is not open' }, 400);
+    if (!isRaceRegistrationOpen(race)) {
+      return c.json({ message: 'This race is outside its registration window' }, 400);
+    }
 
     const duplicateEntry = (db.jockeyInvitations || []).some(
       (item) => item.raceId === race.id && item.horseId === horseId && item.status !== 'cancelled'
@@ -240,6 +295,13 @@ export const createOwnerRoutes = (getDb, writeDb) => {
 
     if (!horse) return c.json({ message: 'Owner can only register approved horses they own' }, 400);
     if (!tournament) return c.json({ message: 'Tournament registration is not open' }, 400);
+    const tournamentRaceList = tournamentRaces(db, tournamentId);
+    if (
+      tournamentRaceList.length > 0 &&
+      !tournamentRaceList.some((race) => isRaceRegistrationOpen(race))
+    ) {
+      return c.json({ message: 'No race is currently inside its registration window' }, 400);
+    }
     if (!jockeyApproved) return c.json({ message: 'Jockey must be approved for the same tournament' }, 400);
 
     db.raceEntries = db.raceEntries || [];

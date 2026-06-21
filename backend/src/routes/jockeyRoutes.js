@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { randomUUID } from 'node:crypto';
+import { TOURNAMENT_REGISTRATION_STATUSES } from '../config/constants.js';
 import { requireRole } from '../services/authService.js';
 import {
   activeTournament,
+  activeRace,
   ownerName,
   publicRaceEntries,
   raceName,
@@ -33,17 +35,33 @@ export const createJockeyRoutes = (getDb, writeDb) => {
     const profile =
       (db.jockeyProfiles || []).find((item) => item.userId === user.id) || null;
 
+    const activeTournamentIds = new Set(
+      db.tournaments
+        .filter((tournament) => tournament.status !== 'completed')
+        .map((tournament) => tournament.id)
+    );
+    const activeRaceIds = new Set(db.races.filter(activeRace).map((race) => race.id));
+    const invitations = (db.jockeyInvitations || []).filter((invitation) =>
+      invitation.jockeyUserId === user.id &&
+      (invitation.tournamentId
+        ? activeTournamentIds.has(invitation.tournamentId)
+        : activeRaceIds.has(invitation.raceId))
+    );
+    const raceEntries = publicRaceEntries(db).filter(
+      (entry) => entry.jockeyUserId === user.id && activeRaceIds.has(entry.raceId)
+    );
+    const visibleHorseIds = new Set([
+      ...invitations.map((invitation) => invitation.horseId),
+      ...raceEntries.map((entry) => entry.horseId),
+    ]);
+
     return c.json({
       profile,
-      horses: db.horses,
-      tournaments: db.tournaments,
-      races: db.races,
-      raceEntries: publicRaceEntries(db).filter(
-        (entry) => entry.jockeyUserId === user.id
-      ),
-      invitations: (db.jockeyInvitations || []).filter(
-        (invitation) => invitation.jockeyUserId === user.id
-      ),
+      horses: db.horses.filter((horse) => visibleHorseIds.has(horse.id)),
+      tournaments: db.tournaments.filter((item) => activeTournamentIds.has(item.id)),
+      races: db.races.filter((race) => activeRaceIds.has(race.id)),
+      raceEntries,
+      invitations,
     });
   });
 
@@ -84,9 +102,13 @@ export const createJockeyRoutes = (getDb, writeDb) => {
     const user = c.get('user');
     const db = c.get('db');
     const { tournamentId } = await c.req.json();
-    const tournament = db.tournaments.find((item) => item.id === tournamentId);
+    const tournament = db.tournaments.find(
+      (item) =>
+        item.id === tournamentId &&
+        TOURNAMENT_REGISTRATION_STATUSES.includes(item.status)
+    );
 
-    if (!tournament) return c.json({ message: 'Tournament not found' }, 404);
+    if (!tournament) return c.json({ message: 'Tournament registration is not open' }, 400);
 
     db.jockeyTournamentRegistrations = db.jockeyTournamentRegistrations || [];
     const existing = db.jockeyTournamentRegistrations.find(
@@ -132,6 +154,15 @@ export const createJockeyRoutes = (getDb, writeDb) => {
       (item) => item.id === id && item.jockeyUserId === user.id
     );
     if (!invitation) return c.json({ message: 'Invitation not found' }, 404);
+    const invitationTournament = invitation.tournamentId
+      ? db.tournaments.find((item) => item.id === invitation.tournamentId)
+      : null;
+    const invitationRace = invitation.raceId
+      ? db.races.find((item) => item.id === invitation.raceId)
+      : null;
+    if (invitationTournament?.status === 'completed' || !activeRace(invitationRace) && invitation.raceId) {
+      return c.json({ message: 'This assignment is no longer active' }, 400);
+    }
 
     invitation.status = decision;
     invitation.respondedAt = new Date().toISOString();

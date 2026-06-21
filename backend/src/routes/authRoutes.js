@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { randomUUID } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import {
   ACCOUNT_APPROVAL_ROLES,
   SELF_REGISTRATION_ROLES,
@@ -43,12 +44,17 @@ export const createAuthRoutes = (getDb, writeDb) => {
     const db = await getDb();
     const { email, password } = await c.req.json();
     const user = db.users.find(
-      (item) =>
-        item.email.toLowerCase() === String(email || '').toLowerCase() &&
-        item.password === password
+      (item) => item.email.toLowerCase() === String(email || '').toLowerCase()
     );
+    const passwordMatches = user
+      ? String(user.password || '').startsWith('$2')
+        ? await bcrypt.compare(String(password || ''), user.password)
+        : user.password === password
+      : false;
 
-    if (!user) return c.json({ message: 'Invalid email or password' }, 401);
+    if (!user || !passwordMatches) {
+      return c.json({ message: 'Invalid email or password' }, 401);
+    }
 
     if (user.status !== 'active') {
       return c.json(
@@ -67,6 +73,11 @@ export const createAuthRoutes = (getDb, writeDb) => {
         !session.expiresAt || new Date(session.expiresAt).getTime() > Date.now()
     );
 
+    if (!String(user.password || '').startsWith('$2')) {
+      user.password = await bcrypt.hash(String(password), 12);
+      user.updatedAt = new Date().toISOString();
+    }
+
     const token = createSession(db, user.id);
     await writeDb(db);
     return c.json({ token, user: publicUser(user) });
@@ -83,6 +94,9 @@ export const createAuthRoutes = (getDb, writeDb) => {
         400
       );
     }
+    if (String(password).length < 8) {
+      return c.json({ message: 'Password must contain at least 8 characters' }, 400);
+    }
 
     const exists = db.users.some(
       (item) => item.email.toLowerCase() === String(email).toLowerCase()
@@ -95,7 +109,7 @@ export const createAuthRoutes = (getDb, writeDb) => {
       id: randomUUID(),
       name,
       email,
-      password,
+      password: await bcrypt.hash(String(password), 12),
       role,
       status: needsApproval ? 'pending' : 'active',
       createdAt,

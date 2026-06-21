@@ -33,6 +33,18 @@ interface TournamentPageProps {
 const raceNumberValue = (raceNumber?: string) =>
   Number(String(raceNumber || '').replace(/\D/g, '')) || 999;
 
+const registrationWindowOpen = (race: RaceRecord) => {
+  if (race.status !== 'registration-open') return false;
+  const now = Date.now();
+  const opensAt = race.registrationOpensAt
+    ? new Date(race.registrationOpensAt).getTime()
+    : Number.NEGATIVE_INFINITY;
+  const closesAt = race.registrationClosesAt
+    ? new Date(race.registrationClosesAt).getTime()
+    : Number.POSITIVE_INFINITY;
+  return now >= opensAt && now < closesAt;
+};
+
 export default function TournamentPage({
   currentUser,
   onNavigate,
@@ -227,7 +239,7 @@ export default function TournamentPage({
               (race) => race.tournamentId === tournament.id
             );
             const openRaceCount = tournamentRaces.filter(
-              (race) => race.status === 'registration-open'
+              registrationWindowOpen
             ).length;
             const jockeyRegistration = jockeyRegistrationByTournament.get(tournament.id);
             const isCompletedTournament = tournament.status === 'completed';
@@ -258,6 +270,7 @@ export default function TournamentPage({
             const canRegisterTournamentHorse =
               currentUser?.role === 'owner' &&
               !isCompletedTournament &&
+              openRaceCount > 0 &&
               availableOwnerHorseCount > 0 &&
               availableApprovedJockeyCount > 0;
 

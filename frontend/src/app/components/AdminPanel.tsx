@@ -14,14 +14,18 @@ import {
   Eye,
   Pencil,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import {
   ApprovalItem,
+  HorseTournamentRegistration,
+  RaceEntryRecord,
   RaceRecord,
   TournamentRecord,
   adminRaceAction,
   createTournament,
   decideApproval,
+  deleteRace,
   getApprovals,
   getBootstrap,
   updateRace as persistRace,
@@ -73,6 +77,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
   const [totalUsers, setTotalUsers] = useState(0);
   const [tournaments, setTournaments] = useState<TournamentRecord[]>([]);
   const [races, setRaces] = useState<RaceRecord[]>([]);
+  const [pairings, setPairings] = useState<HorseTournamentRegistration[]>([]);
+  const [raceEntries, setRaceEntries] = useState<RaceEntryRecord[]>([]);
+  const [maxRacesPerTournament, setMaxRacesPerTournament] = useState(10);
   const [showCreateTournament, setShowCreateTournament] = useState(false);
   const [tournamentMessage, setTournamentMessage] = useState('');
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
@@ -105,6 +112,9 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
     getBootstrap()
       .then((data) => {
         setRaces(data.races || []);
+        setPairings(data.horseTournamentRegistrations || []);
+        setRaceEntries(data.raceEntries || []);
+        setMaxRacesPerTournament(data.limits?.maxRacesPerTournament || 10);
         setTotalUsers(data.users.length);
         setTournaments(data.tournaments || []);
       })
@@ -129,13 +139,29 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
       });
   };
 
-  const activeTournament =
-    tournaments.find((tournament) => tournament.status !== 'completed') ||
-    tournaments[0];
-  const primaryRace = races[0];
-  const confirmationTotal = Number(primaryRace?.participants || 0) * 2;
-  const confirmationReady =
-    Number(primaryRace?.ownerConfirmed || 0) + Number(primaryRace?.jockeyConfirmed || 0);
+  const activeTournaments = tournaments.filter(
+    (tournament) => tournament.status !== 'completed'
+  );
+  const activeTournamentIds = new Set(activeTournaments.map((item) => item.id));
+  const registeredPairKeys = pairings.filter(
+    (pairing) =>
+      pairing.status === 'approved' &&
+      activeTournamentIds.has(pairing.tournamentId)
+  ).map((pairing) => `${pairing.horseId}:${pairing.jockeyUserId}`);
+  const activeRaceIds = new Set(
+    races
+      .filter((race) => !['finished', 'completed'].includes(race.status))
+      .map((race) => race.id)
+  );
+  const activeEntryPairKeys = raceEntries
+    .filter(
+      (entry) => entry.status === 'approved' && activeRaceIds.has(entry.raceId)
+    )
+    .map((entry) => `${entry.horseId}:${entry.jockeyUserId}`);
+  const activePairingCount = new Set([
+    ...registeredPairKeys,
+    ...activeEntryPairKeys,
+  ]).size;
 
   const systemStats = [
     {
@@ -147,8 +173,10 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
 
     {
       label: 'Active Tournaments',
-      value: String(tournaments.length || 0),
-      change: activeTournament ? statusLabel(activeTournament.status) : 'None',
+      value: String(activeTournaments.length),
+      change: activeTournaments[0]
+        ? statusLabel(activeTournaments[0].status)
+        : 'None',
       icon: Calendar,
     },
 
@@ -160,14 +188,20 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
     },
 
     {
-      label: 'Race Confirmations',
-      value: `${confirmationReady}/${confirmationTotal}`,
-      change: 'Owner + Jockey',
+      label: 'Active Pairings',
+      value: String(activePairingCount),
+      change: 'Matched Owner + Jockey',
       icon: BarChart3,
     },
   ];
 
   const visibleRaces = scheduleExpanded ? races : races.slice(0, 4);
+  const canCreateRace = tournaments.some(
+    (tournament) =>
+      tournament.status !== 'completed' &&
+      races.filter((race) => race.tournamentId === tournament.id).length <
+        maxRacesPerTournament
+  );
 
   const [showViewModal, setShowViewModal] =
     useState<RaceRecord | null>(null);
@@ -204,6 +238,28 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
       .catch((error) =>
         setApprovalMessage(
           error instanceof Error ? error.message : 'Unable to save race'
+        )
+      );
+  };
+
+  const removeRace = () => {
+    if (!editRace) return;
+    if (!window.confirm(`Delete ${editRace.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    deleteRace(editRace.id)
+      .then(() => {
+        setRaces((current) => current.filter((race) => race.id !== editRace.id));
+        setRaceEntries((current) =>
+          current.filter((entry) => entry.raceId !== editRace.id)
+        );
+        setEditRace(null);
+        setApprovalMessage('Race deleted.');
+      })
+      .catch((error) =>
+        setApprovalMessage(
+          error instanceof Error ? error.message : 'Unable to delete race'
         )
       );
   };
@@ -455,8 +511,13 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                   )}
 
                   <button
-                    onClick={() => tournaments.length > 0 && onNavigate('create-race')}
-                    disabled={tournaments.length === 0}
+                    onClick={() => canCreateRace && onNavigate('create-race')}
+                    disabled={!canCreateRace}
+                    title={
+                      canCreateRace
+                        ? undefined
+                        : `Every active tournament already has ${maxRacesPerTournament} races`
+                    }
                     className="flex items-center gap-2 px-5 py-3 bg-[#d4af37] disabled:bg-white/10 disabled:text-gray-500 rounded-xl hover:bg-[#b8892d] transition-all text-white font-bold"
                   >
                     <Plus className="w-5 h-5" />
@@ -544,7 +605,17 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
                             onClick={() =>
                               handleRaceAction(race.id, 'close-registration')
                             }
-                            className="flex items-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-400 rounded-xl hover:bg-yellow-500/20 transition-all border border-yellow-500/30"
+                            disabled={Boolean(
+                              race.registrationClosesAt &&
+                              Date.now() < new Date(race.registrationClosesAt).getTime()
+                            )}
+                            title={
+                              race.registrationClosesAt &&
+                              Date.now() < new Date(race.registrationClosesAt).getTime()
+                                ? `Registration closes at ${new Date(race.registrationClosesAt).toLocaleString()}`
+                                : undefined
+                            }
+                            className="flex items-center gap-2 px-4 py-2 bg-yellow-500/10 text-yellow-400 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl hover:bg-yellow-500/20 transition-all border border-yellow-500/30"
                           >
                             Close Registration
                           </button>
@@ -757,6 +828,14 @@ export default function AdminPanel({ onNavigate }: AdminPanelProps) {
               </div>
 
               <div className="flex gap-4 mt-8">
+
+                <button
+                  onClick={removeRace}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 bg-red-600 hover:bg-red-700 rounded-2xl text-white font-bold"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Delete
+                </button>
 
                 <button
                   onClick={() =>

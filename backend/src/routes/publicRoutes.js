@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import {
   MAX_OWNER_HORSES,
+  MAX_RACE_FIELD_SIZE,
+  MAX_TOURNAMENT_RACES,
   PUBLIC_RACE_STATUSES,
   USER_ROLES,
   FRONTEND_URL,
@@ -26,7 +28,12 @@ const visibleRaces = (db, user) => {
       (race) => isPublicRace(race) || raceRefereeIds(db, race).includes(user.id)
     );
   }
-  return db.races;
+  if ([USER_ROLES.OWNER, USER_ROLES.JOCKEY].includes(user?.role)) {
+    return db.races.filter(
+      (race) => isPublicRace(race) || race.status === 'registration-open'
+    );
+  }
+  return db.races.filter(isPublicRace);
 };
 
 // Lấy danh sách race entries mà người dùng được phép xem theo vai trò
@@ -130,7 +137,8 @@ export const createPublicRoutes = (getDb) => {
         : [],
       limits: {
         maxOwnerHorses: MAX_OWNER_HORSES,
-        maxRaceFieldSize: 10,
+        maxRaceFieldSize: MAX_RACE_FIELD_SIZE,
+        maxRacesPerTournament: MAX_TOURNAMENT_RACES,
       },
     });
   });

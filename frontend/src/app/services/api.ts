@@ -147,6 +147,7 @@ export interface TournamentRecord {
 export interface SystemLimits {
   maxOwnerHorses: number;
   maxRaceFieldSize: number;
+  maxRacesPerTournament: number;
 }
 
 export interface RaceEntryRecord {
@@ -194,6 +195,12 @@ export interface HorseTournamentRegistration {
   notes?: string;
   createdAt: string;
   reviewedAt?: string | null;
+}
+
+export interface ActivePairing extends HorseTournamentRegistration {
+  horseName: string;
+  jockeyName: string;
+  tournamentName: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:4000/api';
@@ -346,6 +353,7 @@ export const getOwnerPortal = async () =>
   request<{
     horses: HorseRecord[];
     raceEntries: RaceEntryRecord[];
+    activePairings: ActivePairing[];
     jockeyProfiles: JockeyProfileRecord[];
     invitations: JockeyInvitation[];
     limits: Pick<SystemLimits, 'maxOwnerHorses'>;
@@ -480,6 +488,7 @@ export const getRaceBuilder = async () =>
     tournaments: TournamentRecord[];
     races: RaceRecord[];
     referees: RaceBuilderReferee[];
+    maxRacesPerTournament: number;
   }>('/admin/race-builder');
 
 // Tạo một cuộc đua mới trong giải đấu (admin)
@@ -495,7 +504,7 @@ export const createRace = async (race: {
   raceClass: string;
   handicapMin?: string | number;
   handicapMax?: string | number;
-  totalPrize: string | number;
+  totalPrize?: string | number;
   refereeUserId: string;
   refereeUserIds?: string[];
   tournamentId?: string;
@@ -520,6 +529,11 @@ export const updateRace = async (
   request<{ race: RaceRecord }>(`/admin/races/${raceId}`, {
     method: 'PATCH',
     body: JSON.stringify(race),
+  });
+
+export const deleteRace = async (raceId: string) =>
+  request<{ ok: boolean; raceId: string }>(`/admin/races/${raceId}`, {
+    method: 'DELETE',
   });
 
 // Admin chỉ đóng đăng ký và publish race

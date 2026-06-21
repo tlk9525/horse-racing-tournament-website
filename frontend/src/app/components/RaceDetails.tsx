@@ -2,11 +2,9 @@ import {
   Activity,
   Circle,
   CloudSun,
-  Gauge,
   MapPin,
   Shield,
   Timer,
-  Trophy,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -38,9 +36,6 @@ const ratingForHorse = (horse?: HorseRecord) =>
         Number(horse?.healthRating || 80) * 0.15
     ).toFixed(2)
   );
-
-const trackCondition = (race?: RaceRecord) =>
-  race?.surface === 'Dirt' ? 'Fast Dirt' : 'Good Track';
 
 const canShowRaceCardData = (race?: RaceRecord) =>
   Boolean(
@@ -159,8 +154,6 @@ export default function RaceDetails() {
       rating,
       ratingChange: '0',
       horseWeightKg: Number(horse?.weightKg || 0).toFixed(1),
-      priority: '-',
-      gear: '-',
     };
   });
   const visibleRows = entriesExpanded ? rows : rows.slice(0, 4);
@@ -225,13 +218,8 @@ export default function RaceDetails() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Trophy className="w-4 h-4 text-[#d4af37]" />
-                    Prize Pool: ${Number(selectedRace.totalPrize || 0).toLocaleString()}
-                  </div>
-
-                  <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[#d4af37]" />
-                    {trackCondition(selectedRace)}
+                    {selectedRace.raceClass || selectedRace.surface || 'Class not set'}
                   </div>
                 </div>
               </div>
@@ -239,32 +227,36 @@ export default function RaceDetails() {
               <div className="grid grid-cols-2 gap-4 min-w-[340px]">
                 <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
-                    Owner Confirmed
+                    Matched Pairs
                   </div>
 
                   <div className="text-2xl font-black text-[#d4af37]">
-                    {selectedRace.ownerConfirmed}/{selectedRace.participants || selectedEntries.length}
+                    {selectedEntries.length}
                   </div>
                 </div>
 
                 <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
-                    Jockey Confirmed
+                    Field Capacity
                   </div>
 
                   <div className="text-2xl font-black text-white">
-                    {selectedRace.jockeyConfirmed}/{selectedRace.participants || selectedEntries.length}
+                    {selectedEntries.length}/{maxRaceFieldSize}
                   </div>
                 </div>
 
                 <div className="bg-[#071a2f]/40 border border-white/10 rounded-xl p-4">
                   <div className="text-xs text-gray-500 uppercase mb-2">
-                    Weather
+                    Registration
                   </div>
 
                   <div className="flex items-center gap-2 text-white font-bold">
                     <CloudSun className="w-5 h-5 text-[#d4af37]" />
-                    Sunny
+                    {selectedRace.status === 'registration-open' &&
+                    selectedRace.registrationClosesAt &&
+                    Date.now() < new Date(selectedRace.registrationClosesAt).getTime()
+                      ? 'Open'
+                      : 'Closed'}
                   </div>
                 </div>
 
@@ -367,7 +359,7 @@ export default function RaceDetails() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1600px]">
+                <table className="w-full min-w-[1350px]">
                   <thead className="bg-[#071a2f] border-b border-white/10">
                     <tr>
                       <th className="py-4 px-3 text-left text-gray-400 uppercase text-xs">Horse No.</th>
@@ -382,8 +374,6 @@ export default function RaceDetails() {
                       <th className="py-4 px-3 text-center text-gray-400 uppercase text-xs">Rtg.</th>
                       <th className="py-4 px-3 text-center text-gray-400 uppercase text-xs">Rtg +/-</th>
                       <th className="py-4 px-3 text-center text-gray-400 uppercase text-xs">Horse Wt. (kg)</th>
-                      <th className="py-4 px-3 text-center text-gray-400 uppercase text-xs">Priority</th>
-                      <th className="py-4 px-3 text-center text-gray-400 uppercase text-xs">Gear</th>
                     </tr>
                   </thead>
 
@@ -464,18 +454,6 @@ export default function RaceDetails() {
                           {row.horseWeightKg}kg
                         </td>
 
-                        <td className="py-5 px-3 text-center">
-                          <div className="inline-flex px-3 py-2 rounded-lg bg-[#12304f] text-gray-300 text-sm font-bold">
-                            {row.priority}
-                          </div>
-                        </td>
-
-                        <td className="py-5 px-3 text-center">
-                          <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#12304f] border border-white/10 text-gray-300 font-semibold">
-                            <Gauge className="w-4 h-4 text-[#d4af37]" />
-                            {row.gear}
-                          </div>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -484,25 +462,6 @@ export default function RaceDetails() {
             </div>
           )}
 
-          <div className="border-t border-white/10 p-6 bg-[#071a2f]">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <div className="px-4 py-2 rounded-lg bg-[#12304f] border border-white/10 text-gray-400">
-                TT = Tongue Tie
-              </div>
-
-              <div className="px-4 py-2 rounded-lg bg-[#12304f] border border-white/10 text-gray-400">
-                XB = Cross Nose Band
-              </div>
-
-              <div className="px-4 py-2 rounded-lg bg-[#12304f] border border-white/10 text-gray-400">
-                CP = Cheek Pieces
-              </div>
-
-              <div className="px-4 py-2 rounded-lg bg-[#12304f] border border-white/10 text-gray-400">
-                B = Blinkers
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
