@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useNavigate,
   useParams,
@@ -32,6 +32,7 @@ export default function LiveRace() {
   const [resultDrafts, setResultDrafts] = useState<
     Record<string, { position: string; finishTime: string; notes: string; violationNotes: string }>
   >({});
+  const loadRequestIdRef = useRef(0);
 
   const selectedRace = useMemo(
     () => races.find((race) => race.id === selectedRaceId) || races[0],
@@ -71,8 +72,12 @@ export default function LiveRace() {
   const showRefereeControl = currentUser?.role === 'referee';
 
   const loadRaceOps = () => {
+    const requestId = ++loadRequestIdRef.current;
+
     Promise.all([getMe().catch(() => ({ user: null as AuthUser | null })), getBootstrap()])
       .then(([me, data]) => {
+        if (requestId !== loadRequestIdRef.current) return;
+
         setCurrentUser(me.user);
         const visibleRaces =
           me.user?.role === 'referee'
@@ -103,9 +108,10 @@ export default function LiveRace() {
           return fallback;
         });
       })
-      .catch((error) =>
-        setMessage(error instanceof Error ? error.message : 'Unable to load races')
-      );
+      .catch((error) => {
+        if (requestId !== loadRequestIdRef.current) return;
+        setMessage(error instanceof Error ? error.message : 'Unable to load races');
+      });
   };
 
   useEffect(() => {
@@ -226,6 +232,15 @@ export default function LiveRace() {
       .then(({ race, entries }) => {
         if (!race?.id) {
           setMessage('Results were submitted, but the server response did not include the updated race.');
+          loadRaceOps();
+          return;
+        }
+        if (
+          race.status !== 'finished' ||
+          race.resultStatus !== 'official' ||
+          !race.awardsPublished
+        ) {
+          setMessage('Results were not published by the server. Please retry.');
           loadRaceOps();
           return;
         }
