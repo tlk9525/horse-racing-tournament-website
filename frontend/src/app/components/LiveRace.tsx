@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useNavigate,
   useParams,
@@ -32,6 +32,7 @@ export default function LiveRace() {
   const [resultDrafts, setResultDrafts] = useState<
     Record<string, { position: string; finishTime: string; notes: string; violationNotes: string }>
   >({});
+  const officialRaceIdsRef = useRef(new Set<string>());
 
   const selectedRace = useMemo(
     () => races.find((race) => race.id === selectedRaceId) || races[0],
@@ -94,8 +95,31 @@ export default function LiveRace() {
               )
             : data.races;
 
-        setRaces(visibleRaces);
-        setEntries(data.raceEntries);
+        setRaces(
+          visibleRaces.map((race) =>
+            officialRaceIdsRef.current.has(race.id)
+              ? {
+                  ...race,
+                  status: 'finished',
+                  resultStatus: 'official',
+                  awardsPublished: true,
+                }
+              : race
+          )
+        );
+        setEntries(
+          data.raceEntries.map((entry) =>
+            officialRaceIdsRef.current.has(entry.raceId)
+              ? {
+                  ...entry,
+                  resultStatus:
+                    entry.preRaceStatus === 'absent' || entry.disqualified
+                      ? 'disqualified'
+                      : 'official',
+                }
+              : entry
+          )
+        );
         setSelectedRaceId((current) => {
           const next = raceId || current;
 
@@ -227,23 +251,46 @@ export default function LiveRace() {
     if (!selectedRace) return;
 
     submitRaceResults(selectedRace.id)
-      .then(({ race, entries: updatedEntries = [] }) => {
-        setRaces((current) =>
-          current.map((item) => (item.id === race.id ? race : item))
+      .then(({ race, entries }) => {
+        if (!race?.id) {
+          setMessage('Results were submitted, but the server response did not include the updated race.');
+          loadRaceOps();
+          return;
+        }
+
+        const updatedEntries = Array.isArray(entries) ? entries : [];
+        const officialRace = {
+          ...race,
+          status: 'finished',
+          resultStatus: 'official',
+          awardsPublished: true,
+        };
+        officialRaceIdsRef.current.add(officialRace.id);
+        const officialEntries = (updatedEntries.length > 0 ? updatedEntries : selectedEntries).map(
+          (entry) => ({
+            ...entry,
+            resultStatus:
+              entry.preRaceStatus === 'absent' || entry.disqualified
+                ? 'disqualified'
+                : 'official',
+          })
         );
-        if (updatedEntries.length > 0) {
+
+        setRaces((current) =>
+          current.map((item) => (item.id === officialRace.id ? officialRace : item))
+        );
+        if (officialEntries.length > 0) {
           setEntries((current) => {
-            const updatedEntryIds = new Set(updatedEntries.map((entry) => entry.id));
+            const updatedEntryIds = new Set(officialEntries.map((entry) => entry.id));
 
             return [
               ...current.filter((entry) => !updatedEntryIds.has(entry.id)),
-              ...updatedEntries,
+              ...officialEntries,
             ];
           });
         }
         setResultDrafts({});
         setMessage('Official results published successfully.');
-        loadRaceOps();
       })
       .catch((error) =>
         setMessage(error instanceof Error ? error.message : 'Unable to submit results')

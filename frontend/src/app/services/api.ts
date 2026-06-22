@@ -564,7 +564,7 @@ export const startRace = async (raceId: string) =>
 
 // Trọng tài xác nhận và công bố kết quả chính thức
 export const submitRaceResults = async (raceId: string) =>
-  request<{ race: RaceRecord; entries: RaceEntryRecord[] }>(
+  request<{ race?: RaceRecord; entries?: RaceEntryRecord[] }>(
     `/referee/races/${raceId}/submit-results`,
     {
       method: 'POST',
