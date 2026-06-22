@@ -231,17 +231,50 @@ export default function LiveRace() {
   };
 
   const markReadiness = (entry: RaceEntryRecord, readiness: 'ready' | 'absent') => {
+    const previousPreRaceStatus = entry.preRaceStatus;
+    const previousDisqualified = entry.disqualified;
+
     setReadinessEntryId(entry.id);
     setMessage(`Marking ${entry.horseName} ${readiness}...`);
+    setEntries((currentEntries) =>
+      currentEntries.map((currentEntry) =>
+        currentEntry.id === entry.id
+          ? {
+              ...currentEntry,
+              preRaceStatus: readiness,
+              disqualified: readiness === 'absent',
+            }
+          : currentEntry
+      )
+    );
 
     markRaceEntryReadiness(entry.id, readiness)
-      .then(() => {
+      .then(({ entries: updatedRaceEntries }) => {
+        const updatedEntriesById = new Map(
+          updatedRaceEntries.map((updatedEntry) => [updatedEntry.id, updatedEntry])
+        );
+
+        setEntries((currentEntries) =>
+          currentEntries.map(
+            (currentEntry) => updatedEntriesById.get(currentEntry.id) || currentEntry
+          )
+        );
         setMessage(`${entry.horseName} marked ${readiness}.`);
-        loadRaceOps();
       })
-      .catch((error) =>
-        setMessage(error instanceof Error ? error.message : 'Unable to update readiness')
-      )
+      .catch((error) => {
+        setEntries((currentEntries) =>
+          currentEntries.map((currentEntry) =>
+            currentEntry.id === entry.id
+              ? {
+                  ...currentEntry,
+                  preRaceStatus: previousPreRaceStatus,
+                  disqualified: previousDisqualified,
+                }
+              : currentEntry
+          )
+        );
+        setMessage(error instanceof Error ? error.message : 'Unable to update readiness');
+      })
       .finally(() => setReadinessEntryId(''));
   };
 
@@ -411,25 +444,28 @@ export default function LiveRace() {
                           )}
                         </div>
 
-                        {canOperate && selectedRace.status === 'published' && (
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              onClick={() => markReadiness(entry, 'ready')}
-                              disabled={readinessEntryId === entry.id}
-                              className="py-3 bg-green-600/20 text-green-400 border border-green-600/30 disabled:cursor-not-allowed disabled:opacity-60 rounded-xl font-bold"
-                            >
-                              {readinessEntryId === entry.id ? 'Saving...' : 'Ready'}
-                            </button>
+                        {canOperate &&
+                          selectedRace.status === 'published' &&
+                          !['ready', 'absent'].includes(entry.preRaceStatus) &&
+                          !entry.disqualified && (
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                onClick={() => markReadiness(entry, 'ready')}
+                                disabled={readinessEntryId === entry.id}
+                                className="py-3 bg-green-600/20 text-green-400 border border-green-600/30 disabled:cursor-not-allowed disabled:opacity-60 rounded-xl font-bold"
+                              >
+                                {readinessEntryId === entry.id ? 'Saving...' : 'Ready'}
+                              </button>
 
-                            <button
-                              onClick={() => markReadiness(entry, 'absent')}
-                              disabled={readinessEntryId === entry.id}
-                              className="py-3 bg-red-600/20 text-red-400 border border-red-600/30 disabled:cursor-not-allowed disabled:opacity-60 rounded-xl font-bold"
-                            >
-                              {readinessEntryId === entry.id ? 'Saving...' : 'Absent'}
-                            </button>
-                          </div>
-                        )}
+                              <button
+                                onClick={() => markReadiness(entry, 'absent')}
+                                disabled={readinessEntryId === entry.id}
+                                className="py-3 bg-red-600/20 text-red-400 border border-red-600/30 disabled:cursor-not-allowed disabled:opacity-60 rounded-xl font-bold"
+                              >
+                                {readinessEntryId === entry.id ? 'Saving...' : 'Absent'}
+                              </button>
+                            </div>
+                          )}
 
                         {canOperate && selectedRace.status === 'in-progress' && entry.preRaceStatus !== 'absent' && (
                           <div className="grid grid-cols-2 gap-3">
