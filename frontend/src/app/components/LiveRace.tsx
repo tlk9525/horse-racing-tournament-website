@@ -42,6 +42,10 @@ export default function LiveRace() {
   const selectedEntries = entries.filter(
     (entry) => entry.raceId === selectedRace?.id
   );
+  const selectedRaceStatusLabel =
+    selectedRace?.resultStatus === 'official' || selectedRace?.awardsPublished
+      ? 'Official Results Published'
+      : statusLabel(selectedRace?.status || '');
 
   const positionOptions = Array.from(
     { length: selectedEntries.length },
@@ -350,7 +354,7 @@ export default function LiveRace() {
               <div className="bg-[#12304f] border border-white/10 rounded-2xl p-6">
                 <div className="grid md:grid-cols-4 gap-4">
                   {[
-                    ['Status', statusLabel(selectedRace.status)],
+                    ['Status', selectedRaceStatusLabel],
                     ['Venue', selectedRace.venue],
                     ['Distance', selectedRace.distance || '-'],
                     ['Referee', selectedRace.referee || '-'],
@@ -517,7 +521,7 @@ export default function LiveRace() {
                   <div className="flex justify-between gap-3">
                     <span>Start status</span>
                     <span className="text-white font-bold">
-                      {statusLabel(selectedRace.status)}
+                      {selectedRaceStatusLabel}
                     </span>
                   </div>
 

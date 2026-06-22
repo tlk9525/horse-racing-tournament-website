@@ -74,14 +74,14 @@ export default function Navbar({
     { name: 'Jockey Portal', page: 'jockeys', roles: ['jockey'] },
     { name: 'Live Race', page: 'live-race', roles: ['admin', 'referee', 'spectator'] },
     { name: 'Rankings', page: 'rankings', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
-    { name: 'Results', page: 'results', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'] },
+    { name: 'Results', page: 'results', roles: ['admin', 'owner', 'jockey', 'referee', 'spectator'], public: true },
     { name: 'Admin', page: 'admin', roles: ['admin'] },
   ];
 
   const visibleNavItems = navItems.filter(
     (item) =>
-      currentUser &&
-      item.roles.includes(currentUser.role)
+      item.public ||
+      (currentUser && item.roles.includes(currentUser.role))
   );
   const unreadCount = notifications.filter((item) => !item.read).length;
   const visibleNotifications = notifications.slice(0, 6);

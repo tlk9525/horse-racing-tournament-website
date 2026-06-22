@@ -57,7 +57,6 @@ const protectedPages: Record<string, string[]> = {
   'jockey-profiles': ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   jockeys: ['jockey'],
   'live-race': ['admin', 'referee', 'spectator'],
-  results: ['admin', 'owner', 'jockey', 'referee', 'spectator'],
   rankings: ['admin', 'owner', 'jockey', 'referee', 'spectator'],
 };
 
