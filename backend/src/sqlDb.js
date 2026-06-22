@@ -30,6 +30,7 @@ const postgresConfig =
       };
 
 let pool;
+let runtimeSchemaPromise;
 
 // Trả về connection pool PostgreSQL (tạo mới nếu chưa tồn tại) để tái sử dụng kết nối hiệu quả
 const getPool = () => {
@@ -38,6 +39,66 @@ const getPool = () => {
   }
 
   return pool;
+};
+
+const ensureRuntimeSchema = async () => {
+  if (!runtimeSchemaPromise) {
+    runtimeSchemaPromise = (async () => {
+      const client = await getPool().connect();
+
+      try {
+        await client.query('BEGIN');
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS "raceActionLogs" (
+            "id" VARCHAR(64) PRIMARY KEY,
+            "raceId" VARCHAR(64) NOT NULL REFERENCES "races" ("id") ON DELETE CASCADE,
+            "userId" VARCHAR(64) REFERENCES "users" ("id") ON DELETE SET NULL,
+            "action" VARCHAR(64) NOT NULL,
+            "fromStatus" VARCHAR(64),
+            "toStatus" VARCHAR(64),
+            "details" TEXT,
+            "createdAt" TIMESTAMPTZ NOT NULL
+          )
+        `);
+        await client.query(`
+          CREATE INDEX IF NOT EXISTS "idx_race_action_logs_race"
+          ON "raceActionLogs" ("raceId", "createdAt")
+        `);
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS "refereeReports" (
+            "id" VARCHAR(64) PRIMARY KEY,
+            "raceId" VARCHAR(64) NOT NULL REFERENCES "races" ("id") ON DELETE CASCADE,
+            "raceEntryId" VARCHAR(64) REFERENCES "raceEntries" ("id") ON DELETE SET NULL,
+            "refereeUserId" VARCHAR(64) NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+            "reportType" VARCHAR(64) NOT NULL DEFAULT 'incident',
+            "description" TEXT NOT NULL,
+            "violation" TEXT,
+            "status" VARCHAR(32) NOT NULL DEFAULT 'submitted'
+              CHECK ("status" IN ('draft', 'submitted', 'reviewed', 'dismissed')),
+            "createdAt" TIMESTAMPTZ NOT NULL,
+            "reviewedAt" TIMESTAMPTZ
+          )
+        `);
+        await client.query(`
+          CREATE INDEX IF NOT EXISTS "idx_referee_reports_race"
+          ON "refereeReports" ("raceId", "status")
+        `);
+        await client.query(`
+          CREATE INDEX IF NOT EXISTS "idx_referee_reports_referee"
+          ON "refereeReports" ("refereeUserId", "status")
+        `);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        runtimeSchemaPromise = undefined;
+        throw error;
+      } finally {
+        client.release();
+      }
+    })();
+  }
+
+  return runtimeSchemaPromise;
 };
 
 // Bao gọc một tên cột hoặc bảng bằng dấu ngoặc kép để an toàn trong câu truy vấn SQL
@@ -98,6 +159,8 @@ const rowTimestamps = (row, fallbackCreatedAt = nowIso()) => ({
 
 // Đọc toàn bộ database từ PostgreSQL và trả về object chứa tất cả dữ liệu đã được format
 export const readDb = async () => {
+  await ensureRuntimeSchema();
+
   const [
     users,
     tournaments,
@@ -255,6 +318,8 @@ const tableDeleteOrder = [
 
 // Ghi toàn bộ dữ liệu vào PostgreSQL: xóa toàn bộ và chèn mới theo đúng thứ tự phụ thuộc
 export const writeDb = async (db) => {
+  await ensureRuntimeSchema();
+
   const client = await getPool().connect();
 
   try {
@@ -617,6 +682,8 @@ export const writeDb = async (db) => {
 
 // Cập nhật trực tiếp trạng thái publish kết quả để tránh lệch state sau khi reload trang.
 export const persistOfficialRaceResults = async (raceId, updatedAt = nowIso()) => {
+  await ensureRuntimeSchema();
+
   const client = await getPool().connect();
 
   try {
