@@ -33,7 +33,7 @@ import AdminPanel from './app/components/AdminPanel';
 import CreateRacePage from './app/components/CreateRacePage';
 
 import LoginPage from './app/components/LoginPage';
-import { AuthUser, HorseRecord, clearToken, getMe, logout } from './app/services/api';
+import { AuthUser, HorseRecord, getMe, logout } from './app/services/api';
 
 const roleHome: Record<string, string> = {
   admin: 'admin',
@@ -150,9 +150,7 @@ export default function App() {
           });
         }
       })
-      .catch(() => {
-        clearToken();
-      })
+      .catch(() => undefined)
       .finally(() => setAuthChecked(true));
   }, []);
 
@@ -199,7 +197,6 @@ export default function App() {
 
   const handleLogout = async () => {
     await logout().catch(() => undefined);
-    clearToken();
     setCurrentUser(null);
     routerNavigate('/login');
   };

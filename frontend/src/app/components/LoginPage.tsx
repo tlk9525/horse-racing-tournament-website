@@ -13,7 +13,6 @@ import {
   UserRole,
   login,
   register,
-  storeToken,
 } from '../services/api';
 
 interface LoginPageProps {
@@ -70,11 +69,9 @@ export default function LoginPage({
         }
 
         const loginResult = await login(email, password);
-        storeToken(loginResult.token);
         onLogin(loginResult.user);
       } else {
         const result = await login(email, password);
-        storeToken(result.token);
         onLogin(result.user);
       }
     } catch (err) {

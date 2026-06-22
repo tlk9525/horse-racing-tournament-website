@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { bodyLimit } from 'hono/body-limit';
+import { secureHeaders } from 'hono/secure-headers';
 import { serve } from '@hono/node-server';
 import { API_HOST, API_PORT, FRONTEND_URL } from './config/constants.js';
 import {
@@ -7,6 +9,9 @@ import {
   persistRefereeRaceAction,
   persistRaceEntryReadiness,
   persistRaceEntryResult,
+  persistLoginSession,
+  persistRegisteredUser,
+  deleteSession,
   readDb,
   writeDb,
 } from './sqlDb.js';
@@ -23,19 +28,47 @@ const getDb = () => readDb();
 
 const app = new Hono();
 
+app.use('*', secureHeaders());
+app.use(
+  '*',
+  bodyLimit({
+    maxSize: 1024 * 1024,
+    onError: (c) => c.json({ message: 'Request body is too large' }, 413),
+  })
+);
+
 // Cho phép CORS từ frontend
 app.use(
   '*',
   cors({
-    origin: [FRONTEND_URL, 'http://127.0.0.1:5173', 'http://localhost:5173'],
+    origin: [
+      FRONTEND_URL.replace(/\/$/, ''),
+      'http://127.0.0.1:5173',
+      'http://localhost:5173',
+    ],
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   })
 );
 
+app.onError((error, c) => {
+  console.error(error);
+  return c.json({ message: 'Internal server error' }, 500);
+});
+
 // Đăng ký các nhóm route
 app.route('/api', createPublicRoutes(getDb));
-app.route('/api', createAuthRoutes(getDb, writeDb));
+app.route(
+  '/api',
+  createAuthRoutes(
+    getDb,
+    writeDb,
+    persistLoginSession,
+    persistRegisteredUser,
+    deleteSession
+  )
+);
 app.route('/api/owner', createOwnerRoutes(getDb, writeDb));
 app.route('/api/jockey', createJockeyRoutes(getDb, writeDb));
 app.route('/api/admin', createAdminRoutes(getDb, writeDb));

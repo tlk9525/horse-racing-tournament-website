@@ -132,7 +132,9 @@ export default function LiveRace() {
   useEffect(() => {
     if (!selectedRace?.id) return;
 
-    const events = new EventSource(getLiveRaceEventsUrl(selectedRace.id));
+    const events = new EventSource(getLiveRaceEventsUrl(selectedRace.id), {
+      withCredentials: true,
+    });
 
     events.addEventListener('race-update', () => {
       loadRaceOps();

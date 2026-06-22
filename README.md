@@ -214,8 +214,11 @@ Giao diện sẽ chạy tại: `http://127.0.0.1:5173`
 | `MAX_OWNER_HORSES` | `5` | Số ngựa tối đa mỗi owner |
 | `MAX_RACE_FIELD_SIZE` | `10` | Số thí sinh tối đa mỗi race |
 | `SESSION_DAYS` | `7` | Thời hạn phiên đăng nhập (ngày) |
+| `SESSION_COOKIE_NAME` | `horse-racing-session` | Tên cookie phiên đăng nhập |
+| `COOKIE_SECURE` | Production: `true` | Chỉ gửi cookie qua HTTPS |
+| `COOKIE_SAME_SITE` | `Lax` | Chính sách SameSite của cookie |
 
-> **Triển khai cloud (Neon / Render):** Dùng `DATABASE_URL` và đặt `POSTGRES_SSL=true` thay cho các biến riêng lẻ.
+> **Triển khai cloud:** Backend dùng `DATABASE_URL` và `POSTGRES_SSL=true`. Frontend production gọi `/api`; `vercel.json` proxy API qua Render để cookie `HttpOnly` vẫn là first-party trên Safari.
 
 ---
 
@@ -228,6 +231,7 @@ Giao diện sẽ chạy tại: `http://127.0.0.1:5173`
 | `npm run db:init` | Tạo schema + nạp dữ liệu mẫu |
 | `npm run db:schema` | Chỉ chạy schema (tạo bảng) |
 | `npm run db:seed` | Chỉ nạp dữ liệu mẫu |
+| `npm test` | Chạy test auth và referee |
 | `npm run build` | Build frontend production |
 | `npm run preview` | Xem trước bản build production |
 

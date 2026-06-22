@@ -8,6 +8,14 @@ export const MAX_RACE_FIELD_SIZE = Number(process.env.MAX_RACE_FIELD_SIZE || 10)
 export const MAX_TOURNAMENT_RACES = Number(process.env.MAX_TOURNAMENT_RACES || 10);
 export const MAX_OWNER_HORSES = Number(process.env.MAX_OWNER_HORSES || 5);
 export const SESSION_DAYS = Number(process.env.SESSION_DAYS || 7);
+export const SESSION_COOKIE_NAME =
+  process.env.SESSION_COOKIE_NAME || 'horse-racing-session';
+export const COOKIE_SECURE =
+  process.env.COOKIE_SECURE === 'true' ||
+  (process.env.COOKIE_SECURE !== 'false' &&
+    (process.env.NODE_ENV === 'production' || FRONTEND_URL.startsWith('https://')));
+export const COOKIE_SAME_SITE =
+  process.env.COOKIE_SAME_SITE || 'Lax';
 
 export const USER_ROLES = Object.freeze({
   ADMIN: 'admin',

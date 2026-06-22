@@ -11,6 +11,8 @@
     "db:seed": "node --env-file-if-exists=.env scripts/run-postgres-file.mjs database/postgres/seed.sql",
     "db:migrate:race-actions": "node --env-file-if-exists=.env scripts/run-postgres-file.mjs database/postgres/migrations/002_race_action_logs.sql",
     "build": "vite build --config frontend/vite.config.ts",
+    "test": "node --test backend/test/*.test.js",
+    "test:auth": "node --test backend/test/auth-flow.test.js",
     "test:referee": "node --test backend/test/referee-flow.test.js",
     "dev": "vite --config frontend/vite.config.ts --host 127.0.0.1",
     "preview": "vite preview --config frontend/vite.config.ts --host 127.0.0.1"
@@ -33,6 +35,6 @@
     "postcss": "^8.5.14",
     "rollup": "^4.60.4",
     "tailwindcss": "^3.4.3",
-    "vite": "6.3.5"
+    "vite": "^6.4.3"
   }
 }

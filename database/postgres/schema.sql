@@ -1,4 +1,4 @@
-status-- Horse Racing Tournament Website - PostgreSQL schema
+-- Horse Racing Tournament Website - PostgreSQL schema
 -- Run:
 --   npm run db:init
 

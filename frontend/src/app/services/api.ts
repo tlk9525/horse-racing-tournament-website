@@ -203,8 +203,9 @@ export interface ActivePairing extends HorseTournamentRegistration {
   tournamentName: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:4000/api';
-const TOKEN_KEY = 'horse-racing-token';
+const API_URL = import.meta.env.PROD
+  ? '/api'
+  : import.meta.env.VITE_API_URL || 'http://127.0.0.1:4000/api';
 
 class ApiRequestError extends Error {
   status: number;
@@ -216,31 +217,17 @@ class ApiRequestError extends Error {
   }
 }
 
-// Lấy token đăng nhập đang được lưu trong localStorage
-export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
-
 // Tạo URL kết nối Server-Sent Events (SSE) để theo dõi cập nhật trực tiếp của một cuộc đua
 export const getLiveRaceEventsUrl = (raceId: string) =>
   `${API_URL}/live/races/${encodeURIComponent(raceId)}/events`;
 
-// Lưu token đăng nhập vào localStorage để dùng cho các yêu cầu sau
-export const storeToken = (token: string) => {
-  localStorage.setItem(TOKEN_KEY, token);
-};
-
-// Xóa token khỏi localStorage khi đăng xuất
-export const clearToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-};
-
-// Hàm gửi HTTP request chung, tự động gắn token xác thực và báo lỗi nếu response không thành công
+// Hàm gửi HTTP request chung, dùng HttpOnly session cookie và báo lỗi khi response thất bại.
 const request = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
-  const token = getStoredToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -254,9 +241,9 @@ const request = async <T>(path: string, options: RequestInit = {}): Promise<T> =
   return data;
 };
 
-// Đăng nhập bằng email và password, trả về token và thông tin user
+// Đăng nhập bằng email/password; session được backend lưu trong HttpOnly cookie.
 export const login = async (email: string, password: string) => {
-  return request<{ token: string; user: AuthUser }>('/login', {
+  return request<{ user: AuthUser }>('/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });

@@ -1,9 +1,13 @@
 import { Hono } from 'hono';
 import { randomUUID } from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import {
   ACCOUNT_APPROVAL_ROLES,
+  COOKIE_SAME_SITE,
+  COOKIE_SECURE,
   SELF_REGISTRATION_ROLES,
+  SESSION_COOKIE_NAME,
   SESSION_DAYS,
 } from '../config/constants.js';
 import { authenticate, publicUser } from '../services/authService.js';
@@ -12,7 +16,13 @@ import {
   notifyAdmins,
 } from '../services/notificationService.js';
 
-export const createAuthRoutes = (getDb, writeDb) => {
+export const createAuthRoutes = (
+  getDb,
+  writeDb,
+  persistLoginSession,
+  persistRegisteredUser,
+  deleteSession
+) => {
   const app = new Hono();
 
   // Tạo một phiên đăng nhập mới với token ngẫu nhiên và lưu vào database
@@ -30,6 +40,14 @@ export const createAuthRoutes = (getDb, writeDb) => {
     return token;
   };
 
+  const sessionCookieOptions = {
+    httpOnly: true,
+    secure: COOKIE_SECURE,
+    sameSite: COOKIE_SAME_SITE,
+    path: '/',
+    maxAge: SESSION_DAYS * 24 * 60 * 60,
+  };
+
   // Trả về thông tin user đang đăng nhập
   app.get('/me', async (c) => {
     const db = await getDb();
@@ -39,7 +57,7 @@ export const createAuthRoutes = (getDb, writeDb) => {
       : c.json({ message: 'Not authenticated' }, 401);
   });
 
-  // Đăng nhập bằng email và password, trả về token và thông tin user
+  // Đăng nhập bằng email/password và đặt session token trong HttpOnly cookie.
   app.post('/login', async (c) => {
     const db = await getDb();
     const { email, password } = await c.req.json();
@@ -68,9 +86,10 @@ export const createAuthRoutes = (getDb, writeDb) => {
       );
     }
 
+    const expiresAt = new Date();
     db.sessions = (db.sessions || []).filter(
       (session) =>
-        !session.expiresAt || new Date(session.expiresAt).getTime() > Date.now()
+        !session.expiresAt || new Date(session.expiresAt).getTime() > expiresAt.getTime()
     );
 
     if (!String(user.password || '').startsWith('$2')) {
@@ -79,8 +98,16 @@ export const createAuthRoutes = (getDb, writeDb) => {
     }
 
     const token = createSession(db, user.id);
-    await writeDb(db);
-    return c.json({ token, user: publicUser(user) });
+    const session = db.sessions.find((item) => item.token === token);
+
+    if (persistLoginSession) {
+      await persistLoginSession(user, session, expiresAt.toISOString());
+    } else {
+      await writeDb(db);
+    }
+
+    setCookie(c, SESSION_COOKIE_NAME, token, sessionCookieOptions);
+    return c.json({ user: publicUser(user) });
   });
 
   // Đăng ký tài khoản mới, trả về thông tin user và trạng thái phê duyệt
@@ -116,6 +143,9 @@ export const createAuthRoutes = (getDb, writeDb) => {
       updatedAt: createdAt,
     };
     db.users.push(user);
+    const existingNotificationIds = new Set(
+      (db.notifications || []).map((notification) => notification.id)
+    );
 
     if (needsApproval) {
       notifyAdmins(
@@ -131,7 +161,14 @@ export const createAuthRoutes = (getDb, writeDb) => {
       );
     }
 
-    await writeDb(db);
+    const createdNotifications = (db.notifications || []).filter(
+      (notification) => !existingNotificationIds.has(notification.id)
+    );
+    if (persistRegisteredUser) {
+      await persistRegisteredUser(user, createdNotifications);
+    } else {
+      await writeDb(db);
+    }
     return c.json(
       {
         user: publicUser(user),
@@ -148,9 +185,20 @@ export const createAuthRoutes = (getDb, writeDb) => {
   app.post('/logout', async (c) => {
     const db = await getDb();
     const header = c.req.header('Authorization') || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+    const token =
+      getCookie(c, SESSION_COOKIE_NAME) ||
+      (header.startsWith('Bearer ') ? header.slice(7) : '');
     db.sessions = db.sessions.filter((item) => item.token !== token);
-    await writeDb(db);
+    if (deleteSession) {
+      await deleteSession(token);
+    } else {
+      await writeDb(db);
+    }
+    deleteCookie(c, SESSION_COOKIE_NAME, {
+      path: '/',
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAME_SITE,
+    });
     return c.json({ ok: true });
   });
 

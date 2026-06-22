@@ -31,6 +31,7 @@ const postgresConfig =
 
 let pool;
 let runtimeSchemaPromise;
+const dbBaselines = new WeakMap();
 
 // Trả về connection pool PostgreSQL (tạo mới nếu chưa tồn tại) để tái sử dụng kết nối hiệu quả
 const getPool = () => {
@@ -252,7 +253,7 @@ export const readDb = async () => {
     };
   });
 
-  return {
+  const db = {
     users,
     tournaments: tournaments.map((tournament) => ({
       ...tournament,
@@ -282,18 +283,64 @@ export const readDb = async () => {
     refereeReports,
     sessions,
   };
+
+  dbBaselines.set(db, structuredClone(db));
+  return db;
 };
 
-// Chèn nhiều hàng dữ liệu vào một bảng trong transaction đang chạy
-const insertRows = async (client, tableName, columns, rows = []) => {
+const comparableValue = (row, column) => {
+  const value =
+    column === 'isRead' && row[column] === undefined
+      ? row.read
+      : row[column];
+
+  if (value instanceof Date) return value.toISOString();
+  return value ?? null;
+};
+
+const rowKey = (row, keyColumn) => String(row[keyColumn] ?? '');
+
+// Chỉ UPSERT các hàng mới hoặc thực sự thay đổi so với snapshot lúc request bắt đầu.
+const upsertChangedRows = async (
+  client,
+  tableName,
+  columns,
+  rows = [],
+  baselineRows = [],
+  keyColumn = columns[0]
+) => {
   if (!rows.length) return;
 
   const columnsSql = columnList(columns);
   const params = columns.map((_, index) => `$${index + 1}`).join(', ');
+  const updateColumns = columns.filter((column) => column !== keyColumn);
+  const conflictSql = updateColumns.length
+    ? `DO UPDATE SET ${updateColumns
+        .map(
+          (column) =>
+            `${identifier(column)} = EXCLUDED.${identifier(column)}`
+        )
+        .join(', ')}`
+    : 'DO NOTHING';
+  const baselineByKey = new Map(
+    baselineRows.map((row) => [rowKey(row, keyColumn), row])
+  );
 
   for (const row of rows) {
+    const baselineRow = baselineByKey.get(rowKey(row, keyColumn));
+    const changed =
+      !baselineRow ||
+      columns.some(
+        (column) =>
+          JSON.stringify(comparableValue(row, column)) !==
+          JSON.stringify(comparableValue(baselineRow, column))
+      );
+    if (!changed) continue;
+
     await client.query(
-      `INSERT INTO ${identifier(tableName)} (${columnsSql}) VALUES (${params})`,
+      `INSERT INTO ${identifier(tableName)} (${columnsSql})
+       VALUES (${params})
+       ON CONFLICT (${identifier(keyColumn)}) ${conflictSql}`,
       columns.map((column) => row[column])
     );
   }
@@ -316,21 +363,29 @@ const tableDeleteOrder = [
   'users',
 ];
 
-// Ghi toàn bộ dữ liệu vào PostgreSQL: xóa toàn bộ và chèn mới theo đúng thứ tự phụ thuộc
+// Ghi các hàng thay đổi vào PostgreSQL và chỉ xóa các hàng bị loại khỏi snapshot.
 export const writeDb = async (db) => {
   await ensureRuntimeSchema();
 
   const client = await getPool().connect();
+  const baseline = dbBaselines.get(db) || {};
+  const persistedRows = new Map();
+  const writeRows = async (tableName, columns, rows = []) => {
+    persistedRows.set(tableName, rows);
+    await upsertChangedRows(
+      client,
+      tableName,
+      columns,
+      rows,
+      baseline[tableName] || [],
+      tableName === 'sessions' ? 'token' : 'id'
+    );
+  };
 
   try {
     await client.query('BEGIN');
 
-    for (const tableName of tableDeleteOrder) {
-      await client.query(`DELETE FROM ${identifier(tableName)}`);
-    }
-
-    await insertRows(
-      client,
+    await writeRows(
       'users',
       ['id', 'name', 'email', 'password', 'role', 'status', 'createdAt', 'updatedAt'],
       (db.users || []).map((user) => ({
@@ -339,8 +394,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'tournaments',
       [
         'id',
@@ -362,8 +416,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'horses',
       [
         'id',
@@ -410,8 +463,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'races',
       [
         'id',
@@ -458,8 +510,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'jockeyProfiles',
       [
         'id',
@@ -477,8 +528,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'jockeyTournamentRegistrations',
       ['id', 'tournamentId', 'jockeyUserId', 'status', 'createdAt', 'reviewedAt'],
       (db.jockeyTournamentRegistrations || []).map((registration) => ({
@@ -487,8 +537,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'jockeyInvitations',
       [
         'id',
@@ -511,8 +560,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'horseTournamentRegistrations',
       [
         'id',
@@ -556,8 +604,7 @@ export const writeDb = async (db) => {
             }))
         );
 
-    await insertRows(
-      client,
+    await writeRows(
       'raceRefereeAssignments',
       ['id', 'raceId', 'refereeUserId', 'assignedBy', 'status', 'assignedAt'],
       derivedRefereeAssignments.map((assignment) => ({
@@ -567,8 +614,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'raceEntries',
       [
         'id',
@@ -610,8 +656,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'raceActionLogs',
       ['id', 'raceId', 'userId', 'action', 'fromStatus', 'toStatus', 'details', 'createdAt'],
       (db.raceActionLogs || []).map((log) => ({
@@ -624,8 +669,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'refereeReports',
       [
         'id',
@@ -649,8 +693,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'notifications',
       ['id', 'userId', 'type', 'title', 'message', 'isRead', 'createdAt'],
       (db.notifications || []).map((notification) => ({
@@ -660,8 +703,7 @@ export const writeDb = async (db) => {
       }))
     );
 
-    await insertRows(
-      client,
+    await writeRows(
       'sessions',
       ['token', 'userId', 'createdAt', 'expiresAt'],
       (db.sessions || []).map((session) => ({
@@ -671,7 +713,26 @@ export const writeDb = async (db) => {
       }))
     );
 
+    for (const tableName of tableDeleteOrder) {
+      const keyColumn = tableName === 'sessions' ? 'token' : 'id';
+      const currentKeys = new Set(
+        (persistedRows.get(tableName) || []).map((row) => rowKey(row, keyColumn))
+      );
+      const removedRows = (baseline[tableName] || []).filter(
+        (row) => !currentKeys.has(rowKey(row, keyColumn))
+      );
+
+      for (const row of removedRows) {
+        await client.query(
+          `DELETE FROM ${identifier(tableName)}
+           WHERE ${identifier(keyColumn)} = $1`,
+          [row[keyColumn]]
+        );
+      }
+    }
+
     await client.query('COMMIT');
+    dbBaselines.set(db, structuredClone(db));
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -926,4 +987,93 @@ export const persistRefereeRaceAction = async ({
   } finally {
     client.release();
   }
+};
+
+// Lưu thay đổi đăng nhập mà không rewrite toàn bộ database.
+export const persistLoginSession = async (user, session, expiredBefore) => {
+  await ensureRuntimeSchema();
+
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE "users"
+       SET "password" = $2,
+           "updatedAt" = $3
+       WHERE "id" = $1`,
+      [user.id, user.password, user.updatedAt || nowIso()]
+    );
+    await client.query(
+      `DELETE FROM "sessions" WHERE "expiresAt" <= $1`,
+      [expiredBefore || nowIso()]
+    );
+    await client.query(
+      `INSERT INTO "sessions" ("token", "userId", "createdAt", "expiresAt")
+       VALUES ($1, $2, $3, $4)`,
+      [session.token, session.userId, session.createdAt, session.expiresAt]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+// Lưu tài khoản mới và thông báo liên quan trong một transaction nhỏ.
+export const persistRegisteredUser = async (user, notifications = []) => {
+  await ensureRuntimeSchema();
+
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `INSERT INTO "users" (
+        "id", "name", "email", "password", "role", "status", "createdAt", "updatedAt"
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        user.id,
+        user.name,
+        user.email,
+        user.password,
+        user.role,
+        user.status,
+        user.createdAt,
+        user.updatedAt,
+      ]
+    );
+
+    for (const notification of notifications) {
+      await client.query(
+        `INSERT INTO "notifications" (
+          "id", "userId", "type", "title", "message", "isRead", "createdAt"
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          notification.id,
+          notification.userId,
+          notification.type || 'general',
+          notification.title || '',
+          notification.message || '',
+          Boolean(notification.read),
+          notification.createdAt || nowIso(),
+        ]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
+// Xóa đúng phiên đăng xuất thay vì ghi lại toàn bộ bảng session.
+export const deleteSession = async (token) => {
+  if (!token) return;
+  await ensureRuntimeSchema();
+  await getPool().query(`DELETE FROM "sessions" WHERE "token" = $1`, [token]);
 };

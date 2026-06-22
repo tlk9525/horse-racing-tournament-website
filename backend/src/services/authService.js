@@ -1,13 +1,28 @@
+import { SESSION_COOKIE_NAME } from '../config/constants.js';
+
 // Trả về thông tin user công khai, loại bỏ trường password để tránh lộ thông tin nhạy cảm
 export const publicUser = ({ password, ...user }) => user;
 
-// Xác thực người dùng từ token Bearer trong header Authorization, trả về thông tin user nếu hợp lệ
+const cookieToken = (req) => {
+  const cookieHeader =
+    (typeof req.headers?.get === 'function'
+      ? req.headers.get('cookie')
+      : req.headers?.cookie) || '';
+
+  return cookieHeader
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`))
+    ?.slice(SESSION_COOKIE_NAME.length + 1) || '';
+};
+
+// Xác thực bằng HttpOnly cookie; Bearer token vẫn được chấp nhận trong giai đoạn chuyển đổi.
 export const authenticate = async (req, db) => {
   const header =
     (typeof req.headers?.get === 'function'
       ? req.headers.get('authorization')
       : req.headers?.authorization) || '';
-  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  const token = cookieToken(req) || (header.startsWith('Bearer ') ? header.slice(7) : '');
   const session = db.sessions.find((item) => item.token === token);
 
   if (!session) return null;
