@@ -614,3 +614,36 @@ export const writeDb = async (db) => {
     client.release();
   }
 };
+
+// Cập nhật trực tiếp trạng thái publish kết quả để tránh lệch state sau khi reload trang.
+export const persistOfficialRaceResults = async (raceId, updatedAt = nowIso()) => {
+  const client = await getPool().connect();
+
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE "races"
+       SET "status" = 'finished',
+           "resultStatus" = 'official',
+           "awardsPublished" = TRUE,
+           "updatedAt" = $2
+       WHERE "id" = $1`,
+      [raceId, updatedAt]
+    );
+    await client.query(
+      `UPDATE "raceEntries"
+       SET "resultStatus" = CASE
+         WHEN "preRaceStatus" = 'absent' OR "disqualified" = TRUE THEN 'disqualified'
+         ELSE 'official'
+       END
+       WHERE "raceId" = $1 AND "status" = 'approved'`,
+      [raceId]
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};

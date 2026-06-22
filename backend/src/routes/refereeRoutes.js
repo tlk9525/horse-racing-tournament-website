@@ -18,7 +18,7 @@ const finishTimeMs = (value) => {
   return Number(minutes) * 60000 + Number(seconds) * 1000 + Number(fraction.padEnd(3, '0'));
 };
 
-export const createRefereeRoutes = (getDb, writeDb) => {
+export const createRefereeRoutes = (getDb, writeDb, persistOfficialResults) => {
   const app = new Hono();
 
   // Chỉ trọng tài được phân công mới có quyền điều hành và công bố kết quả.
@@ -184,6 +184,9 @@ export const createRefereeRoutes = (getDb, writeDb) => {
     }
 
     await writeDb(db);
+    if (action === 'submit-results' && persistOfficialResults) {
+      await persistOfficialResults(race.id, race.updatedAt);
+    }
     broadcastRaceUpdate(race.id);
     const persistedDb = await getDb();
     const persistedRace = persistedDb.races.find((item) => item.id === race.id) || race;
