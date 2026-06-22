@@ -185,9 +185,23 @@ export const createRefereeRoutes = (getDb, writeDb) => {
 
     await writeDb(db);
     broadcastRaceUpdate(race.id);
+    const persistedDb = await getDb();
+    const persistedRace = persistedDb.races.find((item) => item.id === race.id) || race;
+    const persistedEntries = publicRaceEntries(persistedDb).filter((item) => item.raceId === race.id);
+
+    if (
+      action === 'submit-results' &&
+      (persistedRace.status !== 'finished' || persistedRace.resultStatus !== 'official')
+    ) {
+      return c.json(
+        { message: 'Results were validated but could not be persisted. Please retry publishing.' },
+        500
+      );
+    }
+
     return c.json({
-      race,
-      entries: publicRaceEntries(db).filter((item) => item.raceId === race.id),
+      race: persistedRace,
+      entries: persistedEntries,
     });
   });
 

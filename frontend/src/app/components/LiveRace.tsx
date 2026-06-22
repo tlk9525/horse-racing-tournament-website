@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useNavigate,
   useParams,
@@ -32,7 +32,6 @@ export default function LiveRace() {
   const [resultDrafts, setResultDrafts] = useState<
     Record<string, { position: string; finishTime: string; notes: string; violationNotes: string }>
   >({});
-  const officialRaceIdsRef = useRef(new Set<string>());
 
   const selectedRace = useMemo(
     () => races.find((race) => race.id === selectedRaceId) || races[0],
@@ -42,10 +41,6 @@ export default function LiveRace() {
   const selectedEntries = entries.filter(
     (entry) => entry.raceId === selectedRace?.id
   );
-  const selectedRaceStatusLabel =
-    selectedRace?.resultStatus === 'official' || selectedRace?.awardsPublished
-      ? 'Official Results Published'
-      : statusLabel(selectedRace?.status || '');
 
   const positionOptions = Array.from(
     { length: selectedEntries.length },
@@ -89,31 +84,8 @@ export default function LiveRace() {
               )
             : data.races;
 
-        setRaces(
-          visibleRaces.map((race) =>
-            officialRaceIdsRef.current.has(race.id)
-              ? {
-                  ...race,
-                  status: 'finished',
-                  resultStatus: 'official',
-                  awardsPublished: true,
-                }
-              : race
-          )
-        );
-        setEntries(
-          data.raceEntries.map((entry) =>
-            officialRaceIdsRef.current.has(entry.raceId)
-              ? {
-                  ...entry,
-                  resultStatus:
-                    entry.preRaceStatus === 'absent' || entry.disqualified
-                      ? 'disqualified'
-                      : 'official',
-                }
-              : entry
-          )
-        );
+        setRaces(visibleRaces);
+        setEntries(data.raceEntries);
         setSelectedRaceId((current) => {
           const next = raceId || current;
 
@@ -259,38 +231,22 @@ export default function LiveRace() {
         }
 
         const updatedEntries = Array.isArray(entries) ? entries : [];
-        const officialRace = {
-          ...race,
-          status: 'finished',
-          resultStatus: 'official',
-          awardsPublished: true,
-        };
-        officialRaceIdsRef.current.add(officialRace.id);
-        const officialEntries = (updatedEntries.length > 0 ? updatedEntries : selectedEntries).map(
-          (entry) => ({
-            ...entry,
-            resultStatus:
-              entry.preRaceStatus === 'absent' || entry.disqualified
-                ? 'disqualified'
-                : 'official',
-          })
-        );
-
         setRaces((current) =>
-          current.map((item) => (item.id === officialRace.id ? officialRace : item))
+          current.map((item) => (item.id === race.id ? race : item))
         );
-        if (officialEntries.length > 0) {
+        if (updatedEntries.length > 0) {
           setEntries((current) => {
-            const updatedEntryIds = new Set(officialEntries.map((entry) => entry.id));
+            const updatedEntryIds = new Set(updatedEntries.map((entry) => entry.id));
 
             return [
               ...current.filter((entry) => !updatedEntryIds.has(entry.id)),
-              ...officialEntries,
+              ...updatedEntries,
             ];
           });
         }
         setResultDrafts({});
         setMessage('Official results published successfully.');
+        loadRaceOps();
       })
       .catch((error) =>
         setMessage(error instanceof Error ? error.message : 'Unable to submit results')
@@ -354,7 +310,7 @@ export default function LiveRace() {
               <div className="bg-[#12304f] border border-white/10 rounded-2xl p-6">
                 <div className="grid md:grid-cols-4 gap-4">
                   {[
-                    ['Status', selectedRaceStatusLabel],
+                    ['Status', statusLabel(selectedRace.status)],
                     ['Venue', selectedRace.venue],
                     ['Distance', selectedRace.distance || '-'],
                     ['Referee', selectedRace.referee || '-'],
@@ -521,7 +477,7 @@ export default function LiveRace() {
                   <div className="flex justify-between gap-3">
                     <span>Start status</span>
                     <span className="text-white font-bold">
-                      {selectedRaceStatusLabel}
+                      {statusLabel(selectedRace.status)}
                     </span>
                   </div>
 
